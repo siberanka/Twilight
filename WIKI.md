@@ -1,3 +1,5 @@
+<img src="docs/images/brand/logo.png" alt="Twilight logo" width="96" align="right">
+
 # Twilight wiki
 
 > Türkçe: [aşağıda](#türkçe)
