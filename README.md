@@ -7,6 +7,7 @@
 > Türkçe: [aşağıda](#türkçe)
 
 [![Release](https://img.shields.io/github/v/release/siberanka/twilight?include_prereleases&label=release)](https://github.com/siberanka/twilight/releases)
+[![Downloads](https://img.shields.io/github/downloads/siberanka/twilight/total?label=downloads&color=blue)](https://github.com/siberanka/twilight/releases)
 [![License: Twilight License (PolyForm Noncommercial 1.0.0 with additional terms)](https://img.shields.io/badge/license-Twilight%20License%20%28PolyForm%20NC%20%2B%20terms%29-blue.svg)](LICENSE)
 [![Server](https://img.shields.io/badge/server-Paper%20%7C%20Folia%20%7C%20Spigot-6f4e37)](#requirements)
 [![Proxy](https://img.shields.io/badge/proxy-Velocity%20%7C%20BungeeCord-6f4e37)](#twilight-proxy)
