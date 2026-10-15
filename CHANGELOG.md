@@ -4,7 +4,7 @@
 
 All notable changes in Twilight are documented here.
 
-## 1.0.0-beta.2 - unreleased
+## 1.0.0-beta.2 - 2026-10-16
 
 - Displays and holograms (FancyHolograms, DecentHolograms, furniture plugins, display builds), also when sent
   only as packets: block displays show the block state's model, rotated and tinted like Java; item displays show
@@ -68,7 +68,7 @@ First public beta of Twilight and twilight-proxy.
 
 Twilight'taki tüm önemli değişiklikler burada belgelenir.
 
-#### 1.0.0-beta.2 - yayımlanmadı
+#### 1.0.0-beta.2 - 2026-10-16
 
 - Görüntüler ve hologramlar (FancyHolograms, DecentHolograms, mobilya eklentileri, görüntü yapıları), yalnızca
   paket olarak gönderildiklerinde de: blok görüntüleri blok durumunun modelini Java gibi döndürülmüş ve
