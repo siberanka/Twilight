@@ -12,7 +12,10 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.BiConsumer;
@@ -28,16 +31,26 @@ import java.util.zip.ZipFile;
  */
 public final class CustomSkulls implements AutoCloseable {
     public static final String PATH = "twilight/player_heads.json";
+    /**
+     * The skins of the players who joined a server, most recent first: heads of players ({@code head-%player%},
+     * top lists) show their skins too. They never ask for a restart; Geyser takes them at its next start.
+     */
+    public static final String PLAYERS_PATH = "twilight/player_skins.json";
     /** Upper bound on registered skulls: each is a Bedrock block, and clients load every one of them. */
     public static final int MAX = 4096;
     private static final long MAX_BYTES = 4L * 1024 * 1024;
 
-    /** The skins (hashes) and user names of a set of packs. */
-    public record Heads(Set<String> skins, Set<String> names) {
-        static final Heads EMPTY = new Heads(Set.of(), Set.of());
+    /** The skins (hashes) and user names of a set of packs, and the skins of their servers' players. */
+    public record Heads(Set<String> skins, Set<String> names, Set<String> players) {
+        static final Heads EMPTY = new Heads(Set.of(), Set.of(), Set.of());
 
         public int size() {
-            return skins.size() + names.size();
+            return skins.size() + names.size() + players.size();
+        }
+
+        /** Whether the heads the servers show (not their players' skins) are the same. */
+        public boolean sameShown(Heads other) {
+            return skins.equals(other.skins) && names.equals(other.names);
         }
     }
 
@@ -83,6 +96,14 @@ public final class CustomSkulls implements AutoCloseable {
                 warn.accept("Could not register the player head " + skin + " with Geyser", failure);
             }
         }
+        for (String skin : heads.players()) {
+            try {
+                event.register(skin, GeyserDefineCustomSkullsEvent.SkullTextureType.SKIN_HASH);
+                count++;
+            } catch (RuntimeException failure) {
+                warn.accept("Could not register the skin " + skin + " with Geyser", failure);
+            }
+        }
         for (String name : heads.names()) {
             try {
                 event.register(name, GeyserDefineCustomSkullsEvent.SkullTextureType.USERNAME);
@@ -95,33 +116,62 @@ public final class CustomSkulls implements AutoCloseable {
         if (count > 0) info.accept("Registered " + count + " player head skin(s) for Bedrock players.");
     }
 
-    /** The heads of every pack, merged; a pack that cannot be read adds none. */
+    /**
+     * The heads of every pack, merged; a pack that cannot be read adds none. The heads servers show come first; the
+     * players' skins fill what is left of {@link #MAX}, taken round-robin from the packs (each most recent first).
+     */
     public static Heads read(Collection<Path> packs) {
         Set<String> skins = new TreeSet<>(), names = new TreeSet<>();
+        List<List<String>> players = new ArrayList<>();
         for (Path pack : packs) {
             if (pack == null || !Files.isRegularFile(pack)) continue;
             try (ZipFile zip = new ZipFile(pack.toFile())) {
-                var entry = zip.getEntry(PATH);
-                if (entry == null || entry.getSize() > MAX_BYTES) continue;
-                byte[] bytes;
-                try (InputStream input = zip.getInputStream(entry)) {
-                    bytes = input.readNBytes((int) MAX_BYTES + 1);
-                }
-                if (bytes.length > MAX_BYTES) continue;
-                JsonObject root = JsonParser.parseString(new String(bytes, StandardCharsets.UTF_8)).getAsJsonObject();
-                if (root.has("skins")) for (JsonElement value : root.getAsJsonArray("skins")) {
+                JsonObject root = json(zip, PATH);
+                if (root != null && root.has("skins")) for (JsonElement value : root.getAsJsonArray("skins")) {
                     String skin = value.getAsString();
                     if (HeadTextures.valid(skin) && skins.size() + names.size() < MAX) skins.add(skin);
                 }
-                if (root.has("names")) for (JsonElement value : root.getAsJsonArray("names")) {
+                if (root != null && root.has("names")) for (JsonElement value : root.getAsJsonArray("names")) {
                     String name = value.getAsString();
                     if (HeadTextures.name(name) && skins.size() + names.size() < MAX) names.add(name);
+                }
+                JsonObject joined = json(zip, PLAYERS_PATH);
+                if (joined != null && joined.has("skins")) {
+                    List<String> list = new ArrayList<>();
+                    for (JsonElement value : joined.getAsJsonArray("skins")) {
+                        String skin = value.getAsString();
+                        if (HeadTextures.valid(skin) && list.size() < MAX) list.add(skin);
+                    }
+                    players.add(list);
                 }
             } catch (IOException | RuntimeException unreadable) {
                 // Another server's pack, or one being replaced: its heads come with the next read.
             }
         }
-        return skins.isEmpty() && names.isEmpty() ? Heads.EMPTY : new Heads(Set.copyOf(skins), Set.copyOf(names));
+        Set<String> recent = new LinkedHashSet<>();
+        for (int index = 0; skins.size() + names.size() + recent.size() < MAX; index++) {
+            boolean any = false;
+            for (List<String> list : players) {
+                if (index >= list.size()) continue;
+                any = true;
+                if (!skins.contains(list.get(index))) recent.add(list.get(index));
+                if (skins.size() + names.size() + recent.size() >= MAX) break;
+            }
+            if (!any) break;
+        }
+        if (skins.isEmpty() && names.isEmpty() && recent.isEmpty()) return Heads.EMPTY;
+        return new Heads(Set.copyOf(skins), Set.copyOf(names), java.util.Collections.unmodifiableSet(recent));
+    }
+
+    private static JsonObject json(ZipFile zip, String path) throws IOException {
+        var entry = zip.getEntry(path);
+        if (entry == null || entry.getSize() > MAX_BYTES) return null;
+        byte[] bytes;
+        try (InputStream input = zip.getInputStream(entry)) {
+            bytes = input.readNBytes((int) MAX_BYTES + 1);
+        }
+        if (bytes.length > MAX_BYTES) return null;
+        return JsonParser.parseString(new String(bytes, StandardCharsets.UTF_8)).getAsJsonObject();
     }
 
     @Override public void close() {

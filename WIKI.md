@@ -178,6 +178,7 @@ change behaviour.
 | `item-display-models` | `auto` | Bedrock models for custom items in Java item displays: furniture, ModelEngine and BetterModel models, and the mobs and NPCs built from them ([item displays](#item-displays)). `auto`: when Geyser runs on this server, or when the twilight-proxy in front of it says that it shows item displays; `on`; `off`. The pack is rebuilt by itself when that changes |
 | `item-display-variants` | `seen` | Which items get those models. `seen`: the items this server has shown in item displays, and every model bone; `all`: every custom item (each client then builds a model for every item while loading) |
 | `player-heads` | `true` | Player heads show their skins on Bedrock instead of Steve's (menus, hands, armour stands, holograms); new heads need a restart ([player heads](#player-heads)) |
+| `player-head-skins-of-players` | `1024` | Also register the skins of this many most recent players, for heads of players that menus show (`0`: none) |
 | `custom-blocks` | `true` | Content plugins' custom blocks (ItemsAdder's and CraftEngine's ores and blocks on note blocks, mushroom blocks and tripwire) get their own Bedrock look instead of the vanilla block, and the items that place them show the block in 3D in the inventory and when dropped. Geyser registers blocks when it starts: a build that changes them needs a restart, like item changes ([custom blocks](#custom-blocks)) |
 
 ### `ui`
@@ -576,14 +577,24 @@ the server and on the proxy registers them (`geyser.player-heads`, `bedrock.play
 - **Menus.** Every menu a player opens is read a moment after it opens and again two seconds later (menu plugins
   fill and refresh their items then), whatever plugin made it.
 - **Configurations.** At start the plugins' configuration files are read for heads in every common form: Base64
-  profiles (`basehead-...`, `texture: ...`), skin URLs and hashes (`texture-...`), user names (`head-Notch`,
-  `skull-owner: Notch`) and HeadDatabase ids (`hdb-1234`, resolved through HeadDatabase when it is installed).
-  Placeholders such as `head-%player_name%` are left to the menu scan, which sees the real head.
+  profiles (`basehead-...`, `texture: ...`), skin URLs and hashes (`texture-...`, `skin: ...`), user names
+  (`head-Notch`, TrMenu's `head:Notch`, `skull-owner: Notch`) and HeadDatabase ids (`hdb-1234`, resolved through
+  HeadDatabase when it is installed). Libraries, logs, generated resource packs and per-player data files are not
+  read, and no plugin's folder takes more than 2500 files, so the scan stays short (a few seconds on a large
+  server, off the main thread). Placeholders such as `head-%player_name%` are left to the menu scan, which sees
+  the real head.
+- **The players.** The skins of the players who join (`geyser.player-head-skins-of-players`, the 1024 most recent
+  by default): menus often show a player's own head or other players' heads (profiles, top lists, friends,
+  auction sellers), which no configuration names. Bedrock players' skins are read too, once Floodgate has them.
+  A new player never starts a build or asks for a restart: the skins go into the next build and Geyser registers
+  them at its next start; on a proxy, the players' skins of every server are taken in turn.
 - **The world.** Armour stands, mobs, item frames, displays and dropped items, as their chunks load; heads in
   displays a plugin sends only as packets are reported by Geyser on the server or by twilight-proxy.
 
-The heads are kept in `player-heads.txt` (at most 4096). Geyser registers skulls when it starts, so a build with
-new heads asks for a restart, like new items. A head in an item display is drawn with its skin as Java draws it
+The heads are kept in `player-heads.txt` and the players' skins in `player-skins.txt` (a skin hash and the time
+it was last seen; nothing else about the player). Geyser registers at most 4096 skulls; the heads the server shows
+come first and the players' skins fill the rest. Geyser registers skulls when it starts, so a build with new
+shown heads asks for a restart, like new items. A head in an item display is drawn with its skin as Java draws it
 (the skin is downloaded once from Mojang's texture server into `cache/skins/`). Placed head blocks were already
 drawn with their skins by Geyser.
 
@@ -765,6 +776,7 @@ by hand once. `/twilight status` and `/twilightproxy` show the result of the las
 | `pack-host/<sha256>.zip` | Copies the [pack host](#pack-hosting) serves; cleared at start, removed when unused |
 | `displayed-items.txt` | Items, blocks and heads this server showed in displays (one key per line, at most 20000) |
 | `player-heads.txt` | Player head skins (hashes) and user names this server showed or its plugins name (at most 4096) |
+| `player-skins.txt` | Skin hashes of the players who joined, with the time each was last seen (at most 20000) |
 | `cache/skins/` | Skins of heads shown in item displays, downloaded from Mojang's texture server |
 | `proxy-features.properties` | What the twilight-proxy in front of this server last said it shows; expires after 30 days without a repeat |
 
@@ -1140,6 +1152,7 @@ değiştirmek için düzenlenmesi gerekir.
 | `item-display-models` | `auto` | Java eşya görüntülerindeki özel eşyalar için Bedrock modelleri: mobilyalar, ModelEngine ve BetterModel modelleri ve onlardan yapılan moblar ve NPC'ler ([eşya görüntüleri](#eşya-görüntüleri)). `auto`: Geyser bu sunucuda çalışıyorsa veya önündeki twilight-proxy eşya görüntülerini gösterdiğini söylüyorsa; `on`; `off`. Bu değişince paket kendiliğinden yeniden derlenir |
 | `item-display-variants` | `seen` | Bu modelleri hangi eşyaların alacağı. `seen`: bu sunucunun eşya görüntülerinde gösterdiği eşyalar ve her model kemiği; `all`: her özel eşya (her istemci yüklerken her eşya için bir model kurar) |
 | `player-heads` | `true` | Oyuncu kafaları Bedrock'ta Steve'inki yerine kendi skinleriyle görünür (menüler, eller, zırh standları, hologramlar); yeni kafalar yeniden başlatma gerektirir ([oyuncu kafaları](#oyuncu-kafaları)) |
+| `player-head-skins-of-players` | `1024` | Menülerin gösterdiği oyuncu kafaları için en son bu kadar oyuncunun skinini de kaydeder (`0`: hiçbiri) |
 | `custom-blocks` | `true` | İçerik eklentilerinin özel blokları (ItemsAdder'ın ve CraftEngine'in nota blokları, mantar blokları ve tuzak teli üzerindeki madenleri ve blokları) vanilla blok yerine kendi Bedrock görünümlerini alır; onları yerleştiren eşyalar bloğu envanterde ve yere düştüğünde 3B gösterir. Geyser blokları açılışta kaydeder: blokları değiştiren bir derleme, eşya değişiklikleri gibi yeniden başlatma gerektirir ([özel bloklar](#özel-bloklar)) |
 
 ##### `ui`
@@ -1543,15 +1556,26 @@ sunucudaki ve proxy'deki Geyser da onları kaydeder (`geyser.player-heads`, `bed
 - **Menüler.** Bir oyuncunun açtığı her menü, hangi eklenti yapmış olursa olsun, açıldıktan biraz sonra ve iki
   saniye sonra tekrar okunur (menü eklentileri eşyalarını o zaman doldurur ve yeniler).
 - **Yapılandırmalar.** Açılışta eklentilerin yapılandırma dosyaları her yaygın biçimdeki kafalar için okunur:
-  Base64 profiller (`basehead-...`, `texture: ...`), skin URL'leri ve hash'leri (`texture-...`), kullanıcı adları
-  (`head-Notch`, `skull-owner: Notch`) ve HeadDatabase kimlikleri (`hdb-1234`; HeadDatabase kuruluysa onun
-  üzerinden çözülür). `head-%player_name%` gibi yer tutucular, gerçek kafayı gören menü taramasına bırakılır.
+  Base64 profiller (`basehead-...`, `texture: ...`), skin URL'leri ve hash'leri (`texture-...`, `skin: ...`),
+  kullanıcı adları (`head-Notch`, TrMenu'nün `head:Notch` biçimi, `skull-owner: Notch`) ve HeadDatabase kimlikleri
+  (`hdb-1234`; HeadDatabase kuruluysa onun üzerinden çözülür). Kütüphaneler, günlükler, üretilmiş kaynak paketleri
+  ve oyuncu başına veri dosyaları okunmaz ve hiçbir eklentinin klasörü 2500 dosyadan fazlasını almaz; böylece
+  tarama kısa sürer (büyük bir sunucuda birkaç saniye, ana iş parçacığının dışında). `head-%player_name%` gibi yer
+  tutucular, gerçek kafayı gören menü taramasına bırakılır.
+- **Oyuncular.** Katılan oyuncuların skinleri (`geyser.player-head-skins-of-players`, varsayılan olarak en son
+  1024 oyuncu): menüler sıkça oyuncunun kendi kafasını veya başka oyuncuların kafalarını gösterir (profiller,
+  sıralama listeleri, arkadaşlar, açık artırma satıcıları) ve bunların adını hiçbir yapılandırma vermez. Bedrock
+  oyuncularının skinleri de Floodgate onları aldığında okunur. Yeni bir oyuncu asla derleme başlatmaz veya
+  yeniden başlatma istemez: skinler sonraki derlemeye girer ve Geyser onları bir sonraki açılışında kaydeder;
+  proxy'de her sunucunun oyuncu skinleri sırayla alınır.
 - **Dünya.** Zırh standları, moblar, eşya çerçeveleri, görüntüler ve düşen eşyalar, yığınları yüklenirken;
   eklentilerin yalnızca paket olarak gönderdiği görüntülerdeki kafaları sunucudaki Geyser veya twilight-proxy
   bildirir.
 
-Kafalar `player-heads.txt` içinde tutulur (en fazla 4096). Geyser kafaları açılırken kaydeder; bu yüzden yeni
-kafalı bir derleme, yeni eşyalar gibi yeniden başlatma ister. Bir eşya görüntüsündeki kafa, Java'nın çizdiği gibi
+Kafalar `player-heads.txt`, oyuncuların skinleri `player-skins.txt` içinde tutulur (bir skin hash'i ve en son
+görüldüğü zaman; oyuncu hakkında başka hiçbir şey yok). Geyser en fazla 4096 kafa kaydeder; önce sunucunun
+gösterdiği kafalar gelir, kalanı oyuncuların skinleri doldurur. Geyser kafaları açılırken kaydeder; bu yüzden
+yeni gösterilen kafalı bir derleme, yeni eşyalar gibi yeniden başlatma ister. Bir eşya görüntüsündeki kafa, Java'nın çizdiği gibi
 kendi skiniyle çizilir (skin bir kez Mojang'ın doku sunucusundan `cache/skins/` içine indirilir). Yerleştirilmiş
 kafa bloklarını Geyser zaten skinleriyle çiziyordu.
 
@@ -1733,6 +1757,7 @@ izler. Önceki geliştirme derlemeleri 1.0.0-beta.1'i duyurmaz: onları bir kez 
 | `pack-host/<sha256>.zip` | [Paket sunucusunun](#paket-sunucusu) sunduğu kopyalar; açılışta temizlenir, kullanılmayınca silinir |
 | `displayed-items.txt` | Bu sunucunun görüntülerde gösterdiği eşyalar, bloklar ve kafalar (satır başına bir anahtar, en fazla 20000) |
 | `player-heads.txt` | Bu sunucunun gösterdiği veya eklentilerinin adını verdiği oyuncu kafası skinleri (hash'ler) ve kullanıcı adları (en fazla 4096) |
+| `player-skins.txt` | Katılan oyuncuların skin hash'leri ve her birinin en son görüldüğü zaman (en fazla 20000) |
 | `cache/skins/` | Eşya görüntülerinde gösterilen kafaların Mojang'ın doku sunucusundan indirilen skinleri |
 | `proxy-features.properties` | Bu sunucunun önündeki twilight-proxy'nin en son neyi gösterdiğini söylediği; 30 gün tekrarlanmazsa geçersizleşir |
 

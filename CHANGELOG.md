@@ -20,6 +20,11 @@ All notable changes in Twilight are documented here.
   show, reads the ones plugin configurations name (Base64 profiles, skin URLs and hashes, user names, HeadDatabase
   ids) and Geyser registers them as custom skulls (`geyser.player-heads`, `bedrock.player-heads`). Heads in item
   displays are drawn with their skin as Java draws them.
+- Heads of players show their skins too: the skins of the players who join, Java and Bedrock, are kept
+  (`player-skins.txt`, the 1024 most recent by default: `geyser.player-head-skins-of-players`) and registered
+  after the heads the server shows, without starting a build or asking for a restart. The configuration scan
+  reads TrMenu's `head:` and `skin:` forms, skips libraries, generated packs and per-player data, and limits
+  each plugin's folder, so it covers every plugin of a large server in a few seconds.
 - Chest titles without custom characters (no image, offset or shift) are no longer moved: they go out as Java
   sent them and show at Java's position in a label of their own, on desktop and on phones. Only titles that need
   it are laid out with spacers, so a plain title can no longer drift or disappear on devices whose GUI scale
@@ -81,6 +86,12 @@ Twilight'taki tüm önemli değişiklikler burada belgelenir.
   ve hash'leri, kullanıcı adları, HeadDatabase kimlikleri) ve Geyser onları özel kafa olarak kaydeder
   (`geyser.player-heads`, `bedrock.player-heads`). Eşya görüntülerindeki kafalar Java'nın çizdiği gibi skinleriyle
   çizilir.
+- Oyuncuların kafaları da skinleriyle görünür: katılan Java ve Bedrock oyuncularının skinleri tutulur
+  (`player-skins.txt`, varsayılan olarak en son 1024 oyuncu: `geyser.player-head-skins-of-players`) ve derleme
+  başlatmadan veya yeniden başlatma istemeden sunucunun gösterdiği kafalardan sonra kaydedilir. Yapılandırma
+  taraması TrMenu'nün `head:` ve `skin:` biçimlerini okur; kütüphaneleri, üretilmiş paketleri ve oyuncu başına
+  verileri atlar ve her eklentinin klasörünü sınırlar; böylece büyük bir sunucunun tüm eklentilerini birkaç
+  saniyede kapsar.
 - Özel karakter içermeyen (görsel, offset veya kaydırma olmayan) sandık başlıkları artık kaydırılmaz: Java'nın
   gönderdiği gibi gider ve masaüstünde de telefonda da Java'nın konumunda kendi etiketinde görünür. Yalnızca
   gereken başlıklar boşluk glifleriyle yerleştirilir; böylece düz bir başlık, GUI ölçeği boşlukları yuvarlayan

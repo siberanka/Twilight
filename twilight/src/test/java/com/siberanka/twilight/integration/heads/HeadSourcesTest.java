@@ -56,9 +56,21 @@ class HeadSourcesTest {
         Files.writeString(plugins.resolve("Twilight/ignored.yml"), "texture: " + profile("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
         Files.createDirectories(plugins.resolve("zMenu"));
         Files.writeString(plugins.resolve("zMenu/buttons.yml"), "url: http://textures.minecraft.net/texture/" + OTHER + "\n");
+        Files.createDirectories(plugins.resolve("TrMenu/menus"));
+        Files.writeString(plugins.resolve("TrMenu/menus/main.yml"), """
+                Icons:
+                  jeb:
+                    display:
+                      mat: 'head:jeb_'
+                  me:
+                    display:
+                      mat: 'head:%%player_name%%'
+                  skin:
+                    skin: %s
+                """.formatted(OTHER));
         var found = HeadSources.scan(plugins, id -> id.equals("1234") ? profile("abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd") : null);
         assertEquals(Set.of(SKIN, OTHER, "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd"), found.skins());
-        assertEquals(Set.of("Notch"), found.names());
+        assertEquals(Set.of("Notch", "jeb_"), found.names());
         assertEquals(Set.of("1234"), found.headDatabase());
         assertTrue(HeadSources.heads(found).contains("name:Notch"));
     }
@@ -74,5 +86,34 @@ class HeadSourcesTest {
         var heads = CustomSkulls.read(List.of(pack, root.resolve("missing.zip")));
         assertEquals(Set.of(SKIN), heads.skins());
         assertEquals(Set.of("Notch"), heads.names());
+        assertEquals(Set.of(), heads.players());
+    }
+
+    /**
+     * The players' skins fill what the shown heads leave free, most recent first and taken in turn from each pack;
+     * a change in them alone never counts as other heads shown (it asks for no restart).
+     */
+    @Test void customSkullsAddThePlayersSkins() throws Exception {
+        Path first = root.resolve("first.zip"), second = root.resolve("second.zip");
+        try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(first))) {
+            zip.putNextEntry(new ZipEntry(CustomSkulls.PATH));
+            zip.write(("{\"format\":1,\"skins\":[\"" + SKIN + "\"],\"names\":[]}").getBytes(StandardCharsets.UTF_8));
+            zip.closeEntry();
+            zip.putNextEntry(new ZipEntry(CustomSkulls.PLAYERS_PATH));
+            zip.write(("{\"format\":1,\"skins\":[\"" + SKIN + "\",\"aaaaaaaaaaaaaaaa\",\"cccccccccccccccc\"]}").getBytes(StandardCharsets.UTF_8));
+            zip.closeEntry();
+        }
+        try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(second))) {
+            zip.putNextEntry(new ZipEntry(CustomSkulls.PLAYERS_PATH));
+            zip.write("{\"format\":1,\"skins\":[\"bbbbbbbbbbbbbbbb\",\"no\"]}".getBytes(StandardCharsets.UTF_8));
+            zip.closeEntry();
+        }
+        var heads = CustomSkulls.read(List.of(first, second));
+        assertEquals(Set.of(SKIN), heads.skins());
+        assertEquals(List.of("bbbbbbbbbbbbbbbb", "aaaaaaaaaaaaaaaa", "cccccccccccccccc"), List.copyOf(heads.players()));
+        assertEquals(4, heads.size());
+        var shownOnly = CustomSkulls.read(List.of(first));
+        assertTrue(heads.sameShown(shownOnly));
+        assertNotEquals(heads, shownOnly);
     }
 }

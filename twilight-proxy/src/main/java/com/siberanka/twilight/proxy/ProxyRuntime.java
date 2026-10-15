@@ -179,7 +179,7 @@ final class ProxyRuntime implements AutoCloseable {
         var registeredHeads = heads == null ? null : heads.registered();
         if (registeredHeads != null) {
             var now = heads.current();
-            if (!now.equals(registeredHeads)) changed.add(now.size() + " player head skin(s)");
+            if (!now.sameShown(registeredHeads)) changed.add(now.skins().size() + now.names().size() + " player head(s)");
         }
         return changed.isEmpty() ? null : String.join(" and ", changed);
     }

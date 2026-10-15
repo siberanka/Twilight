@@ -300,11 +300,14 @@ class BedrockPackCompilerTest {
         BuildResult result = new BedrockPackCompiler(root.resolve("data-heads"), config())
                 .withDisplayedOwnModels(java.util.Set.of("head=" + skin, "head=" + "0".repeat(64)))
                 .withPlayerHeads(java.util.Set.of(skin), java.util.Set.of("Notch"), cache, false)
+                .withPlayerSkins(new java.util.LinkedHashSet<>(List.of("bbbbbbbbbbbbbbbb", "aaaaaaaaaaaaaaaa")))
                 .build(List.of(pack), List.of());
         try (ZipFile zip = new ZipFile(result.outputDirectory().resolve("pack.zip").toFile())) {
             JsonObject heads = read(zip, com.siberanka.twilight.geyser.CustomSkulls.PATH);
             assertEquals(skin, heads.getAsJsonArray("skins").get(0).getAsString());
             assertEquals("Notch", heads.getAsJsonArray("names").get(0).getAsString());
+            JsonObject players = read(zip, com.siberanka.twilight.geyser.CustomSkulls.PLAYERS_PATH);
+            assertEquals("bbbbbbbbbbbbbbbb", players.getAsJsonArray("skins").get(0).getAsString(), "most recent first");
             JsonObject index = read(zip, "twilight/display-index-v2.json");
             assertTrue(index.getAsJsonObject("heads").has(skin), index.toString());
             assertEquals(1, index.getAsJsonObject("heads").size(), "a skin that cannot be read gets no model");

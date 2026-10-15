@@ -115,7 +115,13 @@ public final class BedrockPackCompiler {
         return this;
     }
 
-    private Set<String> headSkins = Set.of(), headNames = Set.of();
+    private Set<String> headSkins = Set.of(), headNames = Set.of(), playerSkins = Set.of();
+
+    /** The skins of the players who joined, most recent first (see {@code PlayerSkins}). */
+    public BedrockPackCompiler withPlayerSkins(Set<String> skins) {
+        this.playerSkins = skins == null ? Set.of() : new java.util.LinkedHashSet<>(skins);
+        return this;
+    }
     private SkinCache skins;
 
     /**
@@ -350,6 +356,17 @@ public final class BedrockPackCompiler {
             heads.add("skins", skinList);
             heads.add("names", nameList);
             packFiles.put(com.siberanka.twilight.geyser.CustomSkulls.PATH, jsonBytes(heads));
+        }
+        if (!playerSkins.isEmpty()) {
+            JsonObject players = new JsonObject();
+            players.addProperty("format", 1);
+            JsonArray list = new JsonArray();
+            for (String skin : playerSkins) {
+                if (list.size() >= com.siberanka.twilight.geyser.CustomSkulls.MAX) break;
+                if (com.siberanka.twilight.geyser.HeadTextures.valid(skin)) list.add(skin);
+            }
+            players.add("skins", list);
+            packFiles.put(com.siberanka.twilight.geyser.CustomSkulls.PLAYERS_PATH, jsonBytes(players));
         }
         CustomBlockCompiler.Result blocks = new CustomBlockCompiler.Result(0, 0, null);
         if (customBlocks) {

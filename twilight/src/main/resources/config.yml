@@ -83,6 +83,10 @@ geyser:
   # starts, so new heads need a restart, like new items. Heads in displays get a model with their skin,
   # downloaded from Mojang's texture server.
   player-heads: true
+  # Also the skins of this many most recent players (0: none): menus often show a player's own head or other
+  # players' heads (head-%player_name%, top lists), which no configuration names. New players never start a
+  # build or ask for a restart; their skins come with the next build and Geyser's next start.
+  player-head-skins-of-players: 1024
 
 ui:
   # Desktop chest screens use Java's container layout: the title is unwrapped,

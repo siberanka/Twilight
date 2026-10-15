@@ -71,6 +71,7 @@ public final class TwilightPlugin extends JavaPlugin {
     /** The custom items this server shows in item displays; only they (and model bones) get display models. */
     private com.siberanka.twilight.integration.display.DisplayedItems displayedItems;
     private com.siberanka.twilight.integration.heads.PlayerHeads playerHeads;
+    private com.siberanka.twilight.integration.heads.PlayerSkins playerSkins;
     private com.siberanka.twilight.integration.menus.MenuAudit menuAudit;
     private volatile Object[] menuTable = {null, -1L};
     private com.siberanka.twilight.geyser.CustomSkulls customSkulls;
@@ -150,6 +151,10 @@ public final class TwilightPlugin extends JavaPlugin {
         if (!playerHeadsEnabled()) return;
         try {
             playerHeads = com.siberanka.twilight.integration.heads.PlayerHeads.start(this, getDataFolder().toPath().resolve("player-heads.txt"));
+            if (getConfig().getInt("geyser.player-head-skins-of-players", 1024) > 0) {
+                playerSkins = com.siberanka.twilight.integration.heads.PlayerSkins.start(this,
+                        getDataFolder().toPath().resolve("player-skins.txt"));
+            }
             playerHeads.onNew(added -> {
                 if (itemDisplayModels() || getServer().getPluginManager().getPlugin("Geyser-Spigot") != null
                         || proxyChannel != null) scheduleBuild(added.size() + " new player head(s)", 1200L);
@@ -359,6 +364,7 @@ public final class TwilightPlugin extends JavaPlugin {
         if (proxyChannel != null) proxyChannel.close();
         if (displayedItems != null) displayedItems.close();
         if (playerHeads != null) playerHeads.close();
+        if (playerSkins != null) playerSkins.close();
         if (menuAudit != null) menuAudit.close();
         if (customSkulls != null) customSkulls.close();
         if (loadingGuard != null) loadingGuard.close();
@@ -421,6 +427,10 @@ public final class TwilightPlugin extends JavaPlugin {
         var heads = playerHeads;
         java.util.Set<String> headSkins = heads == null || !playerHeadsEnabled() ? java.util.Set.of() : heads.skins();
         java.util.Set<String> headNames = heads == null || !playerHeadsEnabled() ? java.util.Set.of() : heads.names();
+        var joined = playerSkins;
+        java.util.Set<String> joinedSkins = joined == null || !playerHeadsEnabled() ? java.util.Set.of()
+                : joined.recent(Math.clamp(getConfig().getInt("geyser.player-head-skins-of-players", 1024), 0,
+                        com.siberanka.twilight.geyser.CustomSkulls.MAX));
         java.util.Set<String> shownOwn = !displays || displayedItems == null ? java.util.Set.of()
                 : displayedItems.keys().stream().filter(com.siberanka.twilight.integration.display.DisplayedItems::own)
                         .collect(java.util.stream.Collectors.toUnmodifiableSet());
@@ -479,6 +489,7 @@ public final class TwilightPlugin extends JavaPlugin {
                                 .withServerBiomes(world.biomes(), world.current())
                                 .withNameplatePlugin(world.nameplates()).withItemDisplays(displays).withDisplayedItems(shownItems).withDisplayedOwnModels(shownOwn)
                                 .withPlayerHeads(headSkins, headNames, getDataFolder().toPath().resolve("cache/skins"), playerHeadsEnabled())
+                                .withPlayerSkins(joinedSkins)
                                 .withMaxGlyphCell(getConfig().getInt("ui.max-glyph-cell", 512))
                                 .withPocketContainerLayout(pocketContainerLayout())
                                 .withCustomBlocks(getConfig().getBoolean("geyser.custom-blocks", true))
@@ -493,6 +504,7 @@ public final class TwilightPlugin extends JavaPlugin {
                                 .withServerBiomes(world.biomes(), world.current())
                                 .withNameplatePlugin(world.nameplates()).withItemDisplays(displays).withDisplayedItems(shownItems).withDisplayedOwnModels(shownOwn)
                                 .withPlayerHeads(headSkins, headNames, getDataFolder().toPath().resolve("cache/skins"), playerHeadsEnabled())
+                                .withPlayerSkins(joinedSkins)
                                 .withMaxGlyphCell(getConfig().getInt("ui.max-glyph-cell", 512))
                                 .withPocketContainerLayout(pocketContainerLayout())
                                 .withCustomBlocks(getConfig().getBoolean("geyser.custom-blocks", true))

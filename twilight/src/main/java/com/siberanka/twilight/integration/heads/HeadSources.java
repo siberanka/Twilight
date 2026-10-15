@@ -11,9 +11,11 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -33,11 +35,26 @@ public final class HeadSources {
     static final long MAX_FILE = 2L * 1024 * 1024;
     static final long MAX_TOTAL = 64L * 1024 * 1024;
     static final int MAX_FILES = 20_000;
+    /** Files read at most from one plugin's folder, so that one large plugin cannot use up the scan. */
+    static final int MAX_PLUGIN_FILES = 2_500;
+    /**
+     * Folders that hold no configuration: libraries, logs, generated resource packs and their assets, and per-player
+     * data (a plugin keeps one file per player there; a player's own head is learned when it is shown).
+     */
+    private static final Set<String> SKIPPED_FOLDERS = Set.of("logs", "cache", "caches", "backups", "backup", "libs",
+            "libraries", "lib", "assets", "resourcepack", "resource_pack", "resource-pack", "generated", "output",
+            "textures", "models", "sounds", "fonts", "userdata", "playerdata", "players", "users", "storage", "stats",
+            "temp", "tmp", "web", "images");
+    /** A file named after a player's UUID: per-player data. */
+    private static final Pattern UUID_FILE = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\..*");
     private static final Pattern BASE64 = Pattern.compile("(?<![A-Za-z0-9+/])(?:eyJ|ewo|ewog|e3)[A-Za-z0-9+/]{40,}={0,2}");
     private static final Pattern URL = Pattern.compile("textures\\.minecraft\\.net/texture/([0-9a-fA-F]{16,64})");
-    private static final Pattern HASH_KEY = Pattern.compile("(?i)(?:texture|skull|head)[-_:=\\s\"']{1,3}([0-9a-f]{56,64})\\b");
-    /** {@code material: head-Notch} (DeluxeMenus and its kind) and {@code skull-owner: Notch} (ChestCommands and others). */
-    private static final Pattern NAME = Pattern.compile("(?i)(?:material\\s*:\\s*['\"]?head-|skull-?owner\\s*:\\s*['\"]?|player-?head\\s*:\\s*['\"]?)([A-Za-z0-9_]{3,16})(?![\\w%{])");
+    private static final Pattern HASH_KEY = Pattern.compile("(?i)(?:texture|skull|head|skin|url|hash)[-_:=\\s\"']{1,3}([0-9a-f]{56,64})\\b");
+    /**
+     * {@code material: head-Notch} (DeluxeMenus and its kind), {@code mat: head:Notch} (TrMenu) and
+     * {@code skull-owner: Notch} (ChestCommands and others).
+     */
+    private static final Pattern NAME = Pattern.compile("(?i)(?:(?:material|mat|item|type)\\s*:\\s*['\"]?head[-:]|skull-?owner\\s*:\\s*['\"]?|player-?head\\s*:\\s*['\"]?)([A-Za-z0-9_]{3,16})(?=['\"]?[ \\t]*(?:[,}\\]#\\r\\n]|$))", Pattern.MULTILINE);
     private static final Pattern HDB = Pattern.compile("(?i)(?:hdb|headdatabase|hdb-id)[-:]\\s*['\"]?(\\d{1,7})(?!\\d)");
     private static final Set<String> SKIPPED = Set.of("twilight", "geyser-spigot", "floodgate", "bstats", "spark",
             "luckperms", "worldedit", "fastasyncworldedit", "coreprotect", "dynmap", "bluemap", "squaremap", "plan");
@@ -52,13 +69,13 @@ public final class HeadSources {
         Set<String> skins = new LinkedHashSet<>(), names = new LinkedHashSet<>(), ids = new LinkedHashSet<>();
         long[] total = {0};
         int[] files = {0};
+        Map<Path, Integer> perPlugin = new HashMap<>();
         if (Files.isDirectory(plugins)) Files.walkFileTree(plugins, Set.of(), 8, new SimpleFileVisitor<>() {
             @Override public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attributes) {
                 if (dir.equals(plugins)) return FileVisitResult.CONTINUE;
                 String name = dir.getFileName().toString().toLowerCase(Locale.ROOT);
                 if (dir.getParent().equals(plugins) && SKIPPED.contains(name)) return FileVisitResult.SKIP_SUBTREE;
-                if (name.startsWith(".") || name.equals("logs") || name.equals("cache") || name.equals("backups")
-                        || name.equals("libs") || name.equals("libraries")) return FileVisitResult.SKIP_SUBTREE;
+                if (name.startsWith(".") || SKIPPED_FOLDERS.contains(name)) return FileVisitResult.SKIP_SUBTREE;
                 return FileVisitResult.CONTINUE;
             }
 
@@ -67,7 +84,14 @@ public final class HeadSources {
                 String name = file.getFileName().toString().toLowerCase(Locale.ROOT);
                 if (!(name.endsWith(".yml") || name.endsWith(".yaml") || name.endsWith(".json") || name.endsWith(".conf")
                         || name.endsWith(".toml") || name.endsWith(".txt") || name.endsWith(".properties"))) return FileVisitResult.CONTINUE;
-                if (attributes.size() > MAX_FILE || !attributes.isRegularFile()) return FileVisitResult.CONTINUE;
+                if (attributes.size() > MAX_FILE || !attributes.isRegularFile() || UUID_FILE.matcher(name).matches()) {
+                    return FileVisitResult.CONTINUE;
+                }
+                Path relative = plugins.relativize(file);
+                if (relative.getNameCount() > 1) {
+                    int count = perPlugin.merge(relative.getName(0), 1, Integer::sum);
+                    if (count > MAX_PLUGIN_FILES) return FileVisitResult.SKIP_SIBLINGS;
+                }
                 files[0]++;
                 total[0] += attributes.size();
                 String text;
