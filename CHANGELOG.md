@@ -24,6 +24,9 @@ All notable changes in Twilight are documented here.
   sent them and show at Java's position in a label of their own, on desktop and on phones. Only titles that need
   it are laid out with spacers, so a plain title can no longer drift or disappear on devices whose GUI scale
   rounds the spacers.
+- `/twilight menus` analyses the menus players open, whatever plugin made them: which titles Bedrock gets plain
+  and which laid out, offset tags a plugin left unreplaced, characters the pack has no image for, player heads and
+  custom items per menu, with the plugin that owns the menu (`reports/menus.json`).
 
 ## 1.0.0-beta.1 - 2026-10-15
 
@@ -82,6 +85,10 @@ Twilight'taki tüm önemli değişiklikler burada belgelenir.
   gönderdiği gibi gider ve masaüstünde de telefonda da Java'nın konumunda kendi etiketinde görünür. Yalnızca
   gereken başlıklar boşluk glifleriyle yerleştirilir; böylece düz bir başlık, GUI ölçeği boşlukları yuvarlayan
   cihazlarda artık kaymaz veya kaybolmaz.
+- `/twilight menus`, oyuncuların açtığı menüleri hangi eklenti yapmış olursa olsun analiz eder: Bedrock'un hangi
+  başlıkları düz, hangilerini yerleştirilmiş aldığı, bir eklentinin değiştirmeden bıraktığı offset etiketleri,
+  paketin görseli olmayan karakterler, menü başına oyuncu kafaları ve özel eşyalar, menünün sahibi olan eklentiyle
+  birlikte (`reports/menus.json`).
 
 #### 1.0.0-beta.1 - 2026-10-15
 

@@ -166,6 +166,11 @@ final class AdventureTextLayout {
         return rebuild(adventure, component, texts, new int[]{0}, translations);
     }
 
+    /** The title's text runs with their fonts (no translations), for analysis. */
+    static List<TextLayout.Segment> titleSegments(Object component) throws ReflectiveOperationException {
+        return segments(Adventure.of(component), component, null, true);
+    }
+
     /** {@code text} followed by the component (an unstyled parent, so the component keeps its style). */
     static Object prepend(Object component, String text) throws ReflectiveOperationException {
         Adventure adventure = Adventure.of(component);

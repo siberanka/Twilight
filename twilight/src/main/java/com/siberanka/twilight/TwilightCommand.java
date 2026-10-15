@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Locale;
 
 final class TwilightCommand implements CommandExecutor, TabCompleter {
-    private static final List<String> SUBCOMMANDS = List.of("status", "scan", "convert", "build", "deploy", "rollback", "reload");
+    private static final List<String> SUBCOMMANDS = List.of("status", "scan", "convert", "build", "deploy", "rollback", "reload", "menus");
     private final TwilightPlugin plugin;
 
     TwilightCommand(TwilightPlugin plugin) {
@@ -35,7 +35,8 @@ final class TwilightCommand implements CommandExecutor, TabCompleter {
                 plugin.rollback(sender, index);
             }
             case "reload" -> plugin.reloadTwilight(sender);
-            default -> plugin.send(sender, "Usage: /twilight <status|scan|convert|deploy|rollback|reload>");
+            case "menus" -> plugin.menus(sender, arguments.length > 1 && arguments[1].equalsIgnoreCase("reset"));
+            default -> plugin.send(sender, "Usage: /twilight <status|scan|convert|deploy|rollback|reload|menus>");
         }
         return true;
     }
@@ -43,6 +44,9 @@ final class TwilightCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
                                       @NotNull String alias, @NotNull String[] arguments) {
+        if (arguments.length == 2 && arguments[0].equalsIgnoreCase("menus")) {
+            return "reset".startsWith(arguments[1].toLowerCase(Locale.ROOT)) ? List.of("reset") : List.of();
+        }
         if (arguments.length != 1) return List.of();
         String prefix = arguments[0].toLowerCase(Locale.ROOT);
         return SUBCOMMANDS.stream().filter(value -> value.startsWith(prefix)).toList();

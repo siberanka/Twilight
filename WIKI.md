@@ -113,6 +113,7 @@ season changes. Unchanged inputs are detected by a fingerprint and skipped.
 | `/twilight deploy` | Deploy the last build to Geyser again |
 | `/twilight rollback [n]` | Restore the n-th newest Geyser snapshot (default 1) |
 | `/twilight reload` | Reload and validate `config.yml` |
+| `/twilight menus [reset]` | The menus players opened since start, whatever plugin made them, and how Bedrock gets their titles: plain or laid out, offset tags a plugin left unreplaced, characters the pack has no image for, player heads and custom items. Writes `reports/menus.json`; `reset` starts over |
 
 Alias: `/tw`. Permission: `twilight.admin` (default: operators). Long operations run off the server
 thread; only one runs at a time. Players with `twilight.update` (default: operators) are told about
@@ -759,6 +760,7 @@ by hand once. `/twilight status` and `/twilightproxy` show the result of the las
 | `cache/vanilla/<version>/` | Hash-verified Mojang client assets |
 | `logs/<operation>-log-<time>.txt` | One log per operation (sources, fingerprint, results) |
 | `reports/content-report.json` | The last scan's discovery report |
+| `reports/menus.json` | The menus players opened and how Bedrock gets their titles (`/twilight menus`) |
 | `deployment.properties` | Files Twilight owns in Geyser's folder, with hashes |
 | `pack-host/<sha256>.zip` | Copies the [pack host](#pack-hosting) serves; cleared at start, removed when unused |
 | `displayed-items.txt` | Items, blocks and heads this server showed in displays (one key per line, at most 20000) |
@@ -1073,6 +1075,7 @@ atlanır.
 | `/twilight deploy` | Son derlemeyi Geyser'a yeniden dağıtır |
 | `/twilight rollback [n]` | En yeni n'inci Geyser anlık görüntüsünü geri yükler (varsayılan 1) |
 | `/twilight reload` | `config.yml` dosyasını yeniden yükler ve doğrular |
+| `/twilight menus [reset]` | Açılıştan beri oyuncuların açtığı menüler (hangi eklenti yapmış olursa olsun) ve Bedrock'un başlıklarını nasıl aldığı: düz mü yerleştirilmiş mi, bir eklentinin değiştirmeden bıraktığı offset etiketleri, paketin görseli olmayan karakterler, oyuncu kafaları ve özel eşyalar. `reports/menus.json` dosyasını yazar; `reset` baştan başlatır |
 
 Takma ad: `/tw`. İzin: `twilight.admin` (varsayılan: operatörler). Uzun işlemler sunucu iş parçacığı
 dışında çalışır; aynı anda yalnızca biri çalışır. `twilight.update` iznine sahip oyunculara (varsayılan:
@@ -1725,6 +1728,7 @@ izler. Önceki geliştirme derlemeleri 1.0.0-beta.1'i duyurmaz: onları bir kez 
 | `cache/vanilla/<sürüm>/` | Karma doğrulamalı Mojang istemci varlıkları |
 | `logs/<işlem>-log-<zaman>.txt` | İşlem başına bir günlük (kaynaklar, parmak izi, sonuçlar) |
 | `reports/content-report.json` | Son taramanın keşif raporu |
+| `reports/menus.json` | Oyuncuların açtığı menüler ve Bedrock'un başlıklarını nasıl aldığı (`/twilight menus`) |
 | `deployment.properties` | Twilight'ın Geyser klasöründe sahip olduğu dosyalar, karmalarıyla |
 | `pack-host/<sha256>.zip` | [Paket sunucusunun](#paket-sunucusu) sunduğu kopyalar; açılışta temizlenir, kullanılmayınca silinir |
 | `displayed-items.txt` | Bu sunucunun görüntülerde gösterdiği eşyalar, bloklar ve kafalar (satır başına bir anahtar, en fazla 20000) |

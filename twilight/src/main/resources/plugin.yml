@@ -10,7 +10,7 @@ softdepend: [Geyser-Spigot, floodgate, ItemsAdder, CraftEngine, Nexo, Oraxen, Be
 commands:
   twilight:
     description: Build, validate, deploy, inspect, and roll back Twilight packs.
-    usage: /twilight <status|scan|convert|build|deploy|rollback|reload>
+    usage: /twilight <status|scan|convert|build|deploy|rollback|reload|menus>
     aliases: [tw]
     permission: twilight.admin
 permissions:

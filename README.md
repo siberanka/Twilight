@@ -247,6 +247,7 @@ stages follow the order pre, beta, rc, release. Nothing about the server is sent
 | `/twilight deploy` | Deploy the current validated output to Geyser. |
 | `/twilight rollback [index]` | Restore a retained Geyser deployment snapshot. |
 | `/twilight reload` | Reload and validate Twilight configuration. |
+| `/twilight menus [reset]` | Analyse the menus players opened: plain or laid-out titles, unreplaced offset tags, characters without an image, heads (`reports/menus.json`). |
 
 Each operation writes a dedicated UTF-8 log under `plugins/Twilight/logs`, for example `convert-log-20260921-153000-000-a1b2c3d4.txt`. Logs include phases, selected sources, counts, isolated conversion problems, the executing thread, and complete stack traces.
 
@@ -532,6 +533,7 @@ ile kapatın ([wiki](WIKI.md#güncellemeler)).
 | `/twilight deploy` | Geçerli doğrulanmış çıktıyı Geyser'a dağıtır. |
 | `/twilight rollback [sıra]` | Saklanan bir Geyser dağıtım anlık görüntüsünü geri yükler. |
 | `/twilight reload` | Twilight yapılandırmasını yeniden yükler ve doğrular. |
+| `/twilight menus [reset]` | Oyuncuların açtığı menüleri analiz eder: düz veya yerleştirilmiş başlıklar, değiştirilmemiş offset etiketleri, görseli olmayan karakterler, kafalar (`reports/menus.json`). |
 
 Her işlem `plugins/Twilight/logs` altına ayrı bir UTF-8 günlük yazar, örneğin
 `convert-log-20260921-153000-000-a1b2c3d4.txt`. Günlükler aşamaları, seçilen kaynakları, sayıları, yalıtılmış

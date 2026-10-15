@@ -71,6 +71,8 @@ public final class TwilightPlugin extends JavaPlugin {
     /** The custom items this server shows in item displays; only they (and model bones) get display models. */
     private com.siberanka.twilight.integration.display.DisplayedItems displayedItems;
     private com.siberanka.twilight.integration.heads.PlayerHeads playerHeads;
+    private com.siberanka.twilight.integration.menus.MenuAudit menuAudit;
+    private volatile Object[] menuTable = {null, -1L};
     private com.siberanka.twilight.geyser.CustomSkulls customSkulls;
     /** What the twilight-proxy in front of this server shows (its item displays need the display models). */
     private volatile com.siberanka.twilight.integration.proxy.ProxyFeatures proxyFeatures;
@@ -302,6 +304,8 @@ public final class TwilightPlugin extends JavaPlugin {
                     getDataFolder().toPath().resolve("displayed-items.txt"));
             displayedItems.onNew(this::newDisplayedItems);
             startHeadLearning();
+            menuAudit = com.siberanka.twilight.integration.menus.MenuAudit.start(this,
+                    getDataFolder().toPath().resolve("reports/menus.json"), this::servedLayoutTable);
             var tracked = displayedItems;
             if (displayBridge instanceof com.siberanka.twilight.integration.display.GeyserDisplayBridge bridge) {
                 bridge.onUnshown((session, keys) -> tracked.report(keys));
@@ -355,6 +359,7 @@ public final class TwilightPlugin extends JavaPlugin {
         if (proxyChannel != null) proxyChannel.close();
         if (displayedItems != null) displayedItems.close();
         if (playerHeads != null) playerHeads.close();
+        if (menuAudit != null) menuAudit.close();
         if (customSkulls != null) customSkulls.close();
         if (loadingGuard != null) loadingGuard.close();
         if (customBlocks != null) customBlocks.close();
@@ -775,6 +780,43 @@ public final class TwilightPlugin extends JavaPlugin {
             }
             try { operationLog.close(); } catch (Exception closeFailure) { getLogger().log(Level.WARNING, "Could not close operation log", closeFailure); }
         });
+    }
+
+    /** The layout table of the pack Bedrock players get, read again when the pack changes. */
+    private com.siberanka.twilight.text.TextLayoutTable servedLayoutTable() {
+        java.nio.file.Path pack = servedPack();
+        try {
+            long modified = java.nio.file.Files.isRegularFile(pack) ? java.nio.file.Files.getLastModifiedTime(pack).toMillis() : -1;
+            Object[] cached = menuTable;
+            if ((long) cached[1] == modified) return (com.siberanka.twilight.text.TextLayoutTable) cached[0];
+            var layout = modified < 0 ? null : com.siberanka.twilight.integration.text.GeyserTextLayoutBridge.readLayout(pack);
+            var table = layout == null ? null : layout.table();
+            menuTable = new Object[]{table, modified};
+            return table;
+        } catch (java.io.IOException | RuntimeException unreadable) {
+            return null;
+        }
+    }
+
+    /** {@code /twilight menus [reset]}: the menus players opened and how Bedrock shows their titles. */
+    void menus(CommandSender sender, boolean reset) {
+        var audit = menuAudit;
+        if (audit == null) {
+            send(sender, "Menu analysis is unavailable on this server.");
+            return;
+        }
+        if (reset) {
+            audit.reset();
+            send(sender, "Menu analysis restarted: open the menus to analyse them again.");
+            return;
+        }
+        CompletableFuture.supplyAsync(() -> {
+            try {
+                return audit.report();
+            } catch (java.io.IOException failure) {
+                return java.util.List.of("Could not write the menu report: " + failure.getMessage());
+            }
+        }, worker).thenAccept(lines -> scheduler.execute(() -> lines.forEach(line -> send(sender, line))));
     }
 
     void reloadTwilight(CommandSender sender) {

@@ -50,6 +50,15 @@ public final class OffsetTags {
         return out.append(text, last, text.length()).toString();
     }
 
+    /** How many offset tags a text holds (tags a plugin should have replaced before sending it). */
+    public static int count(String text) {
+        if (text == null || text.length() < 7) return 0;
+        Matcher matcher = TAG.matcher(text);
+        int count = 0;
+        while (matcher.find()) count++;
+        return count;
+    }
+
     /** Whether a code point stands for a tag's move. */
     public static boolean isMove(int codePoint) {
         return codePoint >= BASE - MAX_MOVE && codePoint <= BASE + MAX_MOVE;
