@@ -415,7 +415,7 @@ public final class BedrockPackCompiler {
             TextLayoutTable table = fonts.layout();
             // Bedrock's own chest UI keeps its title label at the left edge: no origin to reach.
             if (!config.javaContainerLayout()) table = table.withContainerOrigin(0);
-            else if (pocketJavaLayout) table = table.withPocketJavaLayout(true);
+            else table = table.withPocketJavaLayout(pocketJavaLayout).withPlainTitles(true);
             if (layerSurfaces.contains(TextLayoutTable.BOSS_LAYERS)) {
                 table = table.withHiddenBossBars(BossBars.hidden(resources)).withStyledBossBars(styledBars);
             }

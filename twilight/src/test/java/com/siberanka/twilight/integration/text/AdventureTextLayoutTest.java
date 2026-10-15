@@ -39,6 +39,14 @@ class AdventureTextLayoutTest {
         assertFalse(child.content().contains("\u1F03"));
     }
 
+    /** A title without custom characters needs no layout; one with an image or a shift does. */
+    @Test
+    void recognisesPlainTitles() throws Exception {
+        Component plain = Component.text("Market ").append(Component.text("Menu", NamedTextColor.RED));
+        assertSame(plain, AdventureTextLayout.plainTitle(TABLE, plain, null));
+        assertNull(AdventureTextLayout.plainTitle(TABLE, Component.text("七ἃ Menu"), null));
+    }
+
     @Test
     void onlyUncolouredContainerTitlesAreDarkened() throws Exception {
         TextLayoutTable shaded = new TextLayoutTable(TABLE.fonts(), 0xF800, 32, TextLayoutTable.ORIGIN, Map.of(),

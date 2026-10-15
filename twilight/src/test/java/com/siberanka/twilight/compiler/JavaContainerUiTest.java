@@ -205,6 +205,31 @@ class JavaContainerUiTest {
         assertEquals(desktopOnly.getAsJsonObject("chest_label"), screen.getAsJsonObject("chest_label"));
     }
 
+    /**
+     * With the text layout a plain title shows in its own label at Java's position (the first bytes of the title)
+     * and a laid-out one in the labels left of Java's origin (the rest), so a plain title never depends on spacers.
+     */
+    @Test
+    void plainTitlesHaveALabelAtJavasPosition() {
+        JsonObject screen = JavaContainerUi.chestScreen(true, true, true);
+        JsonObject plain = screen.getAsJsonObject("twilight_plain_title");
+        String start = plain.getAsJsonArray("bindings").get(1).getAsJsonObject().get("source_property_name").getAsString();
+        assertTrue(start.contains("('%.192s' * $twilight_text)"), start);
+        assertEquals("[8,-3]", screen.getAsJsonObject("small_chest_panel_top_half").get("$twilight_plain_title_offset").toString());
+        String laidOut = screen.getAsJsonObject("chest_label").getAsJsonArray("bindings").get(1).getAsJsonObject()
+                .get("source_property_name").getAsString();
+        assertTrue(laidOut.contains("($twilight_text - ('%.192s' * $twilight_text))"), laidOut);
+        assertTrue(screen.getAsJsonObject("large_chest_panel_top_half").getAsJsonArray("modifications").size() >= 2);
+        assertNull(JavaContainerUi.chestScreen(false).get("twilight_plain_title"));
+        // The filler between the plain block and the laid-out text never doubles a reset.
+        String filler = com.siberanka.twilight.text.LayerEncoding.filler(189);
+        assertEquals(189, com.siberanka.twilight.text.LayerEncoding.bytes(filler));
+        assertTrue(filler.startsWith("§o") && filler.endsWith("§o") && !filler.contains("§r§r"));
+        var table = new com.siberanka.twilight.text.TextLayoutTable(java.util.Map.of(), 0xF900, 32).withPlainTitles(true);
+        assertTrue(com.siberanka.twilight.text.TextLayoutTable.fromJson(table.toJson()).plainTitles());
+        assertFalse(table.withContainerOrigin(0).plainTitles(), "Bedrock's own title label has no plain block");
+    }
+
     @Test
     void layoutTableCarriesThePocketLayout() {
         var table = new com.siberanka.twilight.text.TextLayoutTable(java.util.Map.of(), 0xF900, 32);

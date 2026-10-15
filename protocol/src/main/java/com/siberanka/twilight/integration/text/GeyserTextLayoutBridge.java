@@ -336,8 +336,40 @@ public final class GeyserTextLayoutBridge implements AutoCloseable {
         // A pack whose pocket chest screens use the Java layout lays their titles out like desktop ones.
         var profile = session.getClientData() == null ? null : session.getClientData().getUiProfile();
         boolean pocket = profile != null && "POCKET".equals(profile.toString()) && !table.pocketJavaLayout();
+        if (!pocket && table.plainTitles() && TextSurfaces.CHEST_SCREENS.contains(packet.getType())) {
+            return chestTitle(session, packet, table);
+        }
         return TextSurfaces.openScreen(packet, table, pocket, translations(session),
                 layers(session, table, TextLayoutTable.CHEST_LAYERS, ""));
+    }
+
+    /**
+     * A chest title for a pack with plain title labels (see {@link TextLayoutTable#PLAIN_TITLE_BYTES}): a title
+     * without custom characters goes out as it is and shows at Java's position in its own label; a laid-out
+     * title follows a block of zero-width codes, so that only the labels left of Java's origin show it.
+     */
+    private ClientboundOpenScreenPacket chestTitle(GeyserSession session, ClientboundOpenScreenPacket packet,
+                                                   TextLayoutTable table) throws ReflectiveOperationException {
+        Object title = TextSurfaces.get(packet, "Title");
+        if (!AdventureTextLayout.isComponent(title)) return packet;
+        String locale = session.locale() == null ? "en_us" : session.locale();
+        var translations = translations(session);
+        Object plain = AdventureTextLayout.plainTitle(table, title, translations);
+        if (plain != null && LayerEncoding.bytes(GeyserMessages.convert(plain, locale, true)) <= TextLayoutTable.PLAIN_TITLE_BYTES) {
+            return plain == title ? packet : TextSurfaces.with(packet, "Title", plain);
+        }
+        ClientboundOpenScreenPacket laidOut = TextSurfaces.openScreen(packet, table, false, translations,
+                layers(session, table, TextLayoutTable.CHEST_LAYERS, ""));
+        // Geyser's leading reset and the filler make the plain block; the reset after it starts the laid-out text
+        // as Geyser's own reset started it before, so the layer blocks keep their offsets.
+        String filler = LayerEncoding.filler(TextLayoutTable.PLAIN_TITLE_BYTES - LayerEncoding.bytes(LayerEncoding.CLIENT_PREFIX));
+        Object candidate = AdventureTextLayout.prepend(TextSurfaces.get(laidOut, "Title"), filler + LayerEncoding.CLIENT_PREFIX);
+        String converted = GeyserMessages.convert(candidate, locale, true);
+        if (converted.startsWith(LayerEncoding.CLIENT_PREFIX + filler + LayerEncoding.CLIENT_PREFIX)) {
+            return TextSurfaces.with(laidOut, "Title", candidate);
+        }
+        // Geyser rewrote the zero-width block: the title is shown as Java sent it rather than off-screen.
+        return packet;
     }
 
     private void logOnce(Class<?> type, Throwable failure) {

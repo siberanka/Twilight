@@ -53,6 +53,14 @@ public final class TextLayoutTable {
     private java.util.Set<String> hiddenBossBars = java.util.Set.of();
     private java.util.Set<String> styledBossBars = java.util.Set.of();
     private boolean pocketJavaLayout;
+    private boolean plainTitles;
+    /**
+     * UTF-8 size of the plain title block: with {@link #plainTitles} the chest UI shows the first this many bytes of
+     * a title in a label at Java's title position and the rest in the labels {@link #ORIGIN} units left of it. A
+     * title without custom characters is sent as it is (and shows in the first label, where Bedrock's own text
+     * needs no spacers); a laid-out title is sent after this many zero-width bytes.
+     */
+    public static final int PLAIN_TITLE_BYTES = 192;
 
     public TextLayoutTable(Map<String, Map<Integer, Entry>> fonts, int spacerFirst, int spacerCount) {
         this(fonts, spacerFirst, spacerCount, ORIGIN);
@@ -105,8 +113,18 @@ public final class TextLayoutTable {
     public TextLayoutTable withContainerOrigin(int origin) {
         return new TextLayoutTable(fonts, spacerFirst, spacerCount, origin, textAdvances, shades, layerSurfaces)
                 .withNativeFonts(nativeFonts).withHiddenBossBars(hiddenBossBars)
-                .withStyledBossBars(styledBossBars).withPocketJavaLayout(pocketJavaLayout);
+                .withStyledBossBars(styledBossBars).withPocketJavaLayout(pocketJavaLayout).withPlainTitles(plainTitles);
     }
+
+    /** Same metrics for a pack whose chest UI shows titles without custom characters in a label of their own. */
+    public TextLayoutTable withPlainTitles(boolean value) {
+        TextLayoutTable copy = withNativeFonts(nativeFonts);
+        copy.plainTitles = value;
+        return copy;
+    }
+
+    /** Whether plain chest titles are sent unchanged (see {@link #PLAIN_TITLE_BYTES}). */
+    public boolean plainTitles() { return plainTitles && containerOrigin > 0; }
 
     /**
      * Same metrics for a pack whose chest screens use the Java layout on Bedrock's pocket UI profile too
@@ -125,7 +143,7 @@ public final class TextLayoutTable {
     public TextLayoutTable withLayers(java.util.Set<String> surfaces) {
         return new TextLayoutTable(fonts, spacerFirst, spacerCount, containerOrigin, textAdvances, shades, surfaces)
                 .withNativeFonts(nativeFonts).withHiddenBossBars(hiddenBossBars)
-                .withStyledBossBars(styledBossBars).withPocketJavaLayout(pocketJavaLayout);
+                .withStyledBossBars(styledBossBars).withPocketJavaLayout(pocketJavaLayout).withPlainTitles(plainTitles);
     }
 
     /**
@@ -141,6 +159,7 @@ public final class TextLayoutTable {
         copy.hiddenBossBars = hiddenBossBars;
         copy.styledBossBars = styledBossBars;
         copy.pocketJavaLayout = pocketJavaLayout;
+        copy.plainTitles = plainTitles;
         return copy;
     }
 
@@ -288,6 +307,7 @@ public final class TextLayoutTable {
             root.addProperty("layer_format", LAYER_FORMAT);
         }
         if (pocketJavaLayout) root.addProperty("pocket_layout", "java");
+        if (plainTitles) root.addProperty("plain_titles", PLAIN_TITLE_BYTES);
         if (!shades.isEmpty()) {
             JsonObject shaded = new JsonObject();
             shades.forEach((glyph, copy) ->
@@ -347,7 +367,8 @@ public final class TextLayoutTable {
         return new TextLayoutTable(fonts, root.get("spacer_first").getAsInt(), root.get("spacer_count").getAsInt(),
                 origin, text, shades, layerSurfaces).withNativeFonts(nativeFonts)
                 .withHiddenBossBars(colours(root, "hidden_boss_bars")).withStyledBossBars(colours(root, "styled_boss_bars"))
-                .withPocketJavaLayout(root.has("pocket_layout") && "java".equals(root.get("pocket_layout").getAsString()));
+                .withPocketJavaLayout(root.has("pocket_layout") && "java".equals(root.get("pocket_layout").getAsString()))
+                .withPlainTitles(root.has("plain_titles") && root.get("plain_titles").getAsInt() == PLAIN_TITLE_BYTES);
     }
 
     private static java.util.Set<String> colours(JsonObject root, String key) {

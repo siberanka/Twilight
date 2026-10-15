@@ -151,6 +151,21 @@ final class AdventureTextLayout {
         return layers;
     }
 
+    /**
+     * A chest title that needs no layout (no custom character, nothing the layout would move): the component with
+     * pack translations resolved, or null when the title needs the layout.
+     */
+    static Object plainTitle(TextLayoutTable table, Object component, Function<String, String> translations)
+            throws ReflectiveOperationException {
+        Adventure adventure = Adventure.of(component);
+        List<TextLayout.Segment> segments = segments(adventure, component, translations, true);
+        TextLayout.Result result = TextLayout.layout(table, segments, TextLayout.Mode.CONTAINER);
+        if (result.customCharacters() > 0 || result.approximations() > 0) return null;
+        List<String> texts = new ArrayList<>();
+        for (TextLayout.Segment segment : segments) texts.add(segment.text() == null ? "" : segment.text());
+        return rebuild(adventure, component, texts, new int[]{0}, translations);
+    }
+
     /** {@code text} followed by the component (an unstyled parent, so the component keeps its style). */
     static Object prepend(Object component, String text) throws ReflectiveOperationException {
         Adventure adventure = Adventure.of(component);

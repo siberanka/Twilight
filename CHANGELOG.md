@@ -20,6 +20,10 @@ All notable changes in Twilight are documented here.
   show, reads the ones plugin configurations name (Base64 profiles, skin URLs and hashes, user names, HeadDatabase
   ids) and Geyser registers them as custom skulls (`geyser.player-heads`, `bedrock.player-heads`). Heads in item
   displays are drawn with their skin as Java draws them.
+- Chest titles without custom characters (no image, offset or shift) are no longer moved: they go out as Java
+  sent them and show at Java's position in a label of their own, on desktop and on phones. Only titles that need
+  it are laid out with spacers, so a plain title can no longer drift or disappear on devices whose GUI scale
+  rounds the spacers.
 
 ## 1.0.0-beta.1 - 2026-10-15
 
@@ -74,6 +78,10 @@ Twilight'taki tüm önemli değişiklikler burada belgelenir.
   ve hash'leri, kullanıcı adları, HeadDatabase kimlikleri) ve Geyser onları özel kafa olarak kaydeder
   (`geyser.player-heads`, `bedrock.player-heads`). Eşya görüntülerindeki kafalar Java'nın çizdiği gibi skinleriyle
   çizilir.
+- Özel karakter içermeyen (görsel, offset veya kaydırma olmayan) sandık başlıkları artık kaydırılmaz: Java'nın
+  gönderdiği gibi gider ve masaüstünde de telefonda da Java'nın konumunda kendi etiketinde görünür. Yalnızca
+  gereken başlıklar boşluk glifleriyle yerleştirilir; böylece düz bir başlık, GUI ölçeği boşlukları yuvarlayan
+  cihazlarda artık kaymaz veya kaybolmaz.
 
 #### 1.0.0-beta.1 - 2026-10-15
 
