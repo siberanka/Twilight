@@ -48,7 +48,9 @@ final class DisplayEntityResources {
         /** Items with their own model, by Java item identifier. */
         VANILLA("vanilla"),
         /** Block states of block displays, by block key. */
-        BLOCK("blocks");
+        BLOCK("blocks"),
+        /** Player heads, by skin hash. */
+        HEAD("heads");
 
         final String json;
 

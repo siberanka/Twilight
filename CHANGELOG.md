@@ -15,6 +15,11 @@ All notable changes in Twilight are documented here.
   Java; other dropped items stay Bedrock's own.
 - Display models no longer show a box's east texture on its west side (an item display or block display of a
   crafting table or a furnace looked mirrored).
+- Player heads show their skins on Bedrock instead of Steve's, in menus of any plugin, hands, armour stands,
+  item frames and holograms, on the server and through the proxy: Twilight learns the heads menus and the world
+  show, reads the ones plugin configurations name (Base64 profiles, skin URLs and hashes, user names, HeadDatabase
+  ids) and Geyser registers them as custom skulls (`geyser.player-heads`, `bedrock.player-heads`). Heads in item
+  displays are drawn with their skin as Java draws them.
 
 ## 1.0.0-beta.1 - 2026-10-15
 
@@ -63,6 +68,12 @@ Twilight'taki tüm önemli değişiklikler burada belgelenir.
   eşyalar Bedrock'un kendi eşyaları olarak kalır.
 - Görüntü modelleri bir kutunun doğu dokusunu artık batı yüzünde göstermez (bir çalışma masası veya fırın eşya ya
   da blok görüntüsü ayna görüntüsü gibi görünüyordu).
+- Oyuncu kafaları Bedrock'ta Steve'inki yerine kendi skinleriyle görünür; her eklentinin menülerinde, ellerde, zırh
+  standlarında, eşya çerçevelerinde ve hologramlarda, sunucuda ve proxy üzerinden: Twilight menülerin ve dünyanın
+  gösterdiği kafaları öğrenir, eklenti yapılandırmalarının adını verdiklerini okur (Base64 profiller, skin URL'leri
+  ve hash'leri, kullanıcı adları, HeadDatabase kimlikleri) ve Geyser onları özel kafa olarak kaydeder
+  (`geyser.player-heads`, `bedrock.player-heads`). Eşya görüntülerindeki kafalar Java'nın çizdiği gibi skinleriyle
+  çizilir.
 
 #### 1.0.0-beta.1 - 2026-10-15
 

@@ -261,6 +261,8 @@ public final class ProxyCore implements TwilightProxyApi {
      * servers' packs once this core runs.
      */
     private static volatile com.siberanka.twilight.geyser.CustomBlocks earlyBlocks;
+    /** Player heads subscribed in the load phase, for the same reason as {@link #earlyBlocks}. */
+    private static volatile com.siberanka.twilight.geyser.CustomSkulls earlySkulls;
     private static volatile java.util.function.Supplier<java.util.Collection<Path>> earlyPacks;
     /** The item-display bridge subscribed in the load phase, for the same reason as {@link #earlyBlocks}. */
     private static volatile ProxyRuntime.EarlyDisplays earlyDisplays;
@@ -305,9 +307,16 @@ public final class ProxyCore implements TwilightProxyApi {
                 // The runtime subscribes when it starts.
             }
         }
+        earlyPacks = () -> cachedPacks(dataDirectory);
+        if (settings == null || settings.playerHeads()) {
+            try {
+                earlySkulls = com.siberanka.twilight.geyser.CustomSkulls.start(owner, () -> earlyPacks.get(), info, warn);
+            } catch (RuntimeException | LinkageError unavailable) {
+                // The core subscribes when it attaches.
+            }
+        }
         if (settings != null && !settings.customBlocks()) return;
         try {
-            earlyPacks = () -> cachedPacks(dataDirectory);
             earlyBlocks = com.siberanka.twilight.geyser.CustomBlocks.start(owner, () -> earlyPacks.get(), info, warn);
         } catch (RuntimeException | LinkageError unavailable) {
             // The core subscribes when it attaches.
@@ -403,9 +412,9 @@ public final class ProxyCore implements TwilightProxyApi {
         if (!realGeyser || runtime != null || current == null) return;
         try {
             com.siberanka.twilight.geyser.CustomBlocks early = earlyBlocks;
-            if (early != null) earlyPacks = store::currentPacks;
+            if (early != null || earlySkulls != null) earlyPacks = store::currentPacks;
             ProxyRuntime started = ProxyRuntime.start(owner, current, platform, this::sessionPack, store::currentPacks,
-                    early, earlyDisplays);
+                    early, earlyDisplays, earlySkulls);
             runtime = started;
             // The display variants of the packs already known are read off the proxy's threads.
             java.util.concurrent.CompletableFuture.runAsync(() -> {

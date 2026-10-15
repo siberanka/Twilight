@@ -25,15 +25,16 @@ are in the [reports](docs/); limits per feature are in [docs/COMPATIBILITY.md](d
 4. [Commands and permissions](#commands-and-permissions)
 5. [Configuration reference: Twilight](#configuration-reference-twilight)
 6. [twilight-proxy](#twilight-proxy-1)
-7. [Custom blocks](#custom-blocks)
-8. [Pack hosting](#pack-hosting)
-9. [Updates](#updates)
-10. [Files and folders](#files-and-folders)
-11. [Developer API](#developer-api)
-12. [Plugin-message protocol](#plugin-message-protocol)
-13. [Security model](#security-model)
-14. [Troubleshooting](#troubleshooting)
-15. [Building from source](#building-from-source)
+7. [Player heads](#player-heads)
+8. [Custom blocks](#custom-blocks)
+9. [Pack hosting](#pack-hosting)
+10. [Updates](#updates)
+11. [Files and folders](#files-and-folders)
+12. [Developer API](#developer-api)
+13. [Plugin-message protocol](#plugin-message-protocol)
+14. [Security model](#security-model)
+15. [Troubleshooting](#troubleshooting)
+16. [Building from source](#building-from-source)
 
 ## Requirements
 
@@ -175,6 +176,7 @@ change behaviour.
 | `loading-protection-seconds` | `300` | Keep a Bedrock player connected while its client is still loading the resource packs after joining: with Geyser's `forward-player-ping: true`, Java keep-alives and pings are answered for it until the client is in game, at most this long (0-1800; 0 only logs loading times). Without ping forwarding Geyser answers them itself and only the loading times are logged. Loads of 10 s or more are logged. Needs Geyser on this server; on a proxy network twilight-proxy does the same |
 | `item-display-models` | `auto` | Bedrock models for custom items in Java item displays: furniture, ModelEngine and BetterModel models, and the mobs and NPCs built from them ([item displays](#item-displays)). `auto`: when Geyser runs on this server, or when the twilight-proxy in front of it says that it shows item displays; `on`; `off`. The pack is rebuilt by itself when that changes |
 | `item-display-variants` | `seen` | Which items get those models. `seen`: the items this server has shown in item displays, and every model bone; `all`: every custom item (each client then builds a model for every item while loading) |
+| `player-heads` | `true` | Player heads show their skins on Bedrock instead of Steve's (menus, hands, armour stands, holograms); new heads need a restart ([player heads](#player-heads)) |
 | `custom-blocks` | `true` | Content plugins' custom blocks (ItemsAdder's and CraftEngine's ores and blocks on note blocks, mushroom blocks and tripwire) get their own Bedrock look instead of the vanilla block, and the items that place them show the block in 3D in the inventory and when dropped. Geyser registers blocks when it starts: a build that changes them needs a restart, like item changes ([custom blocks](#custom-blocks)) |
 
 ### `ui`
@@ -284,6 +286,7 @@ bedrock:                 # see "Bedrock runtime on the proxy"
 | `bedrock.translations` | Show the server packs' translations to Bedrock players |
 | `bedrock.loading-protection-seconds` | Keep a Bedrock player connected while its client loads the resource packs, at most this long (0-1800, default 300) |
 | `bedrock.custom-blocks` | Register the servers' custom blocks with the proxy's Geyser and show their items in 3D ([custom blocks](#custom-blocks)) |
+| `bedrock.player-heads` | Register the player heads the servers' packs list with the proxy's Geyser, so they show their skins ([player heads](#player-heads)) |
 | `bedrock.item-displays` | Show Java item displays with the servers' models: furniture, ModelEngine and BetterModel models, the mobs and NPCs built from them ([item displays](#item-displays)); also applies Java's rule that a ridden mob shows no name |
 
 Every pack is checked before use: it must be a ZIP below the size limit with `manifest.json` at its
@@ -563,6 +566,26 @@ plugins, anti-bot checks, connection limits) sees it, so these settings keep it 
 - If the plugin refuses a login while the same name is still online, a reconnect can be refused for a
   moment; the player then lands on the proxy's fallback server.
 
+## Player heads
+
+Without help a Bedrock player head is Steve's: Geyser draws a head's skin only for skulls it registered as custom
+blocks when it started. Twilight finds the heads a server shows and puts their skins into the pack, and Geyser on
+the server and on the proxy registers them (`geyser.player-heads`, `bedrock.player-heads`):
+
+- **Menus.** Every menu a player opens is read a moment after it opens and again two seconds later (menu plugins
+  fill and refresh their items then), whatever plugin made it.
+- **Configurations.** At start the plugins' configuration files are read for heads in every common form: Base64
+  profiles (`basehead-...`, `texture: ...`), skin URLs and hashes (`texture-...`), user names (`head-Notch`,
+  `skull-owner: Notch`) and HeadDatabase ids (`hdb-1234`, resolved through HeadDatabase when it is installed).
+  Placeholders such as `head-%player_name%` are left to the menu scan, which sees the real head.
+- **The world.** Armour stands, mobs, item frames, displays and dropped items, as their chunks load; heads in
+  displays a plugin sends only as packets are reported by Geyser on the server or by twilight-proxy.
+
+The heads are kept in `player-heads.txt` (at most 4096). Geyser registers skulls when it starts, so a build with
+new heads asks for a restart, like new items. A head in an item display is drawn with its skin as Java draws it
+(the skin is downloaded once from Mojang's texture server into `cache/skins/`). Placed head blocks were already
+drawn with their skins by Geyser.
+
 ## Custom blocks
 
 Content plugins draw custom blocks through vanilla block states: ItemsAdder's `REAL_NOTE` blocks and
@@ -738,7 +761,9 @@ by hand once. `/twilight status` and `/twilightproxy` show the result of the las
 | `reports/content-report.json` | The last scan's discovery report |
 | `deployment.properties` | Files Twilight owns in Geyser's folder, with hashes |
 | `pack-host/<sha256>.zip` | Copies the [pack host](#pack-hosting) serves; cleared at start, removed when unused |
-| `displayed-items.txt` | Items this server showed in item displays (one key per line, at most 20000) |
+| `displayed-items.txt` | Items, blocks and heads this server showed in displays (one key per line, at most 20000) |
+| `player-heads.txt` | Player head skins (hashes) and user names this server showed or its plugins name (at most 4096) |
+| `cache/skins/` | Skins of heads shown in item displays, downloaded from Mojang's texture server |
 | `proxy-features.properties` | What the twilight-proxy in front of this server last said it shows; expires after 30 days without a repeat |
 
 In Geyser's folder Twilight owns `packs/twilight.zip`, `custom_mappings/twilight_*.json` and
@@ -957,15 +982,16 @@ Bu sayfa yöneticiler ve eklenti geliştiricileri için başvuru kaynağıdır. 
 4. [Komutlar ve izinler](#komutlar-ve-izinler)
 5. [Yapılandırma başvurusu: Twilight](#yapılandırma-başvurusu-twilight)
 6. [twilight-proxy](#twilight-proxy-4)
-7. [Özel bloklar](#özel-bloklar)
-8. [Paket sunucusu](#paket-sunucusu)
-9. [Güncellemeler](#güncellemeler)
-10. [Dosyalar ve klasörler](#dosyalar-ve-klasörler)
-11. [Geliştirici API'si](#geliştirici-apisi)
-12. [Eklenti mesajı protokolü](#eklenti-mesajı-protokolü)
-13. [Güvenlik modeli](#güvenlik-modeli)
-14. [Sorun giderme](#sorun-giderme)
-15. [Kaynaktan derleme](#kaynaktan-derleme)
+7. [Oyuncu kafaları](#oyuncu-kafaları)
+8. [Özel bloklar](#özel-bloklar)
+9. [Paket sunucusu](#paket-sunucusu)
+10. [Güncellemeler](#güncellemeler)
+11. [Dosyalar ve klasörler](#dosyalar-ve-klasörler)
+12. [Geliştirici API'si](#geliştirici-apisi)
+13. [Eklenti mesajı protokolü](#eklenti-mesajı-protokolü)
+14. [Güvenlik modeli](#güvenlik-modeli)
+15. [Sorun giderme](#sorun-giderme)
+16. [Kaynaktan derleme](#kaynaktan-derleme)
 
 #### Gereksinimler
 
@@ -1109,6 +1135,7 @@ değiştirmek için düzenlenmesi gerekir.
 | `loading-protection-seconds` | `300` | Bir Bedrock oyuncusunu, istemcisi katıldıktan sonra kaynak paketlerini yüklerken bağlı tutar: Geyser'da `forward-player-ping: true` ise istemci oyuna girene kadar, en fazla bu süre boyunca Java keep-alive'ları ve ping'leri onun yerine yanıtlanır (0-1800; 0 yalnızca yükleme sürelerini günlüğe yazar). Ping yönlendirmesi olmadan Geyser bunları kendisi yanıtlar ve yalnızca yükleme süreleri günlüğe yazılır. 10 saniye veya daha uzun yüklemeler günlüğe yazılır. Bu sunucuda Geyser gerekir; proxy'li ağda aynı işi twilight-proxy yapar |
 | `item-display-models` | `auto` | Java eşya görüntülerindeki özel eşyalar için Bedrock modelleri: mobilyalar, ModelEngine ve BetterModel modelleri ve onlardan yapılan moblar ve NPC'ler ([eşya görüntüleri](#eşya-görüntüleri)). `auto`: Geyser bu sunucuda çalışıyorsa veya önündeki twilight-proxy eşya görüntülerini gösterdiğini söylüyorsa; `on`; `off`. Bu değişince paket kendiliğinden yeniden derlenir |
 | `item-display-variants` | `seen` | Bu modelleri hangi eşyaların alacağı. `seen`: bu sunucunun eşya görüntülerinde gösterdiği eşyalar ve her model kemiği; `all`: her özel eşya (her istemci yüklerken her eşya için bir model kurar) |
+| `player-heads` | `true` | Oyuncu kafaları Bedrock'ta Steve'inki yerine kendi skinleriyle görünür (menüler, eller, zırh standları, hologramlar); yeni kafalar yeniden başlatma gerektirir ([oyuncu kafaları](#oyuncu-kafaları)) |
 | `custom-blocks` | `true` | İçerik eklentilerinin özel blokları (ItemsAdder'ın ve CraftEngine'in nota blokları, mantar blokları ve tuzak teli üzerindeki madenleri ve blokları) vanilla blok yerine kendi Bedrock görünümlerini alır; onları yerleştiren eşyalar bloğu envanterde ve yere düştüğünde 3B gösterir. Geyser blokları açılışta kaydeder: blokları değiştiren bir derleme, eşya değişiklikleri gibi yeniden başlatma gerektirir ([özel bloklar](#özel-bloklar)) |
 
 ##### `ui`
@@ -1219,6 +1246,7 @@ bedrock:                 # "Proxy'de Bedrock çalışma zamanı" bölümüne bak
 | `bedrock.translations` | Sunucu paketlerinin çevirilerini Bedrock oyuncularına gösterir |
 | `bedrock.loading-protection-seconds` | Bir Bedrock oyuncusunu istemcisi kaynak paketlerini yüklerken en fazla bu süre bağlı tutar (0-1800, varsayılan 300) |
 | `bedrock.custom-blocks` | Sunucuların özel bloklarını proxy'deki Geyser'a kaydeder ve eşyalarını 3B gösterir ([özel bloklar](#özel-bloklar)) |
+| `bedrock.player-heads` | Sunucuların paketlerinin listelediği oyuncu kafalarını proxy'deki Geyser'a kaydeder; böylece kendi skinleriyle görünürler ([oyuncu kafaları](#oyuncu-kafaları)) |
 | `bedrock.item-displays` | Java eşya görüntülerini sunucuların modelleriyle gösterir: mobilyalar, ModelEngine ve BetterModel modelleri, onlardan yapılan moblar ve NPC'ler ([eşya görüntüleri](#eşya-görüntüleri)); ayrıca binilen bir mobun ad göstermediği Java kuralını uygular |
 
 Her paket kullanılmadan önce denetlenir: boyut sınırının altında, kökünde `manifest.json` bulunan ve hiçbir
@@ -1502,6 +1530,27 @@ eklentileri, anti-bot denetimleri, bağlantı sınırları) onu görür; bu ayar
 - Eklenti aynı ad hâlâ çevrimiçiyken bir girişi reddediyorsa, bir yeniden bağlanma bir anlığına reddedilebilir;
   oyuncu o zaman proxy'nin yedek sunucusuna düşer.
 
+#### Oyuncu kafaları
+
+Yardım olmadan bir Bedrock oyuncu kafası Steve'inkidir: Geyser bir kafanın skinini yalnızca açılırken özel blok
+olarak kaydettiği kafalar için çizer. Twilight bir sunucunun gösterdiği kafaları bulur ve skinlerini pakete koyar;
+sunucudaki ve proxy'deki Geyser da onları kaydeder (`geyser.player-heads`, `bedrock.player-heads`):
+
+- **Menüler.** Bir oyuncunun açtığı her menü, hangi eklenti yapmış olursa olsun, açıldıktan biraz sonra ve iki
+  saniye sonra tekrar okunur (menü eklentileri eşyalarını o zaman doldurur ve yeniler).
+- **Yapılandırmalar.** Açılışta eklentilerin yapılandırma dosyaları her yaygın biçimdeki kafalar için okunur:
+  Base64 profiller (`basehead-...`, `texture: ...`), skin URL'leri ve hash'leri (`texture-...`), kullanıcı adları
+  (`head-Notch`, `skull-owner: Notch`) ve HeadDatabase kimlikleri (`hdb-1234`; HeadDatabase kuruluysa onun
+  üzerinden çözülür). `head-%player_name%` gibi yer tutucular, gerçek kafayı gören menü taramasına bırakılır.
+- **Dünya.** Zırh standları, moblar, eşya çerçeveleri, görüntüler ve düşen eşyalar, yığınları yüklenirken;
+  eklentilerin yalnızca paket olarak gönderdiği görüntülerdeki kafaları sunucudaki Geyser veya twilight-proxy
+  bildirir.
+
+Kafalar `player-heads.txt` içinde tutulur (en fazla 4096). Geyser kafaları açılırken kaydeder; bu yüzden yeni
+kafalı bir derleme, yeni eşyalar gibi yeniden başlatma ister. Bir eşya görüntüsündeki kafa, Java'nın çizdiği gibi
+kendi skiniyle çizilir (skin bir kez Mojang'ın doku sunucusundan `cache/skins/` içine indirilir). Yerleştirilmiş
+kafa bloklarını Geyser zaten skinleriyle çiziyordu.
+
 #### Özel bloklar
 
 İçerik eklentileri özel blokları vanilla blok durumlarıyla çizer: ItemsAdder'ın `REAL_NOTE` blokları ve
@@ -1677,7 +1726,9 @@ izler. Önceki geliştirme derlemeleri 1.0.0-beta.1'i duyurmaz: onları bir kez 
 | `reports/content-report.json` | Son taramanın keşif raporu |
 | `deployment.properties` | Twilight'ın Geyser klasöründe sahip olduğu dosyalar, karmalarıyla |
 | `pack-host/<sha256>.zip` | [Paket sunucusunun](#paket-sunucusu) sunduğu kopyalar; açılışta temizlenir, kullanılmayınca silinir |
-| `displayed-items.txt` | Bu sunucunun eşya görüntülerinde gösterdiği eşyalar (satır başına bir anahtar, en fazla 20000) |
+| `displayed-items.txt` | Bu sunucunun görüntülerde gösterdiği eşyalar, bloklar ve kafalar (satır başına bir anahtar, en fazla 20000) |
+| `player-heads.txt` | Bu sunucunun gösterdiği veya eklentilerinin adını verdiği oyuncu kafası skinleri (hash'ler) ve kullanıcı adları (en fazla 4096) |
+| `cache/skins/` | Eşya görüntülerinde gösterilen kafaların Mojang'ın doku sunucusundan indirilen skinleri |
 | `proxy-features.properties` | Bu sunucunun önündeki twilight-proxy'nin en son neyi gösterdiğini söylediği; 30 gün tekrarlanmazsa geçersizleşir |
 
 Geyser klasöründe Twilight yalnızca `packs/twilight.zip`, `custom_mappings/twilight_*.json` ve

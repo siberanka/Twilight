@@ -90,7 +90,7 @@ public final class DisplayedItems implements Listener, AutoCloseable {
 
     /** Whether a key names an item's own model or a block state (built whatever item-display-variants says). */
     public static boolean own(String key) {
-        return key.startsWith("item=") || key.startsWith("block=");
+        return key.startsWith("item=") || key.startsWith("block=") || key.startsWith("head=");
     }
 
     /** Displays already in loaded chunks (not on Folia, where each region reads its own as chunks load). */
@@ -118,6 +118,12 @@ public final class DisplayedItems implements Listener, AutoCloseable {
             if (entity instanceof ItemDisplay display) {
                 ItemStack stack = display.getItemStack();
                 List<String> keys = keys(stack);
+                if (keys.isEmpty() && stack != null && stack.getType() == org.bukkit.Material.PLAYER_HEAD && !itemModel(stack)) {
+                    List<String> skins = new ArrayList<>();
+                    com.siberanka.twilight.integration.heads.PlayerHeads.head(stack, skins);
+                    for (String skin : skins) if (!skin.startsWith("name:")) keys.add(DisplayKeys.head(skin));
+                    if (!keys.isEmpty()) return keys;
+                }
                 if (keys.isEmpty() && stack != null && !stack.getType().isAir() && !itemModel(stack)) {
                     String own = DisplayKeys.item(stack.getType().getKey().toString().toLowerCase(Locale.ROOT));
                     if (DisplayKeys.valid(own)) keys.add(own);

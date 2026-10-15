@@ -10,13 +10,14 @@ import java.util.regex.Pattern;
  * reports the ones it could not show): {@code model=<namespace:path>} for an item model,
  * {@code <namespace:item>|cmd=<n>} and {@code <namespace:item>|str=<text>} for custom model data,
  * {@code item=<namespace:item>} for an item without custom data (its own model) and
- * {@code block=<namespace:block>[name=value,...]} for the block state of a block display, properties sorted by name.
+ * {@code block=<namespace:block>[name=value,...]} for the block state of a block display, properties sorted by name,
+ * and {@code head=<skin hash>} for a player head.
  */
 public final class DisplayKeys {
     private static final String NAME = "[a-z0-9_]{1,32}=[a-z0-9_]{1,32}";
     private static final Pattern KEY = Pattern.compile("model=[a-z0-9_.-]{1,64}:[a-z0-9_./-]{1,256}"
             + "|[a-z0-9_.-]{1,64}:[a-z0-9_./-]{1,128}\\|(cmd=-?\\d{1,10}|str=[\\x21-\\x7b\\x7d\\x7e]{1,128})"
-            + "|item=[a-z0-9_.-]{1,64}:[a-z0-9_./-]{1,128}"
+            + "|item=[a-z0-9_.-]{1,64}:[a-z0-9_./-]{1,128}|head=[0-9a-f]{16,64}"
             + "|block=[a-z0-9_.-]{1,64}:[a-z0-9_./-]{1,128}(\\[" + NAME + "(," + NAME + "){0,15}])?");
 
     private DisplayKeys() {}
@@ -43,9 +44,14 @@ public final class DisplayKeys {
         return "item=" + item;
     }
 
-    /** Whether a key names a custom item (rather than an item's own model or a block). */
+    /** Whether a key names a custom item (rather than an item's own model, a block or a player head). */
     public static boolean custom(String key) {
-        return !key.startsWith("item=") && !key.startsWith("block=");
+        return !key.startsWith("item=") && !key.startsWith("block=") && !key.startsWith("head=");
+    }
+
+    /** A player head by its skin hash. */
+    public static String head(String skin) {
+        return "head=" + skin;
     }
 
     /**

@@ -283,6 +283,35 @@ class BedrockPackCompilerTest {
     }
 
     /**
+     * The player heads a server shows go into the pack for Geyser's custom skulls; a head seen in a display gets a
+     * display model drawn with its skin (here from the skin cache, without downloads).
+     */
+    @Test
+    void packsPlayerHeadsAndDrawsDisplayedHeadsWithTheirSkin() throws Exception {
+        String skin = "4b0b1f7b8a6fa27e5f8fdb4c1d1e44f6a2c1e0d9c3b2a19f8e7d6c5b4a392817";
+        Path cache = root.resolve("skins");
+        Files.createDirectories(cache);
+        BufferedImage image = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
+        image.setRGB(10, 10, 0xFF112233);
+        ImageIO.write(image, "PNG", cache.resolve(skin + ".png").toFile());
+        Path source = root.resolve("head-source");
+        Files.createDirectories(source);
+        ContentSource pack = new ContentSource("test", ContentSource.Kind.RESOURCE_PACK, source, 1);
+        BuildResult result = new BedrockPackCompiler(root.resolve("data-heads"), config())
+                .withDisplayedOwnModels(java.util.Set.of("head=" + skin, "head=" + "0".repeat(64)))
+                .withPlayerHeads(java.util.Set.of(skin), java.util.Set.of("Notch"), cache, false)
+                .build(List.of(pack), List.of());
+        try (ZipFile zip = new ZipFile(result.outputDirectory().resolve("pack.zip").toFile())) {
+            JsonObject heads = read(zip, com.siberanka.twilight.geyser.CustomSkulls.PATH);
+            assertEquals(skin, heads.getAsJsonArray("skins").get(0).getAsString());
+            assertEquals("Notch", heads.getAsJsonArray("names").get(0).getAsString());
+            JsonObject index = read(zip, "twilight/display-index-v2.json");
+            assertTrue(index.getAsJsonObject("heads").has(skin), index.toString());
+            assertEquals(1, index.getAsJsonObject("heads").size(), "a skin that cannot be read gets no model");
+        }
+    }
+
+    /**
      * Content plugins draw custom blocks through vanilla block states (ItemsAdder's and CraftEngine's note blocks).
      * Every state with a custom model becomes a Bedrock block named after the Java state; full cubes use the unit
      * cube with a texture per face, other shapes a block geometry; vanilla looks and invalid states are left alone,

@@ -70,6 +70,8 @@ public final class TwilightPlugin extends JavaPlugin {
     private com.siberanka.twilight.integration.proxy.ProxyPackChannel proxyChannel;
     /** The custom items this server shows in item displays; only they (and model bones) get display models. */
     private com.siberanka.twilight.integration.display.DisplayedItems displayedItems;
+    private com.siberanka.twilight.integration.heads.PlayerHeads playerHeads;
+    private com.siberanka.twilight.geyser.CustomSkulls customSkulls;
     /** What the twilight-proxy in front of this server shows (its item displays need the display models). */
     private volatile com.siberanka.twilight.integration.proxy.ProxyFeatures proxyFeatures;
     private com.siberanka.twilight.integration.text.GeyserLanguageBridge languageBridge;
@@ -90,6 +92,7 @@ public final class TwilightPlugin extends JavaPlugin {
             saveDefaultConfig();
             reloadConfig();
             startCustomBlocks();
+            startPlayerHeads();
             if (!getConfig().getBoolean("geyser.retire-stale-files", true)) return;
             Path root = getServer().getWorldContainer().toPath().toAbsolutePath().normalize();
             var service = new GeyserDeploymentService(root, getDataFolder().toPath(), TwilightConfig.read(getConfig(), root));
@@ -110,6 +113,75 @@ public final class TwilightPlugin extends JavaPlugin {
      * Geyser-Spigot registers custom blocks and items when it enables, right after this load phase: the blocks of
      * the deployed pack are handed to it then (a build that changes them needs a restart, like items).
      */
+    /** {@code geyser.player-heads}: player heads show their skins on Bedrock (Geyser custom skulls). */
+    private boolean playerHeadsEnabled() {
+        return getConfig().getBoolean("geyser.player-heads", true);
+    }
+
+    /** Hands the deployed pack's player heads to Geyser-Spigot, which registers skulls when it enables. */
+    private void startPlayerHeads() {
+        if (!playerHeadsEnabled() || getServer().getPluginManager().getPlugin("Geyser-Spigot") == null) return;
+        try {
+            Path root = getServer().getWorldContainer().toPath().toAbsolutePath().normalize();
+            TwilightConfig settings = TwilightConfig.read(getConfig(), root);
+            Path pack;
+            try {
+                pack = settings.sendPackToBedrock()
+                        ? new GeyserDeploymentService(root, getDataFolder().toPath(), settings).resolveGeyserDirectory().resolve("packs/twilight.zip")
+                        : getDataFolder().toPath().resolve(com.siberanka.twilight.deploy.PackExport.PACK);
+            } catch (java.io.IOException noFolder) {
+                pack = getDataFolder().toPath().resolve(com.siberanka.twilight.deploy.PackExport.PACK);
+            }
+            Path served = pack;
+            customSkulls = com.siberanka.twilight.geyser.CustomSkulls.start(this, () -> java.util.List.of(served),
+                    getLogger()::info, (message, failure) -> getLogger().log(Level.WARNING, message, failure));
+        } catch (RuntimeException | LinkageError failure) {
+            getLogger().log(Level.WARNING, "Player head skins are unavailable for this Geyser build; Bedrock shows Steve's head.", failure);
+        }
+    }
+
+    /**
+     * Learns the player heads this server shows and reads the ones its plugins' configurations name (off the server
+     * thread, a little after start so that HeadDatabase has loaded); new heads go into the next build.
+     */
+    private void startHeadLearning() {
+        if (!playerHeadsEnabled()) return;
+        try {
+            playerHeads = com.siberanka.twilight.integration.heads.PlayerHeads.start(this, getDataFolder().toPath().resolve("player-heads.txt"));
+            playerHeads.onNew(added -> {
+                if (itemDisplayModels() || getServer().getPluginManager().getPlugin("Geyser-Spigot") != null
+                        || proxyChannel != null) scheduleBuild(added.size() + " new player head(s)", 1200L);
+            });
+            var tracked = playerHeads;
+            scheduler.delayed(() -> CompletableFuture.runAsync(() -> {
+                try {
+                    var found = com.siberanka.twilight.integration.heads.HeadSources.scan(getDataFolder().toPath().getParent(),
+                            this::headDatabase);
+                    tracked.report(com.siberanka.twilight.integration.heads.HeadSources.heads(found));
+                    getLogger().info("Player heads in plugin configurations: " + found.skins().size() + " skin(s), "
+                            + found.names().size() + " player name(s), " + found.headDatabase().size()
+                            + " HeadDatabase id(s) in " + found.files() + " file(s).");
+                } catch (java.io.IOException | RuntimeException failure) {
+                    getLogger().log(Level.WARNING, "Could not read the plugins' configurations for player heads", failure);
+                }
+            }, worker), 200L);
+        } catch (RuntimeException | LinkageError failure) {
+            getLogger().log(Level.WARNING, "Could not watch player heads; Bedrock keeps Steve's head for heads it has not seen.", failure);
+        }
+    }
+
+    /** The Base64 profile HeadDatabase stores for an id, or null without HeadDatabase. */
+    private String headDatabase(String id) {
+        try {
+            Class<?> api = Class.forName("me.arcaniax.hdb.api.HeadDatabaseAPI");
+            Object instance = api.getConstructor().newInstance();
+            Object value = api.getMethod("getBase64", String.class).invoke(instance, id);
+            return value instanceof String text ? text : null;
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError absent) {
+            return null;
+        }
+    }
+
     private void startCustomBlocks() {
         if (!getConfig().getBoolean("geyser.custom-blocks", true)) return;
         if (getServer().getPluginManager().getPlugin("Geyser-Spigot") == null) return;
@@ -229,6 +301,7 @@ public final class TwilightPlugin extends JavaPlugin {
             displayedItems = com.siberanka.twilight.integration.display.DisplayedItems.start(this,
                     getDataFolder().toPath().resolve("displayed-items.txt"));
             displayedItems.onNew(this::newDisplayedItems);
+            startHeadLearning();
             var tracked = displayedItems;
             if (displayBridge instanceof com.siberanka.twilight.integration.display.GeyserDisplayBridge bridge) {
                 bridge.onUnshown((session, keys) -> tracked.report(keys));
@@ -247,6 +320,11 @@ public final class TwilightPlugin extends JavaPlugin {
      * delay gathers the items of a busy start or a newly loaded area into one build.
      */
     private void newDisplayedItems(java.util.List<String> keys) {
+        var heads = playerHeads;
+        if (heads != null) {
+            java.util.List<String> skins = keys.stream().filter(key -> key.startsWith("head=")).map(key -> key.substring(5)).toList();
+            if (!skins.isEmpty()) heads.report(skins);
+        }
         boolean seen = displayVariantsSeen();
         long count = keys.stream().filter(com.siberanka.twilight.integration.display.DisplayedItems::matters)
                 .filter(key -> seen || com.siberanka.twilight.integration.display.DisplayedItems.own(key)).count();
@@ -276,6 +354,8 @@ public final class TwilightPlugin extends JavaPlugin {
         }
         if (proxyChannel != null) proxyChannel.close();
         if (displayedItems != null) displayedItems.close();
+        if (playerHeads != null) playerHeads.close();
+        if (customSkulls != null) customSkulls.close();
         if (loadingGuard != null) loadingGuard.close();
         if (customBlocks != null) customBlocks.close();
         if (packHosting != null) packHosting.close();
@@ -333,6 +413,9 @@ public final class TwilightPlugin extends JavaPlugin {
                 : displayedItems == null ? null : displayedItems.keys().stream()
                         .filter(com.siberanka.twilight.integration.display.DisplayedItems::matters)
                         .collect(java.util.stream.Collectors.toUnmodifiableSet());
+        var heads = playerHeads;
+        java.util.Set<String> headSkins = heads == null || !playerHeadsEnabled() ? java.util.Set.of() : heads.skins();
+        java.util.Set<String> headNames = heads == null || !playerHeadsEnabled() ? java.util.Set.of() : heads.names();
         java.util.Set<String> shownOwn = !displays || displayedItems == null ? java.util.Set.of()
                 : displayedItems.keys().stream().filter(com.siberanka.twilight.integration.display.DisplayedItems::own)
                         .collect(java.util.stream.Collectors.toUnmodifiableSet());
@@ -366,7 +449,8 @@ public final class TwilightPlugin extends JavaPlugin {
                 String inputFingerprint = SourceFingerprint.compute(sources, liveItems, config) + world.fingerprint()
                         + "|displays=" + displays + "|shown=" + (shownItems == null ? "all"
                                 : Integer.toHexString(new java.util.TreeSet<>(shownItems).hashCode()))
-                        + "|own=" + Integer.toHexString(new java.util.TreeSet<>(shownOwn).hashCode()) + "|pocket=" + pocketContainerLayout()
+                        + "|own=" + Integer.toHexString(new java.util.TreeSet<>(shownOwn).hashCode())
+                        + "|heads=" + Integer.toHexString(java.util.Objects.hash(headSkins, headNames)) + "|pocket=" + pocketContainerLayout()
                         + "|blocks=" + getConfig().getBoolean("geyser.custom-blocks", true)
                         + "|cell=" + getConfig().getInt("ui.max-glyph-cell", 512);
                 operationLog.info("input-fingerprint", inputFingerprint);
@@ -389,6 +473,7 @@ public final class TwilightPlugin extends JavaPlugin {
                         build = new BedrockPackCompiler(getDataFolder().toPath(), config, minecraftVersion)
                                 .withServerBiomes(world.biomes(), world.current())
                                 .withNameplatePlugin(world.nameplates()).withItemDisplays(displays).withDisplayedItems(shownItems).withDisplayedOwnModels(shownOwn)
+                                .withPlayerHeads(headSkins, headNames, getDataFolder().toPath().resolve("cache/skins"), playerHeadsEnabled())
                                 .withMaxGlyphCell(getConfig().getInt("ui.max-glyph-cell", 512))
                                 .withPocketContainerLayout(pocketContainerLayout())
                                 .withCustomBlocks(getConfig().getBoolean("geyser.custom-blocks", true))
@@ -402,6 +487,7 @@ public final class TwilightPlugin extends JavaPlugin {
                         build = new BedrockPackCompiler(getDataFolder().toPath(), config.withStrict(false), minecraftVersion)
                                 .withServerBiomes(world.biomes(), world.current())
                                 .withNameplatePlugin(world.nameplates()).withItemDisplays(displays).withDisplayedItems(shownItems).withDisplayedOwnModels(shownOwn)
+                                .withPlayerHeads(headSkins, headNames, getDataFolder().toPath().resolve("cache/skins"), playerHeadsEnabled())
                                 .withMaxGlyphCell(getConfig().getInt("ui.max-glyph-cell", 512))
                                 .withPocketContainerLayout(pocketContainerLayout())
                                 .withCustomBlocks(getConfig().getBoolean("geyser.custom-blocks", true))

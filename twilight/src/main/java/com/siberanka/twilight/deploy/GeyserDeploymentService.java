@@ -92,7 +92,7 @@ public final class GeyserDeploymentService {
                                 + (retired.isEmpty() ? "" : " Moved " + retired.size() + " stale Twilight file(s) out of Geyser to "
                                 + dataDirectory.relativize(retired.getFirst().to().getParent().getParent()) + ": "
                                 + String.join(", ", retired.stream().map(com.siberanka.twilight.geyser.StaleFiles.Retired::file).toList()) + ".")
-                                + (restart ? " Restart the server to activate changed Geyser item mappings or display variants; geyser reload is insufficient." : ""), restart);
+                                + (restart ? " Restart the server to activate changed Geyser item mappings, display variants or player heads; geyser reload is insufficient." : ""), restart);
             } catch (Exception failure) {
                 if (publicationStarted) {
                     for (String relative : artifacts.keySet()) Files.deleteIfExists(resolveTarget(geyser, relative));
@@ -143,7 +143,7 @@ public final class GeyserDeploymentService {
             boolean restart = !startupMappings.get(geyser).equals(mappingHashes(geyser));
             return new DeploymentResult(true, geyser, selected, restored.stringPropertyNames().stream().sorted().toList(),
                     "Restored Geyser snapshot " + selected.getFileName()
-                            + (restart ? "; restart the server to activate changed Geyser item mappings or display variants." : ""), restart);
+                            + (restart ? "; restart the server to activate changed Geyser item mappings, display variants or player heads." : ""), restart);
         } finally {
             lock.unlock();
         }
@@ -174,8 +174,9 @@ public final class GeyserDeploymentService {
         // reload, but changing that table requires rebuilding the runtime registry.
         Path pack = geyser.resolve("packs/twilight.zip");
         if (Files.isRegularFile(pack)) try (ZipFile zip = new ZipFile(pack.toFile())) {
-            // Display variants and custom blocks are registered when Geyser starts, like item mappings.
-            for (String registered : java.util.List.of("twilight/display-index-v2.json", "twilight/geyser_blocks.json")) {
+            // Display variants, custom blocks and player heads are registered when Geyser starts, like item mappings.
+            for (String registered : java.util.List.of("twilight/display-index-v2.json", "twilight/geyser_blocks.json",
+                    com.siberanka.twilight.geyser.CustomSkulls.PATH)) {
                 var entry = zip.getEntry(registered);
                 if (entry != null) try (InputStream input = zip.getInputStream(entry)) {
                     hashes.put("packs/twilight.zip!" + registered, sha256(input));

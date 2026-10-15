@@ -233,6 +233,49 @@ final class DisplayModels {
         return face;
     }
 
+    // ---------------------------------------------------------------- player heads
+
+    /**
+     * A player head with its skin, as Java's player head item draws it: the special skull renderer puts the head (8
+     * pixels) and its hat layer (0.25 larger) on the block's floor, centred, the face to the south, with the item
+     * transforms of {@code item/template_skull}.
+     */
+    void addHead(String skin, byte[] png, DisplayEntityResources displays) throws IOException {
+        TextureSet.SKINS.get().put(skin, png);
+        JsonArray elements = new JsonArray();
+        elements.add(skull(4, 0, 4, 12, 8, 12, 0));
+        elements.add(skull(3.75, -0.25, 3.75, 12.25, 8.25, 12.25, 8));
+        // The skull renderer turns the head around: an item display shows the back of the head where an
+        // unturned block model shows its north face (measured against Java, 15 October 2026).
+        elements = bake(elements, 0, 180, false);
+        JsonObject display;
+        try {
+            display = resolver.resolve("minecraft:item/template_skull", true).display();
+        } catch (IOException missing) {
+            display = new JsonObject();
+        }
+        ResolvedJavaModel model = new ResolvedJavaModel("minecraft:player_head", elements,
+                Map.of("skin", TextureSet.SKIN + skin), display, false, false);
+        add(displays, "head_" + skin.substring(0, Math.min(16, skin.length())), model, false,
+                DisplayEntityResources.Section.HEAD, skin);
+    }
+
+    /** One box of the skull: skin regions in 16ths of the 64-pixel skin, {@code shift} 8 for the hat layer. */
+    private static JsonObject skull(double x0, double y0, double z0, double x1, double y1, double z1, int shift) {
+        JsonObject element = new JsonObject();
+        element.add("from", BedrockPackCompiler.numberArray(x0, y0, z0));
+        element.add("to", BedrockPackCompiler.numberArray(x1, y1, z1));
+        JsonObject faces = new JsonObject();
+        faces.add("north", face("#skin", 2 + shift, 2, 4 + shift, 4));
+        faces.add("east", face("#skin", shift, 2, 2 + shift, 4));
+        faces.add("west", face("#skin", 4 + shift, 2, 6 + shift, 4));
+        faces.add("south", face("#skin", 6 + shift, 2, 8 + shift, 4));
+        faces.add("up", face("#skin", 4 + shift, 2, 2 + shift, 0));
+        faces.add("down", face("#skin", 6 + shift, 2, 4 + shift, 0));
+        element.add("faces", faces);
+        return element;
+    }
+
     // ---------------------------------------------------------------- block states
 
     /** A display variant for a block state key; false (with a notice) when Java draws no model for it. */

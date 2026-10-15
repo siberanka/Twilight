@@ -77,6 +77,12 @@ geyser:
   # that place them show the block in 3D (inventory and dropped), as on Java. Geyser registers blocks when
   # it starts, so a build that changes them needs a restart, like item changes.
   custom-blocks: true
+  # Player heads show their skins on Bedrock (menus, hands, armour stands, holograms) instead of Steve's:
+  # Twilight learns the heads this server shows and reads the ones its plugins' configurations name
+  # (textures, skin URLs, user names, HeadDatabase ids), and Geyser registers them as custom skulls when it
+  # starts, so new heads need a restart, like new items. Heads in displays get a model with their skin,
+  # downloaded from Mojang's texture server.
+  player-heads: true
 
 ui:
   # Desktop chest screens use Java's container layout: the title is unwrapped,

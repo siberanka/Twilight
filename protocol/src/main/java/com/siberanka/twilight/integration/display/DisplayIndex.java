@@ -28,11 +28,12 @@ import java.util.zip.ZipFile;
  * @param blocks  variants of block states shown in block displays, by {@link DisplayKeys#block} key
  * @param flat    ordinals of items Java draws flat (generated from their sprite); Bedrock draws those as dropped
  *                items itself
+ * @param heads   variants of player heads, by skin hash
  */
 public record DisplayIndex(Map<String, Variant> items, Map<String, Variant> models, Map<String, Variant> vanilla,
-                           Map<String, Variant> blocks, Set<Integer> flat) {
+                           Map<String, Variant> blocks, Set<Integer> flat, Map<String, Variant> heads) {
     public DisplayIndex(Map<String, Variant> items, Map<String, Variant> models) {
-        this(items, models, Map.of(), Map.of(), Set.of());
+        this(items, models, Map.of(), Map.of(), Set.of(), Map.of());
     }
 
     /** The pack entry that lists the display variants (format 2: variants in sheets of geometries). */
@@ -49,7 +50,7 @@ public record DisplayIndex(Map<String, Variant> items, Map<String, Variant> mode
     public record Variant(int ordinal, float[] contexts) {}
 
     public boolean isEmpty() {
-        return items.isEmpty() && models.isEmpty() && vanilla.isEmpty() && blocks.isEmpty();
+        return items.isEmpty() && models.isEmpty() && vanilla.isEmpty() && blocks.isEmpty() && heads.isEmpty();
     }
 
     /**
@@ -107,13 +108,15 @@ public record DisplayIndex(Map<String, Variant> items, Map<String, Variant> mode
                     ? variants(object.getAsJsonObject("vanilla"), transforms, used) : Map.of();
             Map<String, Variant> blocks = object.has("blocks")
                     ? variants(object.getAsJsonObject("blocks"), transforms, used) : Map.of();
+            Map<String, Variant> heads = object.has("heads")
+                    ? variants(object.getAsJsonObject("heads"), transforms, used) : Map.of();
             Set<Integer> flat = new HashSet<>();
             if (object.has("flat")) for (var value : object.getAsJsonArray("flat")) {
                 int ordinal = value.getAsInt();
                 if (!used.contains(ordinal) || flat.size() >= MAX_VARIANTS) throw new IOException("Invalid flat display variant");
                 flat.add(ordinal);
             }
-            return new DisplayIndex(items, models, vanilla, blocks, Set.copyOf(flat));
+            return new DisplayIndex(items, models, vanilla, blocks, Set.copyOf(flat), heads);
         } catch (RuntimeException malformed) {
             throw new IOException("Malformed display variant index", malformed);
         }
@@ -129,7 +132,8 @@ public record DisplayIndex(Map<String, Variant> items, Map<String, Variant> mode
             if (ordinal < 0 || ordinal >= MAX_VARIANTS || !used.add(ordinal)
                     || transform < -1 || transform >= transforms.size()
                     || !(IDENTIFIER.matcher(value.getKey()).matches()
-                         || value.getKey().startsWith("block=") && DisplayKeys.valid(value.getKey()))) {
+                         || value.getKey().startsWith("block=") && DisplayKeys.valid(value.getKey())
+                         || com.siberanka.twilight.geyser.HeadTextures.valid(value.getKey()))) {
                 throw new IOException("Invalid display variant index");
             }
             result.put(value.getKey(), new Variant(ordinal, transform < 0 ? null : transforms.get(transform)));

@@ -102,6 +102,9 @@ bedrock:
   # and mobs built from them. Twilight on each backend learns that this proxy shows them and builds its
   # pack with their models. Also applies Java's rule that a ridden mob shows no name. Takes effect on restart.
   item-displays: true
+  # Player heads with their skins instead of Steve's (menus, hands, holograms): the heads the servers' packs list
+  # are registered with the proxy's Geyser as custom skulls when it starts; new heads need a proxy restart.
+  player-heads: true
 
 # Geyser item mappings of every server, written to the proxy's Geyser (custom_mappings/twilight-proxy_item_mappings.json).
 item-mappings:

@@ -106,6 +106,9 @@ final class TextureSet {
     }
 
     private static final String TINT = "tint#";
+    /** Player skins a conversion draws ({@code skin#<hash>} sprites), set by the compiler for the build's thread. */
+    static final ThreadLocal<java.util.Map<String, byte[]>> SKINS = ThreadLocal.withInitial(java.util.HashMap::new);
+    static final String SKIN = "skin#";
 
     private static BufferedImage loadFrame(ResourceIndex resources, String sprite, VanillaAssetCache vanillaAssets) throws IOException {
         if (sprite.startsWith(TINT)) {
@@ -120,6 +123,11 @@ final class TextureSet {
                         | ((pixel >> 8 & 255) * tg / 255) << 8 | (pixel & 255) * tb / 255);
             }
             return tinted;
+        }
+        if (sprite.startsWith(SKIN)) {
+            byte[] skin = SKINS.get().get(sprite.substring(SKIN.length()));
+            BufferedImage image = skin == null ? null : PngImages.read(skin);
+            return image == null ? missingTexture() : image;
         }
         if (sprite.equals(MISSING)) return missingTexture();
         String identifier = spriteTexture(resources, sprite);

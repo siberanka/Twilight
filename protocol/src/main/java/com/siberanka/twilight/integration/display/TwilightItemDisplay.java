@@ -150,6 +150,11 @@ final class TwilightItemDisplay extends Entity {
         }
         if (customOnly) return selected == null || index.flat().contains(selected.ordinal()) ? null : selected;
         if (selected == null && model == null) {
+            // A player head draws its skin; its variant is keyed by the skin.
+            String skin = DisplayItems.skin(stack);
+            if (skin != null) return index.heads().get(skin);
+        }
+        if (selected == null && model == null) {
             String base = DisplayItems.baseItem(stack.getId());
             if (base != null) selected = index.vanilla().get(base);
         }
@@ -160,6 +165,11 @@ final class TwilightItemDisplay extends Entity {
     static java.util.List<String> unshownKeys(ItemStack stack, boolean customOnly) {
         java.util.List<String> keys = DisplayItems.keys(stack);
         if (customOnly || !keys.isEmpty()) return keys;
+        String skin = DisplayItems.itemModel(stack) == null ? DisplayItems.skin(stack) : null;
+        if (skin != null) {
+            keys.add(DisplayKeys.head(skin));
+            return keys;
+        }
         String base = DisplayItems.baseItem(stack.getId());
         if (base != null && DisplayItems.itemModel(stack) == null) {
             String key = DisplayKeys.item(base);

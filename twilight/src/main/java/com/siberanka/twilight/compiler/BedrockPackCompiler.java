@@ -114,6 +114,22 @@ public final class BedrockPackCompiler {
         this.displayedOwn = keys == null ? Set.of() : Set.copyOf(keys);
         return this;
     }
+
+    private Set<String> headSkins = Set.of(), headNames = Set.of();
+    private SkinCache skins;
+
+    /**
+     * The player heads the server shows ({@code PlayerHeads}): their skins (hashes) and user names go into the pack
+     * for Geyser's custom skulls, and heads seen in displays get a display model drawn with their skin.
+     *
+     * @param skinCache where downloaded skins are kept; {@code download} allows asking Mojang's texture server
+     */
+    public BedrockPackCompiler withPlayerHeads(Set<String> skins, Set<String> names, Path skinCache, boolean download) {
+        this.headSkins = skins == null ? Set.of() : new java.util.TreeSet<>(skins);
+        this.headNames = names == null ? Set.of() : new java.util.TreeSet<>(names);
+        this.skins = skinCache == null ? null : new SkinCache(skinCache, download);
+        return this;
+    }
     private boolean pocketJavaLayout = true;
     private boolean customBlocks = true;
 
@@ -309,6 +325,13 @@ public final class BedrockPackCompiler {
             try {
                 if (key.startsWith("item=")) displayModels.addItem(key.substring(5), displays, notices);
                 else if (key.startsWith("block=")) displayModels.addBlock(key, displays, notices);
+                else if (key.startsWith("head=") && skins != null) {
+                    String skin = key.substring(5);
+                    var png = skins.skin(skin);
+                    if (png.isPresent()) displayModels.addHead(skin, png.get(), displays);
+                    else notices.add("display " + key + ": its skin could not be read from Mojang's texture server; "
+                            + "the head shows nothing on Bedrock until a later build");
+                }
             } catch (JavaModelResolver.MissingModelException missing) {
                 notices.add("display " + key + ": " + missing.getMessage() + "; Java draws its missing model, Bedrock shows nothing");
             } catch (IOException | RuntimeException failure) {
@@ -316,6 +339,18 @@ public final class BedrockPackCompiler {
             }
         }
         displays.finish(packFiles);
+        TextureSet.SKINS.remove();
+        if (!headSkins.isEmpty() || !headNames.isEmpty()) {
+            JsonObject heads = new JsonObject();
+            heads.addProperty("format", 1);
+            JsonArray skinList = new JsonArray(), nameList = new JsonArray();
+            int count = 0;
+            for (String skin : headSkins) if (com.siberanka.twilight.geyser.HeadTextures.valid(skin) && count++ < com.siberanka.twilight.geyser.CustomSkulls.MAX) skinList.add(skin);
+            for (String name : headNames) if (com.siberanka.twilight.geyser.HeadTextures.name(name) && count++ < com.siberanka.twilight.geyser.CustomSkulls.MAX) nameList.add(name);
+            heads.add("skins", skinList);
+            heads.add("names", nameList);
+            packFiles.put(com.siberanka.twilight.geyser.CustomSkulls.PATH, jsonBytes(heads));
+        }
         CustomBlockCompiler.Result blocks = new CustomBlockCompiler.Result(0, 0, null);
         if (customBlocks) {
             try {
@@ -437,6 +472,7 @@ public final class BedrockPackCompiler {
         report.addProperty("custom_blocks", blocks.blocks());
         report.addProperty("block_items", blocks.items());
         report.addProperty("display_variants", displays.size());
+        report.addProperty("player_heads", headSkins.size() + headNames.size());
         report.addProperty("display_only_models", displayOnly);
         report.addProperty("glyphs", fonts.glyphs());
         report.addProperty("font_pages", fonts.pages());

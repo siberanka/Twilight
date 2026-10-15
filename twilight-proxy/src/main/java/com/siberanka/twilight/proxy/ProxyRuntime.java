@@ -56,7 +56,7 @@ final class ProxyRuntime implements AutoCloseable {
      */
     static ProxyRuntime start(Object owner, ProxyConfig config, Platform platform, Function<String, Optional<Path>> packOf,
                               Supplier<Collection<Path>> packs) {
-        return start(owner, config, platform, packOf, packs, null, null);
+        return start(owner, config, platform, packOf, packs, null, null, null);
     }
 
     /**
@@ -64,7 +64,8 @@ final class ProxyRuntime implements AutoCloseable {
      * @param earlyDisplays   the display bridge subscribed in the load phase with its variant holder, or null
      */
     static ProxyRuntime start(Object owner, ProxyConfig config, Platform platform, Function<String, Optional<Path>> packOf,
-                              Supplier<Collection<Path>> packs, CustomBlocks registered, EarlyDisplays earlyDisplays) {
+                              Supplier<Collection<Path>> packs, CustomBlocks registered, EarlyDisplays earlyDisplays,
+                              com.siberanka.twilight.geyser.CustomSkulls registeredSkulls) {
         Logger logger = logger(platform);
         GeyserTextLayoutBridge text = null;
         GeyserLanguageBridge language = null;
@@ -90,6 +91,13 @@ final class ProxyRuntime implements AutoCloseable {
             else if (config.customBlocks()) runtime.blocks = CustomBlocks.start(owner, packs, platform::info, platform::warn);
         } catch (RuntimeException | LinkageError failure) {
             platform.warn("Custom blocks are unavailable for this Geyser build; they keep the vanilla look on Bedrock.", failure);
+        }
+        try {
+            if (registeredSkulls != null) runtime.skulls = registeredSkulls;
+            else if (config.playerHeads()) runtime.skulls = com.siberanka.twilight.geyser.CustomSkulls.start(owner, packs,
+                    platform::info, platform::warn);
+        } catch (RuntimeException | LinkageError failure) {
+            platform.warn("Player head skins are unavailable for this Geyser build; Bedrock shows Steve's head.", failure);
         }
         if (config.itemDisplays()) {
             try {
@@ -150,6 +158,7 @@ final class ProxyRuntime implements AutoCloseable {
     }
 
     private volatile CustomBlocks blocks;
+    private volatile com.siberanka.twilight.geyser.CustomSkulls skulls;
 
     /**
      * The servers' packs changed: their translations are read again.
@@ -159,16 +168,25 @@ final class ProxyRuntime implements AutoCloseable {
      */
     String packsChanged() {
         if (language != null) language.refresh();
+        java.util.List<String> changed = new java.util.ArrayList<>();
         CustomBlocks custom = blocks;
         CustomBlocks.Merged registered = custom == null ? null : custom.registered();
-        if (registered == null) return null;
-        CustomBlocks.Merged now = custom.current();
-        return now.hash().equals(registered.hash()) ? null : now.blocks().size() + " custom block(s)";
+        if (registered != null) {
+            CustomBlocks.Merged now = custom.current();
+            if (!now.hash().equals(registered.hash())) changed.add(now.blocks().size() + " custom block(s)");
+        }
+        var heads = skulls;
+        var registeredHeads = heads == null ? null : heads.registered();
+        if (registeredHeads != null) {
+            var now = heads.current();
+            if (!now.equals(registeredHeads)) changed.add(now.size() + " player head skin(s)");
+        }
+        return changed.isEmpty() ? null : String.join(" and ", changed);
     }
 
     @Override
     public void close() {
-        for (AutoCloseable part : new AutoCloseable[]{text, language, guard, blocks, displays, riderNames}) {
+        for (AutoCloseable part : new AutoCloseable[]{text, language, guard, blocks, skulls, displays, riderNames}) {
             if (part == null) continue;
             try {
                 part.close();

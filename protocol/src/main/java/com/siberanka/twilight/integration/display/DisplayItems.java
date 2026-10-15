@@ -67,6 +67,28 @@ final class DisplayItems {
         return keys;
     }
 
+    /**
+     * The skin hash of a player head stack (its profile's textures, as Geyser resolves them), or null for other items
+     * and heads whose profile is not resolved yet.
+     */
+    static String skin(ItemStack stack) {
+        if (stack == null || !"minecraft:player_head".equals(baseItem(stack.getId()))) return null;
+        DataComponents components = stack.getDataComponentsPatch();
+        if (components == null) return null;
+        try {
+            var profile = components.get(DataComponentTypes.PROFILE);
+            if (profile == null) return null;
+            var resolved = org.geysermc.geyser.skin.SkinManager.resolveProfile(profile).getNow(null);
+            if (resolved == null) return null;
+            var texture = org.geysermc.geyser.skin.SkinManager.getTextureDataFromProfile(resolved,
+                    org.geysermc.mcprotocollib.auth.texture.TextureType.SKIN);
+            String hash = texture == null ? null : texture.getHash();
+            return com.siberanka.twilight.geyser.HeadTextures.valid(hash) ? hash : null;
+        } catch (RuntimeException | LinkageError unresolved) {
+            return null;
+        }
+    }
+
     static String baseItem(int javaId) {
         try {
             var item = org.geysermc.geyser.registry.Registries.JAVA_ITEMS.get(javaId);
