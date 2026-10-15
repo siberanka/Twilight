@@ -11,7 +11,7 @@ import org.geysermc.mcprotocollib.protocol.data.game.entity.type.EntityType;
 
 import java.util.Arrays;
 
-/** One Java display, owned by Geyser's normal per-session entity lifecycle. */
+/** One Java item or block display, owned by Geyser's normal per-session entity lifecycle. */
 final class TwilightItemDisplay extends Entity {
     private static final float[] IDENTITY_CONTEXT = {0, 0, 0, 0, 0, 0, 1, 1, 1};
     /** Revisions are {@code sequence * 2 + 1} with a new pose, {@code sequence * 2} with only new timing. */
@@ -26,6 +26,7 @@ final class TwilightItemDisplay extends Entity {
     private Integer durationTicks, delayTicks;
     private int sequence;
     private boolean poseDirty;
+    private int billboard, light = -1;
 
     TwilightItemDisplay(EntitySpawnContext spawn, GeyserDisplayBridge bridge) {
         super(spawn);
@@ -71,22 +72,100 @@ final class TwilightItemDisplay extends Entity {
     void context(byte value) { appearance.context(value); updateAppearance(); }
     void viewRange(float value) { appearance.viewRange(value); updateAppearance(); }
 
+    /** Java's billboard constraint: 0 fixed, 1 vertical, 2 horizontal, 3 center. */
+    void billboard(byte value) {
+        billboard = value >= 0 && value <= 3 ? value : 0;
+        updateStyle();
+    }
+
+    /** Java's brightness override ({@code block << 4 | sky << 20}), or -1 for the light at the display. */
+    void brightness(int packed) {
+        light = packed < 0 ? -1 : ((packed >> 4) & 15) * 16 + ((packed >> 20) & 15);
+        updateStyle();
+    }
+
+    private void updateStyle() {
+        if (bridge.style != null) updateProperty(bridge.style, style(billboard, false, light));
+    }
+
+    /** The style property: billboard (2 bits), dropped item (1 bit) and the light override + 1 (block * 16 + sky). */
+    static int style(int billboard, boolean dropped, int light) {
+        return billboard | (dropped ? 4 : 0) | (light + 1) << 3;
+    }
+
     void item(ItemStack stack) {
         DisplayIndex.Variant selected = null;
         if (stack != null && stack.getAmount() > 0) {
-            DisplayIndex index = bridge.variants(session);
-            // Model bones have no Bedrock item: their item_model names them.
-            String model = index.models().isEmpty() ? null : DisplayItems.itemModel(stack);
-            if (model != null) selected = index.models().get(model);
-            if (selected == null && !index.items().isEmpty()) {
-                var item = ItemTranslator.translateToBedrock(session, stack);
-                selected = index.items().get(item.getDefinition().getIdentifier());
-            }
-            if (selected == null) bridge.unshown(session, DisplayItems.keys(stack));
+            selected = select(bridge, session, stack, false);
+            if (selected == null) bridge.unshown(session, unshownKeys(stack, false));
         }
+        show(selected);
+    }
+
+    /** A block display's block state (Java's block state id). */
+    void block(int state) {
+        DisplayIndex.Variant selected = null;
+        String key = blockKey(state);
+        if (key != null) {
+            selected = bridge.variants(session).blocks().get(key);
+            if (selected == null) bridge.unshown(session, java.util.List.of(key));
+        }
+        show(selected);
+    }
+
+    private void show(DisplayIndex.Variant selected) {
         appearance.variant(selected == null ? -1 : selected.ordinal());
         contexts = selected == null ? null : selected.contexts();
         updateAppearance();
+    }
+
+    /** The key of a block state, or null for air and states Geyser does not know. */
+    static String blockKey(int state) {
+        try {
+            var blockState = org.geysermc.geyser.level.block.type.BlockState.of(state);
+            String text = blockState.toString();
+            if (text.equals("minecraft:air") || text.equals("minecraft:cave_air") || text.equals("minecraft:void_air")) return null;
+            String key = DisplayKeys.block(text);
+            return DisplayKeys.valid(key) ? key : null;
+        } catch (RuntimeException | LinkageError unknown) {
+            return null;
+        }
+    }
+
+    /**
+     * The variant Java's model of a stack corresponds to: a model bone by its item model, a custom item by the
+     * Bedrock item Geyser maps it to, otherwise the item's own model. With {@code customOnly} (dropped items, which
+     * Bedrock draws itself) only custom items Java draws in 3D qualify.
+     */
+    static DisplayIndex.Variant select(GeyserDisplayBridge bridge, org.geysermc.geyser.session.GeyserSession session,
+                                       ItemStack stack, boolean customOnly) {
+        DisplayIndex index = bridge.variants(session);
+        if (index.isEmpty()) return null;
+        // Model bones have no Bedrock item: their item_model names them.
+        String model = DisplayItems.itemModel(stack);
+        DisplayIndex.Variant selected = model == null ? null : index.models().get(model);
+        if (selected == null && !index.items().isEmpty()) {
+            var item = ItemTranslator.translateToBedrock(session, stack);
+            selected = index.items().get(item.getDefinition().getIdentifier());
+        }
+        if (customOnly) return selected == null || index.flat().contains(selected.ordinal()) ? null : selected;
+        if (selected == null && model == null) {
+            String base = DisplayItems.baseItem(stack.getId());
+            if (base != null) selected = index.vanilla().get(base);
+        }
+        return selected;
+    }
+
+    /** What to report for a stack the pack cannot show: its custom keys, else its own item. */
+    static java.util.List<String> unshownKeys(ItemStack stack, boolean customOnly) {
+        java.util.List<String> keys = DisplayItems.keys(stack);
+        if (customOnly || !keys.isEmpty()) return keys;
+        String base = DisplayItems.baseItem(stack.getId());
+        if (base != null && DisplayItems.itemModel(stack) == null) {
+            String key = DisplayKeys.item(base);
+            if (DisplayKeys.valid(key)) keys.add(key);
+        }
+        return keys;
     }
 
     private void updateAppearance() {

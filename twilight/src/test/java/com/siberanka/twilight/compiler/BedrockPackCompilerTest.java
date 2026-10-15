@@ -224,6 +224,65 @@ class BedrockPackCompilerTest {
     }
 
     /**
+     * Displays show every item and block: flat custom items as Java's extrusion, items without custom data with their
+     * own model (tinted like Java), block states of block displays rotated as their block state file says; flat ones
+     * are marked so that dropped items stay Bedrock's own.
+     */
+    @Test
+    void displaysShowFlatItemsOwnModelsAndBlockStates() throws Exception {
+        Path source = root.resolve("own-source");
+        write(source, "assets/minecraft/models/item/paper.json", """
+                {"parent":"minecraft:item/generated","textures":{"layer0":"minecraft:item/paper"},"overrides":[
+                  {"predicate":{"custom_model_data":5},"model":"demo:item/note"}]}
+                """);
+        write(source, "assets/demo/models/item/note.json", """
+                {"parent":"minecraft:item/generated","textures":{"layer0":"demo:item/note"}}
+                """);
+        png(source.resolve("assets/demo/textures/item/note.png"), Color.ORANGE);
+        write(source, "assets/demo/items/wand.json", """
+                {"model":{"type":"minecraft:condition","property":"minecraft:using_item",
+                  "on_true":{"type":"minecraft:model","model":"demo:item/missing"},
+                  "on_false":{"type":"minecraft:model","model":"demo:item/wand","tints":[{"type":"minecraft:constant","value":-65536}]}}}
+                """);
+        write(source, "assets/demo/models/item/wand.json", """
+                {"parent":"minecraft:item/generated","textures":{"layer0":"demo:item/wand"}}
+                """);
+        png(source.resolve("assets/demo/textures/item/wand.png"), Color.WHITE);
+        write(source, "assets/demo/blockstates/lamp.json", """
+                {"variants":{"facing=north":{"model":"demo:block/lamp"},"facing=east":{"model":"demo:block/lamp","y":90}}}
+                """);
+        write(source, "assets/demo/models/block/lamp.json", cube("demo:block/lamp"));
+        png(source.resolve("assets/demo/textures/block/lamp.png"), Color.YELLOW);
+        ContentSource pack = new ContentSource("test", ContentSource.Kind.RESOURCE_PACK, source, 1);
+        BuildResult result = new BedrockPackCompiler(root.resolve("data-own"), config())
+                .withDisplayedItems(java.util.Set.of("minecraft:paper|cmd=5"))
+                .withDisplayedOwnModels(java.util.Set.of("item=demo:wand", "block=demo:lamp[facing=east]", "block=demo:none"))
+                .build(List.of(pack), List.of());
+        try (ZipFile zip = new ZipFile(result.outputDirectory().resolve("pack.zip").toFile())) {
+            JsonObject index = read(zip, "twilight/display-index-v2.json");
+            assertEquals(1, index.getAsJsonObject("variants").size(), index.toString());
+            assertTrue(index.getAsJsonObject("vanilla").has("demo:wand"));
+            assertTrue(index.getAsJsonObject("blocks").has("block=demo:lamp[facing=east]"));
+            JsonArray flat = index.getAsJsonArray("flat");
+            assertEquals(2, flat.size(), "the paper note and the wand are flat; the lamp is not");
+            int lamp = index.getAsJsonObject("blocks").getAsJsonArray("block=demo:lamp[facing=east]").get(0).getAsInt();
+            assertFalse(flat.contains(new com.google.gson.JsonPrimitive(lamp)));
+            JsonArray transforms = index.getAsJsonArray("transforms");
+            int transform = index.getAsJsonObject("blocks").getAsJsonArray("block=demo:lamp[facing=east]").get(1).getAsInt();
+            JsonArray none = transforms.get(transform).getAsJsonArray();
+            assertEquals(-8, none.get(0).getAsInt(), "block displays draw from the block's corner, undoing the item half turn");
+            assertEquals(8, none.get(2).getAsInt());
+            BufferedImage sheet = ImageIO.read(zip.getInputStream(zip.getEntry("textures/twilight/display_sheet0.png")));
+            boolean red = false;
+            for (int x = 0; x < sheet.getWidth(); x++) red |= sheet.getRGB(x, 0) == 0xFFFF0000;
+            assertTrue(red, "the wand's constant tint is baked into its texture");
+        }
+        JsonObject report = JsonParser.parseString(Files.readString(result.outputDirectory().resolve("build-report.json")))
+                .getAsJsonObject();
+        assertTrue(report.getAsJsonArray("notices").toString().contains("block=demo:none"), report.toString());
+    }
+
+    /**
      * Content plugins draw custom blocks through vanilla block states (ItemsAdder's and CraftEngine's note blocks).
      * Every state with a custom model becomes a Bedrock block named after the Java state; full cubes use the unit
      * cube with a texture per face, other shapes a block geometry; vanilla looks and invalid states are left alone,

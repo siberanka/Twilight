@@ -22,10 +22,19 @@ import java.util.zip.ZipFile;
  * bones (which have no Bedrock item) by their Java {@code item_model}, and the display transforms they send. A pack
  * is input from a backend or a file a proxy owner placed, so nothing in it is trusted.
  *
- * @param items  variants by Bedrock item identifier
- * @param models variants by Java item model
+ * @param items   variants by Bedrock item identifier
+ * @param models  variants by Java item model
+ * @param vanilla variants of items shown with their own model, by Java item identifier
+ * @param blocks  variants of block states shown in block displays, by {@link DisplayKeys#block} key
+ * @param flat    ordinals of items Java draws flat (generated from their sprite); Bedrock draws those as dropped
+ *                items itself
  */
-public record DisplayIndex(Map<String, Variant> items, Map<String, Variant> models) {
+public record DisplayIndex(Map<String, Variant> items, Map<String, Variant> models, Map<String, Variant> vanilla,
+                           Map<String, Variant> blocks, Set<Integer> flat) {
+    public DisplayIndex(Map<String, Variant> items, Map<String, Variant> models) {
+        this(items, models, Map.of(), Map.of(), Set.of());
+    }
+
     /** The pack entry that lists the display variants (format 2: variants in sheets of geometries). */
     public static final String INDEX = "twilight/display-index-v2.json";
     /** Variant ordinals stay below this: the packed appearance (ordinal * 9 + context) stays within the +-1,000,000 Geyser recommends for int properties. */
@@ -40,7 +49,7 @@ public record DisplayIndex(Map<String, Variant> items, Map<String, Variant> mode
     public record Variant(int ordinal, float[] contexts) {}
 
     public boolean isEmpty() {
-        return items.isEmpty() && models.isEmpty();
+        return items.isEmpty() && models.isEmpty() && vanilla.isEmpty() && blocks.isEmpty();
     }
 
     /**
@@ -94,7 +103,17 @@ public record DisplayIndex(Map<String, Variant> items, Map<String, Variant> mode
             Map<String, Variant> items = variants(object.getAsJsonObject("variants"), transforms, used);
             Map<String, Variant> models = object.has("models")
                     ? variants(object.getAsJsonObject("models"), transforms, used) : Map.of();
-            return new DisplayIndex(items, models);
+            Map<String, Variant> vanilla = object.has("vanilla")
+                    ? variants(object.getAsJsonObject("vanilla"), transforms, used) : Map.of();
+            Map<String, Variant> blocks = object.has("blocks")
+                    ? variants(object.getAsJsonObject("blocks"), transforms, used) : Map.of();
+            Set<Integer> flat = new HashSet<>();
+            if (object.has("flat")) for (var value : object.getAsJsonArray("flat")) {
+                int ordinal = value.getAsInt();
+                if (!used.contains(ordinal) || flat.size() >= MAX_VARIANTS) throw new IOException("Invalid flat display variant");
+                flat.add(ordinal);
+            }
+            return new DisplayIndex(items, models, vanilla, blocks, Set.copyOf(flat));
         } catch (RuntimeException malformed) {
             throw new IOException("Malformed display variant index", malformed);
         }
@@ -109,7 +128,8 @@ public record DisplayIndex(Map<String, Variant> items, Map<String, Variant> mode
             int ordinal = entry.get(0).getAsInt(), transform = entry.get(1).getAsInt();
             if (ordinal < 0 || ordinal >= MAX_VARIANTS || !used.add(ordinal)
                     || transform < -1 || transform >= transforms.size()
-                    || !IDENTIFIER.matcher(value.getKey()).matches()) {
+                    || !(IDENTIFIER.matcher(value.getKey()).matches()
+                         || value.getKey().startsWith("block=") && DisplayKeys.valid(value.getKey()))) {
                 throw new IOException("Invalid display variant index");
             }
             result.put(value.getKey(), new Variant(ordinal, transform < 0 ? null : transforms.get(transform)));

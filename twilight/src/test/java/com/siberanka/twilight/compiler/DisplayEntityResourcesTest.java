@@ -83,14 +83,14 @@ class DisplayEntityResourcesTest {
             var matcher = java.util.regex.Pattern.compile("q\\.property\\('([^']+)'\\)").matcher(file);
             while (matcher.find()) properties.add(matcher.group(1));
         }
-        // One target pose, the context transform, timing, revision and the packed item/context: within Bedrock's 32.
-        assertEquals(27, properties.size(), properties.toString());
+        // One target pose, the context transform, timing, revision, the packed item/context and the style: within Bedrock's 32.
+        assertEquals(28, properties.size(), properties.toString());
         assertTrue(entity.contains("v.rev=-1"), "pre_animation must not read an uninitialized revision variable");
         JsonObject pose = json(files, "animations/twilight_display.json").getAsJsonObject("animations")
                 .getAsJsonObject("animation.twilight.display_pose").getAsJsonObject("bones");
         assertEquals(180, pose.getAsJsonObject("item_flip").getAsJsonArray("rotation").get(1).getAsInt());
-        assertEquals(0, pose.getAsJsonObject("yaw").getAsJsonArray("rotation").get(1).getAsInt(),
-                "The actor already applies body yaw; the mesh must not apply it a second time");
+        assertTrue(pose.getAsJsonObject("yaw").getAsJsonArray("rotation").get(1).getAsString().endsWith(":0"),
+                "The actor already applies body yaw; a fixed display must not apply it a second time");
         assertFalse(json(files, "entity/twilight_display.entity.json").toString().contains("display.variant"),
                 "no per-item animations for items whose meshes share one transform");
     }
@@ -198,6 +198,7 @@ class DisplayEntityResourcesTest {
         properties.put("twilight:delay", delay);
         properties.put("twilight:revision", (double) revision);
         properties.put("twilight:appearance", 0.0);
+        properties.put("twilight:style", 0.0);
     }
 
     private static void frame(MolangMath math, String script, Map<String, Double> properties, double time) {

@@ -67,7 +67,7 @@ final class DisplayItems {
         return keys;
     }
 
-    private static String baseItem(int javaId) {
+    static String baseItem(int javaId) {
         try {
             var item = org.geysermc.geyser.registry.Registries.JAVA_ITEMS.get(javaId);
             return item == null ? null : item.javaIdentifier();

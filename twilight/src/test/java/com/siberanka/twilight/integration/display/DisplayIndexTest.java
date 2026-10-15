@@ -24,6 +24,37 @@ class DisplayIndexTest {
         return values.append(']').toString();
     }
 
+    /** Items with their own model and block states have sections of their own; flat ordinals are listed. */
+    @Test void readsOwnModelsBlockStatesAndFlatVariants() throws IOException {
+        DisplayIndex index = DisplayIndex.parse("""
+                {"format":2,"parts":64,"variants":{},"models":{},"vanilla":{"minecraft:apple":[3,-1]},
+                 "blocks":{"block=minecraft:oak_stairs[facing=east,half=bottom]":[4,-1]},"flat":[3],"transforms":[]}
+                """);
+        assertEquals(3, index.vanilla().get("minecraft:apple").ordinal());
+        assertEquals(4, index.blocks().get("block=minecraft:oak_stairs[facing=east,half=bottom]").ordinal());
+        assertTrue(index.flat().contains(3));
+        assertFalse(index.isEmpty());
+        assertThrows(IOException.class, () -> DisplayIndex.parse("""
+                {"format":2,"variants":{},"blocks":{"block=Bad Key":[1,-1]},"transforms":[]}
+                """));
+        assertThrows(IOException.class, () -> DisplayIndex.parse("""
+                {"format":2,"variants":{"a:b":[1,-1]},"flat":[9],"transforms":[]}
+                """), "a flat ordinal must name a variant");
+    }
+
+    /** Block keys sort their properties, so Java's and Geyser's notations give one key. */
+    @Test void blockKeysSortTheirProperties() {
+        String key = DisplayKeys.block("minecraft:oak_stairs[waterlogged=false,facing=east,half=bottom,shape=straight]");
+        assertEquals("block=minecraft:oak_stairs[facing=east,half=bottom,shape=straight,waterlogged=false]", key);
+        assertTrue(DisplayKeys.valid(key));
+        assertEquals("block=minecraft:stone", DisplayKeys.block("stone"));
+        assertEquals("east", DisplayKeys.blockProperties(key).get("facing"));
+        assertEquals("minecraft:oak_stairs", DisplayKeys.blockId(key));
+        assertTrue(DisplayKeys.valid(DisplayKeys.item("minecraft:apple")));
+        assertFalse(DisplayKeys.valid("block=minecraft:x[a=b"));
+        assertFalse(DisplayKeys.custom("item=minecraft:apple"));
+    }
+
     @Test void readsItemsModelsAndTheirTransforms() throws IOException {
         DisplayIndex index = DisplayIndex.parse("""
                 {"format":2,"parts":64,"variants":{"twilight:chair":[0,0],"twilight:lamp":[1,-1]},

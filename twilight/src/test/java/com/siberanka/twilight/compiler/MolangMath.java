@@ -156,6 +156,10 @@ final class MolangMath {
                 case "math.mod" -> a % args.get(1);
                 case "math.floor" -> Math.floor(a);
                 case "math.lerp" -> a + (args.get(1) - a) * args.get(2);
+                case "math.pow" -> Math.pow(a, args.get(1));
+                case "math.cos" -> Math.cos(Math.toRadians(a));
+                case "math.random" -> a + (args.get(1) - a) * 0.5;
+                case "q.camera_rotation" -> variables.getOrDefault("q.camera_rotation" + (int) a, 0.0);
                 default -> throw new IllegalArgumentException("Unknown function " + name);
             };
         }

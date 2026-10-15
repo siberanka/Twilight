@@ -102,6 +102,18 @@ public final class BedrockPackCompiler {
         this.displayedItems = keys == null ? null : Set.copyOf(keys);
         return this;
     }
+
+    /** Items with their own model ({@code item=}) and block states ({@code block=}) seen in displays. */
+    private Set<String> displayedOwn = Set.of();
+
+    /**
+     * Displays of items without custom data and block displays, seen on this server or reported by twilight-proxy:
+     * they get display variants of the item's own model and of the block state's model.
+     */
+    public BedrockPackCompiler withDisplayedOwnModels(Set<String> keys) {
+        this.displayedOwn = keys == null ? Set.of() : Set.copyOf(keys);
+        return this;
+    }
     private boolean pocketJavaLayout = true;
     private boolean customBlocks = true;
 
@@ -153,6 +165,7 @@ public final class BedrockPackCompiler {
         List<String> problems = new ArrayList<>();
         List<String> notices = new ArrayList<>();
         DisplayEntityResources displays = new DisplayEntityResources();
+        DisplayModels displayModels = new DisplayModels(resources, vanillaAssets, resolver);
         int converted = 0, threeDimensional = 0, displayOnly = 0;
         // Java item model -> Bedrock item: an item drawn with a custom block's model places that block.
         Map<String, String> itemModels = new LinkedHashMap<>();
@@ -242,12 +255,19 @@ public final class BedrockPackCompiler {
                             jsonBytes(animations(safe, model)));
                     packFiles.put("attachables/" + safe + ".json",
                             jsonBytes(attachable(identifier, safe, texturePath)));
-                    if (itemDisplays && displayed(candidate, displayedItems)) displays.add(identifier, geometry(safe, model, atlas, bounds), packFiles.get(texturePath + ".png"),
-                            model.renderParts().stream().map(ResolvedJavaModel::display).toList());
+                    if (itemDisplays && model.isThreeDimensional() && displayed(candidate, displayedItems)) {
+                        displays.add(identifier, geometry(safe, model, atlas, bounds), packFiles.get(texturePath + ".png"),
+                                model.renderParts().stream().map(ResolvedJavaModel::display).toList());
+                    } else if (itemDisplays && displayedFlat(candidate, displayedItems)) {
+                        flatDisplay(displayModels, identifier, model, displays, candidate, notices);
+                    }
                     if (model.isThreeDimensional()) threeDimensional++;
                 } else {
                     icon = TextureSet.png(TextureSet.layeredIcon(resources, layers, vanillaAssets));
                     packFiles.put(texturePath + ".png", icon);
+                    if (itemDisplays && displayedFlat(candidate, displayedItems)) {
+                        flatDisplay(displayModels, identifier, model, displays, candidate, notices);
+                    }
                     if (nativeWeapon != null) {
                         List<String> framePaths = new ArrayList<>();
                         for (int frame = 0; frame < nativeWeapon.frames().size(); frame++) {
@@ -285,6 +305,16 @@ public final class BedrockPackCompiler {
         }
         TextureSet.MISSING_FILES.remove();
 
+        if (itemDisplays) for (String key : new java.util.TreeSet<>(displayedOwn)) {
+            try {
+                if (key.startsWith("item=")) displayModels.addItem(key.substring(5), displays, notices);
+                else if (key.startsWith("block=")) displayModels.addBlock(key, displays, notices);
+            } catch (JavaModelResolver.MissingModelException missing) {
+                notices.add("display " + key + ": " + missing.getMessage() + "; Java draws its missing model, Bedrock shows nothing");
+            } catch (IOException | RuntimeException failure) {
+                notices.add("display " + key + ": " + failure.getMessage() + "; it shows nothing on Bedrock");
+            }
+        }
         displays.finish(packFiles);
         CustomBlockCompiler.Result blocks = new CustomBlockCompiler.Result(0, 0, null);
         if (customBlocks) {
@@ -580,6 +610,23 @@ public final class BedrockPackCompiler {
      * A bone of a ModelEngine or BetterModel model: an item whose {@code item_model} only item displays show (the
      * plugins never hand it to players). With display models it needs no Bedrock item of its own.
      */
+    /** A custom item Java draws flat gets its extruded display model only when a display named it (or with {@code all}). */
+    static boolean displayedFlat(ItemCandidate candidate, Set<String> shown) {
+        if (shown == null) return true;
+        for (String key : displayKeys(candidate)) if (shown.contains(key)) return true;
+        return false;
+    }
+
+    private static void flatDisplay(DisplayModels models, String identifier, ResolvedJavaModel model,
+                                    DisplayEntityResources displays, ItemCandidate candidate, List<String> notices) {
+        try {
+            models.addFlatItem(identifier, model, displays);
+        } catch (IOException | RuntimeException failure) {
+            notices.add(candidate.baseItem() + " -> " + candidate.visualModels() + ": no display model ("
+                    + failure.getMessage() + "); item displays of it show nothing on Bedrock");
+        }
+    }
+
     static boolean displayed(ItemCandidate candidate, Set<String> shown) {
         if (shown == null) return true;
         List<String> keys = displayKeys(candidate);
@@ -736,6 +783,16 @@ public final class BedrockPackCompiler {
         JsonArray geometries = new JsonArray(); geometries.add(geometry);
         JsonObject root = new JsonObject(); root.addProperty("format_version", "1.21.0"); root.add("minecraft:geometry", geometries);
         return root;
+    }
+
+    /** The geometry of a model for its display variant (see {@link DisplayEntityResources}). */
+    static JsonObject displayGeometry(String safe, ResolvedJavaModel model, TextureSet atlas) throws IOException {
+        return geometry(safe, model, atlas, geometryBounds(model));
+    }
+
+    /** Every texture a model's faces draw. */
+    static Set<String> modelTextures(ResolvedJavaModel model) throws IOException {
+        return usedTextures(model);
     }
 
     static double[] defaultFaceUv(String face, double[] from, double[] to) {

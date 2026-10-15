@@ -31,20 +31,38 @@ final class DisplayEntityResources {
     /** Java ItemDisplayContext network ordinals, including NONE. */
     static final String[] CONTEXTS = {"none", "thirdperson_lefthand", "thirdperson_righthand", "firstperson_lefthand",
             "firstperson_righthand", "head", "gui", "ground", "fixed"};
-    private static final List<String> CHAIN = List.of("yaw", "pitch", "translation", "lz", "ly", "lx", "scale",
+    private static final List<String> CHAIN = List.of("drop", "yaw", "pitch", "translation", "lz", "ly", "lx", "scale",
             "rz", "ry", "rx", "item_flip");
     private static final List<String> CONTEXT_CHAIN = List.of("ctx_t", "ctx_x", "ctx_y", "ctx_z", "ctx_s");
     private static final Gson JSON = new GsonBuilder().disableHtmlEscaping().create();
 
     private final List<Variant> variants = new ArrayList<>();
-    private final Set<String> identifiers = new HashSet<>();
-    private final Set<String> models = new HashSet<>();
+    private final Map<Section, Set<String>> keys = new EnumMap<>(Section.class);
+
+    /** Where the server looks a variant up (see the index sections). */
+    enum Section {
+        /** Custom items by the Bedrock item Geyser maps them to. */
+        ITEM("variants"),
+        /** Model bones by their Java item model. */
+        MODEL("models"),
+        /** Items with their own model, by Java item identifier. */
+        VANILLA("vanilla"),
+        /** Block states of block displays, by block key. */
+        BLOCK("blocks");
+
+        final String json;
+
+        Section(String json) {
+            this.json = json;
+        }
+    }
 
     /**
-     * One item: its key (a Bedrock item identifier, or with {@code model} its Java item model), its compact
-     * geometry, its texture and the display transforms of its meshes.
+     * One item or block: its key, its compact geometry, its texture, the display transforms of its meshes and whether
+     * Java draws it flat (Bedrock then draws it as a dropped item itself).
      */
-    private record Variant(String identifier, boolean model, byte[] geometry, byte[] texture, List<JsonObject> displays) {}
+    private record Variant(String identifier, Section section, byte[] geometry, byte[] texture, List<JsonObject> displays,
+                           boolean flat) {}
 
     void add(String identifier, JsonObject itemGeometry, byte[] texturePng, JsonObject display) {
         add(identifier, itemGeometry, texturePng, Collections.singletonList(display));
@@ -52,8 +70,7 @@ final class DisplayEntityResources {
 
     /** An item Geyser maps to a Bedrock item: the server finds its variant by the Bedrock identifier. */
     void add(String identifier, JsonObject itemGeometry, byte[] texturePng, List<JsonObject> displays) {
-        if (!identifiers.add(identifier)) return;
-        add(identifier, false, itemGeometry, texturePng, displays);
+        add(Section.ITEM, identifier, itemGeometry, texturePng, displays, false);
     }
 
     /**
@@ -61,17 +78,21 @@ final class DisplayEntityResources {
      * server finds its variant by the stack's {@code item_model} component.
      */
     void addModel(String itemModel, JsonObject itemGeometry, byte[] texturePng, List<JsonObject> displays) {
-        if (!models.add(itemModel)) return;
-        add(itemModel, true, itemGeometry, texturePng, displays);
+        add(Section.MODEL, itemModel, itemGeometry, texturePng, displays, false);
     }
 
-    private void add(String key, boolean model, JsonObject itemGeometry, byte[] texturePng, List<JsonObject> displays) {
+    boolean contains(Section section, String key) {
+        return keys.getOrDefault(section, Set.of()).contains(key);
+    }
+
+    void add(Section section, String key, JsonObject itemGeometry, byte[] texturePng, List<JsonObject> displays, boolean flat) {
+        if (!keys.computeIfAbsent(section, ignored -> new HashSet<>()).add(key)) return;
         JsonArray meshes = body(itemGeometry).getAsJsonArray("bones");
         if (meshes.size() != displays.size()) throw new IllegalArgumentException("Composite mesh/pose count mismatch");
         List<JsonObject> copies = new ArrayList<>();
         for (JsonObject display : displays) copies.add(display == null ? new JsonObject() : display.deepCopy());
-        variants.add(new Variant(key, model, JSON.toJson(itemGeometry).getBytes(StandardCharsets.UTF_8), texturePng,
-                List.copyOf(copies)));
+        variants.add(new Variant(key, section, JSON.toJson(itemGeometry).getBytes(StandardCharsets.UTF_8), texturePng,
+                List.copyOf(copies), flat));
     }
 
     int size() {
@@ -84,7 +105,9 @@ final class DisplayEntityResources {
         Map<String, List<Variant>> byTexture = new LinkedHashMap<>();
         for (Variant variant : variants) byTexture.computeIfAbsent(digest(variant.texture), key -> new ArrayList<>()).add(variant);
 
-        JsonObject indexVariants = new JsonObject(), indexModels = new JsonObject();
+        Map<Section, JsonObject> sections = new EnumMap<>(Section.class);
+        for (Section section : Section.values()) sections.put(section, new JsonObject());
+        JsonArray flat = new JsonArray();
         JsonArray transforms = new JsonArray();
         Map<String, Integer> transformIds = new HashMap<>();
         List<Sheet> sheets = new ArrayList<>();
@@ -103,7 +126,8 @@ final class DisplayEntityResources {
                 JsonArray entry = new JsonArray();
                 entry.add(ordinal);
                 entry.add(sharedTransform(variant, transforms, transformIds));
-                (variant.model ? indexModels : indexVariants).add(variant.identifier, entry);
+                sections.get(variant.section).add(variant.identifier, entry);
+                if (variant.flat) flat.add(ordinal);
             }
         }
         if (!sheet.parts.isEmpty()) sheets.add(sheet);
@@ -139,8 +163,10 @@ final class DisplayEntityResources {
         JsonObject index = new JsonObject();
         index.addProperty("format", 2);
         index.addProperty("parts", PARTS);
-        index.add("variants", indexVariants);
-        index.add("models", indexModels);
+        for (Section section : Section.values()) {
+            if (section.ordinal() < 2 || !sections.get(section).isEmpty()) index.add(section.json, sections.get(section));
+        }
+        if (!flat.isEmpty()) index.add("flat", flat);
         index.add("transforms", transforms);
         files.put(INDEX, jsonBytes(index));
         writeEntity(files, sheets.size(), geometries, textures, animations, animate);
@@ -321,7 +347,7 @@ final class DisplayEntityResources {
                                 uv.set(1, new JsonPrimitive(uv.get(1).getAsDouble() + offset[1]));
                             }
                         }
-                        cubes.add(cube);
+                        cubes.add(mirrored(cube));
                     }
                     out.add("cubes", cubes);
                     bones.add(out);
@@ -345,6 +371,25 @@ final class DisplayEntityResources {
             root.add("minecraft:geometry", list);
             return root;
         }
+    }
+
+    /**
+     * The item geometry's cube with its east and west faces exchanged. Inside the display entity's bone chain the
+     * boxes sit where Java draws them, but a box's east texture appeared on its west side and the reverse (a
+     * crafting table's front showed on the wrong side, a furnace facing east looked west; measured 15 October 2026
+     * against Java), so the display mesh gives each side the other's texture.
+     */
+    static JsonObject mirrored(JsonObject cube) {
+        JsonObject result = cube.deepCopy();
+        if (result.has("uv") && result.get("uv").isJsonObject()) {
+            JsonObject faces = result.getAsJsonObject("uv"), swapped = new JsonObject();
+            for (Map.Entry<String, JsonElement> face : faces.entrySet()) {
+                String name = switch (face.getKey()) { case "east" -> "west"; case "west" -> "east"; default -> face.getKey(); };
+                swapped.add(name, face.getValue());
+            }
+            result.add("uv", swapped);
+        }
+        return result;
     }
 
     private static boolean sharedTransformDiffers(List<JsonObject> displays) {
@@ -400,7 +445,9 @@ final class DisplayEntityResources {
         animate.add("pose");
         JsonObject scripts = new JsonObject();
         scripts.add("animate", animate);
-        StringBuilder initialize = new StringBuilder("v.rev=-1;v.init=0;v.start=0;v.sec=0;v.del=0;v.p=1;v.var=-1;v.part=-1;");
+        // A dropped item's bob and spin start at a random phase, as Java's ItemEntity does on the client.
+        StringBuilder initialize = new StringBuilder("v.rev=-1;v.init=0;v.start=0;v.sec=0;v.del=0;v.p=1;v.var=-1;v.part=-1;"
+                + "v.phase=math.random(0,6.2831853);v.bb=0;v.drop=0;v.light=-1;v.br=1;");
         double[] identity = DisplayPoseValues.IDENTITY;
         for (int i = 0; i < identity.length; i++) {
             initialize.append("v.a").append(i).append('=').append(number(identity[i])).append(';');
@@ -410,7 +457,11 @@ final class DisplayEntityResources {
         scripts.add("initialize", strings(initialize.toString()));
         scripts.add("pre_animation", strings(preAnimation().toArray(String[]::new)));
         description.add("scripts", scripts);
-        description.add("render_controllers", strings("controller.render.twilight.display"));
+        // A brightness override replaces the world's light at the display (Java's lightmap at that light level).
+        JsonArray controllers = new JsonArray();
+        controllers.add(stringProperty("controller.render.twilight.display", "math.floor(q.property('twilight:style')/8)==0"));
+        controllers.add(stringProperty("controller.render.twilight.display_lit", "math.floor(q.property('twilight:style')/8)>0"));
+        description.add("render_controllers", controllers);
         files.put("entity/twilight_display.entity.json",
                 jsonBytes(property("minecraft:client_entity", property("description", description), "1.10.0")));
 
@@ -437,14 +488,34 @@ final class DisplayEntityResources {
         visibility.add(hidden);
         for (int part = 0; part < PARTS; part++) visibility.add(stringProperty("twp" + part + "_*", "v.part==" + part));
         controller.add("part_visibility", visibility);
-        files.put("render_controllers/twilight_display.json", jsonBytes(property("render_controllers",
-                property("controller.render.twilight.display", controller), "1.10.0")));
+        JsonObject lit = controller.deepCopy();
+        lit.addProperty("ignore_lighting", true);
+        JsonObject overlay = new JsonObject();
+        overlay.addProperty("r", 0);
+        overlay.addProperty("g", 0);
+        overlay.addProperty("b", 0);
+        overlay.addProperty("a", "1-v.br");
+        lit.add("overlay_color", overlay);
+        JsonObject controllerFile = new JsonObject();
+        controllerFile.add("controller.render.twilight.display", controller);
+        controllerFile.add("controller.render.twilight.display_lit", lit);
+        files.put("render_controllers/twilight_display.json", jsonBytes(property("render_controllers", controllerFile, "1.10.0")));
 
         JsonObject bones = new JsonObject();
+        // A dropped item bobs and spins (ItemEntityRenderer): up by the bob plus a quarter of its ground scale.
+        JsonObject drop = new JsonObject();
+        drop.add("position", strings("0", "v.drop?(math.sin(57.29578*((q.life_time*20)/10+v.phase))*0.1+0.1+0.25*"
+                + contextProperty(7) + ")*16:0", "0"));
+        drop.add("rotation", strings("0", "v.drop?-57.29578*((q.life_time*20)/20+v.phase):0", "0"));
+        bones.add("drop", drop);
         // Bedrock already rotates the actor by its body yaw. Applying it again
         // here rotates the entire display twice (hidden by zero-yaw fixtures).
-        bones.add("yaw", property("rotation", array(0, 0, 0)));
-        bones.add("pitch", property("rotation", strings("q.target_x_rotation", "0", "0")));
+        // Billboards (DisplayRenderer.calculateOrientation) face the camera's yaw (vertical, center) and pitch
+        // (horizontal, center) instead of the entity's.
+        bones.add("yaw", property("rotation", strings("0",
+                "(v.bb==1||v.bb==3)?q.camera_rotation(1)-q.body_y_rotation-180:0", "0")));
+        bones.add("pitch", property("rotation", strings(
+                "v.drop?0:((v.bb==2||v.bb==3)?-q.camera_rotation(0):q.target_x_rotation)", "0", "0")));
         bones.add("translation", property("position", strings("v.t0*16", "v.t1*16", "-v.t2*16")));
         // Java's ItemDisplayRenderer adds Y=180 AFTER the display TRSR and BEFORE ItemTransform.
         bones.add("item_flip", property("rotation", array(0, 180, 0)));
@@ -480,6 +551,11 @@ final class DisplayEntityResources {
      */
     static List<String> preAnimation() {
         List<String> script = new ArrayList<>();
+        // Style: billboard (2 bits), dropped item (1 bit), brightness override + 1 (block * 16 + sky).
+        script.add("v.st=q.property('twilight:style');v.bb=math.mod(v.st,4);v.drop=math.mod(math.floor(v.st/4),2);"
+                + "v.light=math.floor(v.st/8)-1;"
+                + "v.light>=0?{v.lv=math.max(math.floor(v.light/16),math.mod(v.light,16))/15;v.lv=v.lv/(4-3*v.lv);"
+                + "v.br=0.03+0.96*((v.lv+1-math.pow(1-v.lv,4))/2);};");
         script.add("v.changed=v.rev!=q.property('twilight:revision');"
                 + "v.posed=v.changed&&math.mod(q.property('twilight:revision'),2)==1;"
                 + "v.cap=v.posed&&v.init>0&&q.property('twilight:seconds')>0;");

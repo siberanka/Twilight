@@ -431,6 +431,25 @@ well.
   models then; it remembers that in `proxy-features.properties`. An older twilight-proxy does not say
   so, and the backend then leaves the models out as before.
 
+What displays and holograms show (FancyHolograms, DecentHolograms, furniture plugins, display builds; also
+when plugins send them only as packets):
+
+| Java | On Bedrock |
+|---|---|
+| Item display of a custom item | Its model, 3D or as Java's one-pixel extrusion of a flat sprite |
+| Item display of an item without custom data | The item's own model (from the server's packs or the vanilla client), tinted like Java (dyes, potions, grass) |
+| Block display | The block state's model, rotated as its block state file says (stairs, logs, fences, furnaces) and tinted like Java without a world (grass, leaves, redstone) |
+| Billboard (`fixed`, `vertical`, `horizontal`, `center`) | Faces the camera like Java |
+| Brightness override | The display ignores the world's light and is drawn at Java's light level |
+| Translation, rotations, scale, interpolation | As Java (see above) |
+| Dropped item (item entity) of a custom item with a 3D model | Its model in Java's ground pose, bobbing and spinning like Java; flat and vanilla items stay Bedrock's own dropped items |
+| Text display | Geyser's name tag (Bedrock has no scalable text entity) |
+| Glow outline, shadow, glow colour | Not drawn (no Bedrock counterpart for a model) |
+
+Items and block states get their models the same way custom items do: once a display shows them
+(`item=` and `block=` keys in `displayed-items.txt`), the next build adds them, whatever
+`item-display-variants` says. A dropped stack is drawn once, not as Java's pile of copies.
+
 ### Sources
 
 - **auto**: Twilight on the backend announces its exported pack when a player joins and after each
@@ -1349,6 +1368,25 @@ hareket eder. Eklentilerin yalnızca paket olarak gönderdiği görüntüler de 
   (sunucu paketini duyurduğunda veya bir oyuncu geldiğinde imzalı bir mesajla) ve modelleri o zaman derler;
   bunu `proxy-features.properties` içinde hatırlar. Daha eski bir twilight-proxy bunu söylemez; arka uç
   da modelleri önceki gibi dışarıda bırakır.
+
+Görüntülerin ve hologramların gösterdikleri (FancyHolograms, DecentHolograms, mobilya eklentileri, görüntü
+yapıları; eklentiler onları yalnızca paket olarak gönderdiğinde de):
+
+| Java | Bedrock'ta |
+|---|---|
+| Özel bir eşyanın eşya görüntüsü | Modeli; 3B ya da düz bir sprite için Java'nın bir piksellik kabartması olarak |
+| Özel verisi olmayan bir eşyanın eşya görüntüsü | Eşyanın kendi modeli (sunucunun paketlerinden veya vanilla istemciden), Java gibi renklendirilmiş (boyalar, iksirler, çimen) |
+| Blok görüntüsü | Blok durumunun modeli; blok durumu dosyasının dediği gibi döndürülmüş (merdivenler, kütükler, çitler, fırınlar) ve Java'nın dünyasız renkleriyle (çimen, yaprak, kızıltaş) |
+| Billboard (`fixed`, `vertical`, `horizontal`, `center`) | Java gibi kameraya döner |
+| Parlaklık geçersiz kılma | Görüntü dünyanın ışığını yok sayar ve Java'nın ışık seviyesinde çizilir |
+| Öteleme, döndürmeler, ölçek, ara geçiş | Java'daki gibi (yukarıya bakın) |
+| 3B modeli olan özel bir eşyanın düşen eşyası (eşya varlığı) | Java'nın yer pozunda modeli; Java gibi zıplayıp döner. Düz ve vanilla eşyalar Bedrock'un kendi düşen eşyaları olarak kalır |
+| Yazı görüntüsü | Geyser'ın ad etiketi (Bedrock'ta ölçeklenebilir bir yazı varlığı yoktur) |
+| Parlama çerçevesi, gölge, parlama rengi | Çizilmez (bir model için Bedrock karşılığı yok) |
+
+Eşyalar ve blok durumları modellerini özel eşyalar gibi alır: bir görüntü onları gösterdiğinde
+(`displayed-items.txt` içindeki `item=` ve `block=` anahtarları) sonraki derleme onları ekler;
+`item-display-variants` ne derse desin. Düşen bir yığın Java'daki kopya yığını olarak değil, bir kez çizilir.
 
 ##### Kaynaklar
 

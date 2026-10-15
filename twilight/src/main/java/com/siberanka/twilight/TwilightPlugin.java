@@ -247,9 +247,11 @@ public final class TwilightPlugin extends JavaPlugin {
      * delay gathers the items of a busy start or a newly loaded area into one build.
      */
     private void newDisplayedItems(java.util.List<String> keys) {
-        long count = keys.stream().filter(com.siberanka.twilight.integration.display.DisplayedItems::matters).count();
-        if (count == 0 || !displayVariantsSeen() || !itemDisplayModels()) return;
-        scheduleBuild(count + " item(s) newly seen in item displays", 1200L);
+        boolean seen = displayVariantsSeen();
+        long count = keys.stream().filter(com.siberanka.twilight.integration.display.DisplayedItems::matters)
+                .filter(key -> seen || com.siberanka.twilight.integration.display.DisplayedItems.own(key)).count();
+        if (count == 0 || !itemDisplayModels()) return;
+        scheduleBuild(count + " item(s) or block(s) newly seen in displays", 1200L);
     }
 
     /**
@@ -331,6 +333,9 @@ public final class TwilightPlugin extends JavaPlugin {
                 : displayedItems == null ? null : displayedItems.keys().stream()
                         .filter(com.siberanka.twilight.integration.display.DisplayedItems::matters)
                         .collect(java.util.stream.Collectors.toUnmodifiableSet());
+        java.util.Set<String> shownOwn = !displays || displayedItems == null ? java.util.Set.of()
+                : displayedItems.keys().stream().filter(com.siberanka.twilight.integration.display.DisplayedItems::own)
+                        .collect(java.util.stream.Collectors.toUnmodifiableSet());
         List<CustomItemDescriptor> liveItems = modelBones(runtimeCollection.items(), displays);
         String minecraftVersion = Bukkit.getMinecraftVersion();
         operationLog.info("runtime-items", liveItems.size());
@@ -360,7 +365,8 @@ public final class TwilightPlugin extends JavaPlugin {
                 // Build options that change the pack without changing its sources.
                 String inputFingerprint = SourceFingerprint.compute(sources, liveItems, config) + world.fingerprint()
                         + "|displays=" + displays + "|shown=" + (shownItems == null ? "all"
-                                : Integer.toHexString(new java.util.TreeSet<>(shownItems).hashCode())) + "|pocket=" + pocketContainerLayout()
+                                : Integer.toHexString(new java.util.TreeSet<>(shownItems).hashCode()))
+                        + "|own=" + Integer.toHexString(new java.util.TreeSet<>(shownOwn).hashCode()) + "|pocket=" + pocketContainerLayout()
                         + "|blocks=" + getConfig().getBoolean("geyser.custom-blocks", true)
                         + "|cell=" + getConfig().getInt("ui.max-glyph-cell", 512);
                 operationLog.info("input-fingerprint", inputFingerprint);
@@ -382,7 +388,7 @@ public final class TwilightPlugin extends JavaPlugin {
                     try {
                         build = new BedrockPackCompiler(getDataFolder().toPath(), config, minecraftVersion)
                                 .withServerBiomes(world.biomes(), world.current())
-                                .withNameplatePlugin(world.nameplates()).withItemDisplays(displays).withDisplayedItems(shownItems)
+                                .withNameplatePlugin(world.nameplates()).withItemDisplays(displays).withDisplayedItems(shownItems).withDisplayedOwnModels(shownOwn)
                                 .withMaxGlyphCell(getConfig().getInt("ui.max-glyph-cell", 512))
                                 .withPocketContainerLayout(pocketContainerLayout())
                                 .withCustomBlocks(getConfig().getBoolean("geyser.custom-blocks", true))
@@ -395,7 +401,7 @@ public final class TwilightPlugin extends JavaPlugin {
                                 + "stay strict. Details: " + operationLog.path());
                         build = new BedrockPackCompiler(getDataFolder().toPath(), config.withStrict(false), minecraftVersion)
                                 .withServerBiomes(world.biomes(), world.current())
-                                .withNameplatePlugin(world.nameplates()).withItemDisplays(displays).withDisplayedItems(shownItems)
+                                .withNameplatePlugin(world.nameplates()).withItemDisplays(displays).withDisplayedItems(shownItems).withDisplayedOwnModels(shownOwn)
                                 .withMaxGlyphCell(getConfig().getInt("ui.max-glyph-cell", 512))
                                 .withPocketContainerLayout(pocketContainerLayout())
                                 .withCustomBlocks(getConfig().getBoolean("geyser.custom-blocks", true))

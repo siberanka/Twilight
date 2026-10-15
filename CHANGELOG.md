@@ -4,6 +4,18 @@
 
 All notable changes in Twilight are documented here.
 
+## 1.0.0-beta.2 - unreleased
+
+- Displays and holograms (FancyHolograms, DecentHolograms, furniture plugins, display builds), also when sent
+  only as packets: block displays show the block state's model, rotated and tinted like Java; item displays show
+  every item, flat ones as Java's one-pixel extrusion and items without custom data with their own model; the
+  billboard modes face the camera and the brightness override sets the light as on Java. Each new item or block
+  state is learned when a display first shows it and added by the next build.
+- Dropped items of custom items with a 3D model lie on the ground with their model, bobbing and spinning like
+  Java; other dropped items stay Bedrock's own.
+- Display models no longer show a box's east texture on its west side (an item display or block display of a
+  crafting table or a furnace looked mirrored).
+
 ## 1.0.0-beta.1 - 2026-10-15
 
 First public beta of Twilight and twilight-proxy.
@@ -38,6 +50,19 @@ First public beta of Twilight and twilight-proxy.
 ### Değişiklik günlüğü
 
 Twilight'taki tüm önemli değişiklikler burada belgelenir.
+
+#### 1.0.0-beta.2 - yayımlanmadı
+
+- Görüntüler ve hologramlar (FancyHolograms, DecentHolograms, mobilya eklentileri, görüntü yapıları), yalnızca
+  paket olarak gönderildiklerinde de: blok görüntüleri blok durumunun modelini Java gibi döndürülmüş ve
+  renklendirilmiş gösterir; eşya görüntüleri her eşyayı gösterir, düz olanları Java'nın bir piksellik kabartması
+  olarak, özel verisi olmayanları kendi modelleriyle; billboard modları kameraya döner ve parlaklık geçersiz
+  kılma ışığı Java'daki gibi ayarlar. Her yeni eşya veya blok durumu bir görüntü onu ilk gösterdiğinde öğrenilir
+  ve sonraki derlemede eklenir.
+- 3B modeli olan özel eşyaların düşen eşyaları yerde modelleriyle durur, Java gibi zıplayıp döner; diğer düşen
+  eşyalar Bedrock'un kendi eşyaları olarak kalır.
+- Görüntü modelleri bir kutunun doğu dokusunu artık batı yüzünde göstermez (bir çalışma masası veya fırın eşya ya
+  da blok görüntüsü ayna görüntüsü gibi görünüyordu).
 
 #### 1.0.0-beta.1 - 2026-10-15
 

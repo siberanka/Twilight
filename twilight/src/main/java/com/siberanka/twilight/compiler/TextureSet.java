@@ -97,7 +97,30 @@ final class TextureSet {
         return loadFrame(resources, sprite, vanillaAssets);
     }
 
+    /**
+     * A sprite multiplied by a Java tint colour (grass, foliage, dyes, potions: Java multiplies the vertex colour
+     * of faces with a tint index). Bedrock draws the pack's texture as is, so the colour is baked into a copy.
+     */
+    static String tinted(int argb, String sprite) {
+        return argb == -1 ? sprite : TINT + String.format("%08x", argb) + "#" + sprite;
+    }
+
+    private static final String TINT = "tint#";
+
     private static BufferedImage loadFrame(ResourceIndex resources, String sprite, VanillaAssetCache vanillaAssets) throws IOException {
+        if (sprite.startsWith(TINT)) {
+            int split = sprite.indexOf('#', TINT.length());
+            int argb = (int) Long.parseLong(sprite.substring(TINT.length(), split), 16);
+            BufferedImage base = loadFrame(resources, sprite.substring(split + 1), vanillaAssets);
+            BufferedImage tinted = new BufferedImage(base.getWidth(), base.getHeight(), BufferedImage.TYPE_INT_ARGB);
+            int ta = argb >>> 24, tr = argb >> 16 & 255, tg = argb >> 8 & 255, tb = argb & 255;
+            for (int y = 0; y < base.getHeight(); y++) for (int x = 0; x < base.getWidth(); x++) {
+                int pixel = base.getRGB(x, y);
+                tinted.setRGB(x, y, ((pixel >>> 24) * ta / 255) << 24 | ((pixel >> 16 & 255) * tr / 255) << 16
+                        | ((pixel >> 8 & 255) * tg / 255) << 8 | (pixel & 255) * tb / 255);
+            }
+            return tinted;
+        }
         if (sprite.equals(MISSING)) return missingTexture();
         String identifier = spriteTexture(resources, sprite);
         String path = JavaModelResolver.texturePath(identifier);

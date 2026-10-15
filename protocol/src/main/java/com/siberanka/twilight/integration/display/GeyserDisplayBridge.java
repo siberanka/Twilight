@@ -55,9 +55,12 @@ public final class GeyserDisplayBridge implements AutoCloseable {
     final GeyserFloatEntityProperty[] context = new GeyserFloatEntityProperty[9];
     GeyserFloatEntityProperty seconds, delay;
     GeyserIntEntityProperty revision, appearance;
+    /** Billboard, dropped-item mode and brightness override, see {@link TwilightItemDisplay#style}. */
+    GeyserIntEntityProperty style;
     private final EventRegistrar registrar;
-    private VanillaEntityType<TwilightItemDisplay> definition;
+    private VanillaEntityType<TwilightItemDisplay> definition, blockDefinition;
     private VanillaEntityType<TwilightAreaEffectCloud> cloudDefinition;
+    private VanillaEntityType<TwilightDroppedItem> droppedDefinition;
 
     /**
      * A backend's own Geyser: the variants of the deployed pack. With {@code learn} the display entity is
@@ -83,31 +86,20 @@ public final class GeyserDisplayBridge implements AutoCloseable {
             }
             CustomEntityDefinition custom = CustomEntityDefinition.of(ID);
             event.register(custom);
-            var builder = VanillaEntityType.<TwilightItemDisplay>builder(spawn -> new TwilightItemDisplay(spawn, this))
-                    .type(EntityType.ITEM_DISPLAY).bedrockDefinition((BedrockEntityDefinition) custom).heightAndWidth(0);
-            // Java DisplayRenderer submits its mesh even with the base entity's
-            // invisible flag set. Model providers use that flag on visible bones.
-            // Living-entity flags (invisibility, swimming, fire, etc.) must not
-            // be forwarded to Bedrock's custom display mesh.
-            builder.addTranslator(null);
-            // Base entity metadata 1..7 does not affect the display mesh.
-            for (int i = 1; i < 8; i++) builder.addTranslator(null);
-            builder.addTranslator(MetadataTypes.INT, (entity, data) -> entity.delay(data.getValue()));
-            builder.addTranslator(MetadataTypes.INT, (entity, data) -> entity.duration(data.getValue()));
-            builder.addTranslator(null); // Position interpolation is handled by Geyser movement packets.
-            builder.addTranslator(MetadataTypes.VECTOR3, (entity, data) -> entity.vector(0, data.getValue()));
-            builder.addTranslator(MetadataTypes.VECTOR3, (entity, data) -> entity.vector(3, data.getValue()));
-            builder.addTranslator(MetadataTypes.QUATERNION, (entity, data) -> entity.rotation(6, data.getValue()));
-            builder.addTranslator(MetadataTypes.QUATERNION, (entity, data) -> entity.rotation(10, data.getValue()));
-            builder.addTranslator(null); // Billboard constraints.
-            builder.addTranslator(null); // Brightness override.
-            builder.addTranslator(MetadataTypes.FLOAT, (entity, data) -> entity.viewRange(data.getValue()));
-            for (int i = 18; i <= 22; i++) builder.addTranslator(null);
+            var builder = displayBase(EntityType.ITEM_DISPLAY, (BedrockEntityDefinition) custom);
             builder.addTranslator(MetadataTypes.ITEM_STACK, (entity, data) -> entity.item(data.getValue()));
             builder.addTranslator(MetadataTypes.BYTE, (entity, data) -> entity.context(data.getValue()));
             definition = builder.build();
+            if (Registries.JAVA_ENTITY_TYPES.get(GeyserEntityType.ofVanilla(EntityType.BLOCK_DISPLAY)) == null) {
+                var blocks = displayBase(EntityType.BLOCK_DISPLAY, (BedrockEntityDefinition) custom);
+                blocks.addTranslator(MetadataTypes.BLOCK_STATE, (entity, data) -> entity.block(data.getValue()));
+                blockDefinition = blocks.build();
+            } else {
+                logger.warning("Block displays keep another translator: something else already owns block_display.");
+            }
             registerCloudAnchors(logger);
-            logger.info("Registered the item-display bridge: furniture and model bones show with the pack's models.");
+            registerDroppedItems(logger, (BedrockEntityDefinition) custom);
+            logger.info("Registered the display bridge: item and block displays, furniture and model bones show with the pack's models.");
         });
         com.siberanka.twilight.geyser.GeyserEvents.subscribe(registrar, GeyserDefineEntityPropertiesEvent.class, event -> {
             if (definition == null) return;
@@ -122,7 +114,53 @@ public final class GeyserDisplayBridge implements AutoCloseable {
             revision = event.registerIntegerProperty(ID, Identifier.of("twilight:revision"), 0, 1_000_000, 0);
             appearance = event.registerIntegerProperty(ID, Identifier.of("twilight:appearance"), -9, DisplayIndex.MAX_VARIANTS * 9 - 1, -9);
             delay = event.registerFloatProperty(ID, Identifier.of("twilight:delay"), -3600, 3600, 0f);
+            style = event.registerIntegerProperty(ID, Identifier.of("twilight:style"), 0, 4095, 0);
         });
+    }
+
+    /**
+     * The metadata shared by item and block displays (Display: indices 0..22). Java DisplayRenderer submits its mesh
+     * even with the base entity's invisible flag set, and model providers use that flag on visible bones, so living
+     * entity flags (invisibility, swimming, fire) are not forwarded to the mesh.
+     */
+    private VanillaEntityType.Builder<TwilightItemDisplay> displayBase(EntityType type, BedrockEntityDefinition custom) {
+        var builder = VanillaEntityType.<TwilightItemDisplay>builder(spawn -> new TwilightItemDisplay(spawn, this))
+                .type(type).bedrockDefinition(custom).heightAndWidth(0);
+        builder.addTranslator(null);
+        // Base entity metadata 1..7 does not affect the display mesh.
+        for (int i = 1; i < 8; i++) builder.addTranslator(null);
+        builder.addTranslator(MetadataTypes.INT, (entity, data) -> entity.delay(data.getValue()));
+        builder.addTranslator(MetadataTypes.INT, (entity, data) -> entity.duration(data.getValue()));
+        builder.addTranslator(null); // Position interpolation is handled by Geyser movement packets.
+        builder.addTranslator(MetadataTypes.VECTOR3, (entity, data) -> entity.vector(0, data.getValue()));
+        builder.addTranslator(MetadataTypes.VECTOR3, (entity, data) -> entity.vector(3, data.getValue()));
+        builder.addTranslator(MetadataTypes.QUATERNION, (entity, data) -> entity.rotation(6, data.getValue()));
+        builder.addTranslator(MetadataTypes.QUATERNION, (entity, data) -> entity.rotation(10, data.getValue()));
+        builder.addTranslator(MetadataTypes.BYTE, (entity, data) -> entity.billboard(data.getValue()));
+        builder.addTranslator(MetadataTypes.INT, (entity, data) -> entity.brightness(data.getValue()));
+        builder.addTranslator(MetadataTypes.FLOAT, (entity, data) -> entity.viewRange(data.getValue()));
+        // Shadow radius and strength, culling width and height, glow colour: no Bedrock counterpart on a mesh.
+        for (int i = 18; i <= 22; i++) builder.addTranslator(null);
+        return builder;
+    }
+
+    /** Java item entities: custom items with 3D models lie on the ground with their model, as on Java. */
+    private void registerDroppedItems(Logger logger, BedrockEntityDefinition custom) {
+        var original = VanillaEntities.ITEM;
+        var type = GeyserEntityType.ofVanilla(EntityType.ITEM);
+        if (Registries.JAVA_ENTITY_TYPES.get(type) != original
+                || Registries.JAVA_ENTITY_IDENTIFIERS.get("minecraft:item") != original) {
+            logger.warning("Dropped items keep another translator: something else already owns minecraft:item.");
+            return;
+        }
+        var replacement = VanillaEntityType.<TwilightDroppedItem>inherited(spawn -> new TwilightDroppedItem(spawn, this), original)
+                .type(EntityType.ITEM).bedrockDefinition(custom).build(false);
+        if (!Registries.JAVA_ENTITY_TYPES.get().replace(type, original, replacement)) return;
+        if (!Registries.JAVA_ENTITY_IDENTIFIERS.get().replace("minecraft:item", original, replacement)) {
+            Registries.JAVA_ENTITY_TYPES.get().replace(type, replacement, original);
+            return;
+        }
+        droppedDefinition = replacement;
     }
 
     private void registerCloudAnchors(Logger logger) {
@@ -186,6 +224,14 @@ public final class GeyserDisplayBridge implements AutoCloseable {
         if (definition != null) {
             Registries.JAVA_ENTITY_TYPES.get().remove(definition.type(), definition);
             Registries.JAVA_ENTITY_IDENTIFIERS.get().remove("minecraft:item_display", definition);
+        }
+        if (blockDefinition != null) {
+            Registries.JAVA_ENTITY_TYPES.get().remove(blockDefinition.type(), blockDefinition);
+            Registries.JAVA_ENTITY_IDENTIFIERS.get().remove("minecraft:block_display", blockDefinition);
+        }
+        if (droppedDefinition != null) {
+            Registries.JAVA_ENTITY_TYPES.get().replace(droppedDefinition.type(), droppedDefinition, VanillaEntities.ITEM);
+            Registries.JAVA_ENTITY_IDENTIFIERS.get().replace("minecraft:item", droppedDefinition, VanillaEntities.ITEM);
         }
     }
 }

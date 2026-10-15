@@ -3,7 +3,9 @@ package com.siberanka.twilight.integration.display;
 
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -32,14 +34,16 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 
 /**
- * The custom items this server shows in Java item displays: furniture, decorations, hologram items. A Bedrock
- * client builds the model of every display variant while it loads the pack (about a third of a millisecond per
- * cube on a desktop, several times that on phones), so a pack carries variants only for items that appear in
- * displays here, besides model bones, which only displays show.
+ * What this server shows in Java displays and as dropped items: furniture, decorations, hologram items and blocks.
+ * A Bedrock client builds the model of every display variant while it loads the pack (about a third of a
+ * millisecond per cube on a desktop, several times that on phones), so a pack carries variants only for what appears
+ * here, besides model bones, which only displays show.
  *
- * <p>Displays are read when their chunks load and shortly after they spawn; the keys are kept in
- * {@code displayed-items.txt}. A key is the base item with its custom model data, or the item model the stack
- * names. New keys are reported once, so that the next build includes them.
+ * <p>Item and block displays and dropped items are read when their chunks load and shortly after they spawn; the
+ * keys are kept in {@code displayed-items.txt}. A key is the base item with its custom model data, the item model the
+ * stack names, the item itself when it has neither ({@code item=}, displays only: Bedrock draws dropped items of
+ * their own model itself) or the block state of a block display ({@code block=}). New keys are reported once, so that
+ * the next build includes them.
  */
 public final class DisplayedItems implements Listener, AutoCloseable {
     /** Bounds the file and the work per build against content that spawns endless distinct items. */
@@ -84,12 +88,19 @@ public final class DisplayedItems implements Listener, AutoCloseable {
         return !key.startsWith("model=modelengine:") && !key.startsWith("model=bettermodel:");
     }
 
+    /** Whether a key names an item's own model or a block state (built whatever item-display-variants says). */
+    public static boolean own(String key) {
+        return key.startsWith("item=") || key.startsWith("block=");
+    }
+
     /** Displays already in loaded chunks (not on Folia, where each region reads its own as chunks load). */
     public void scanLoaded() {
         if (folia()) return;
         List<String> found = new ArrayList<>();
         for (World world : Bukkit.getWorlds()) {
-            for (ItemDisplay display : world.getEntitiesByClass(ItemDisplay.class)) found.addAll(keys(display.getItemStack()));
+            for (Entity entity : world.getEntitiesByClasses(ItemDisplay.class, BlockDisplay.class, Item.class)) {
+                found.addAll(keys(entity));
+            }
         }
         record(found);
     }
@@ -97,10 +108,39 @@ public final class DisplayedItems implements Listener, AutoCloseable {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onEntitiesLoad(EntitiesLoadEvent event) {
         List<String> found = new ArrayList<>();
-        for (Entity entity : event.getEntities()) {
-            if (entity instanceof ItemDisplay display) found.addAll(keys(display.getItemStack()));
-        }
+        for (Entity entity : event.getEntities()) found.addAll(keys(entity));
         record(found);
+    }
+
+    /** The keys of an item display's item, a block display's block or a dropped item's custom item. */
+    static List<String> keys(Entity entity) {
+        try {
+            if (entity instanceof ItemDisplay display) {
+                ItemStack stack = display.getItemStack();
+                List<String> keys = keys(stack);
+                if (keys.isEmpty() && stack != null && !stack.getType().isAir() && !itemModel(stack)) {
+                    String own = DisplayKeys.item(stack.getType().getKey().toString().toLowerCase(Locale.ROOT));
+                    if (DisplayKeys.valid(own)) keys.add(own);
+                }
+                return keys;
+            }
+            if (entity instanceof BlockDisplay display) {
+                String key = DisplayKeys.block(display.getBlock().getAsString());
+                return key != null && DisplayKeys.valid(key) && !key.equals("block=minecraft:air") ? List.of(key) : List.of();
+            }
+            if (entity instanceof Item item) return keys(item.getItemStack());
+        } catch (RuntimeException | LinkageError unreadable) {
+            // An entity a plugin left half set up: nothing to learn from it.
+        }
+        return List.of();
+    }
+
+    private static boolean itemModel(ItemStack stack) {
+        try {
+            return stack.hasItemMeta() && stack.getItemMeta().hasItemModel();
+        } catch (LinkageError | RuntimeException older) {
+            return false;
+        }
     }
 
     /**
@@ -120,19 +160,25 @@ public final class DisplayedItems implements Listener, AutoCloseable {
         Bukkit.getPluginManager().registerEvent(type, this, EventPriority.MONITOR, (listener, event) -> {
             if (!type.isInstance(event)) return;
             try {
-                if (getEntity.invoke(event) instanceof ItemDisplay display) later(display);
+                Object entity = getEntity.invoke(event);
+                if (entity instanceof ItemDisplay || entity instanceof BlockDisplay || entity instanceof Item) later((Entity) entity);
             } catch (ReflectiveOperationException | RuntimeException ignored) {
                 // Nothing to read.
             }
         }, plugin, true);
     }
 
-    private void later(ItemDisplay display) {
+    private void later(Entity entity) {
+        // Dropped vanilla items are by far the most common entity here and teach nothing.
+        if (entity instanceof Item item) {
+            ItemStack stack = item.getItemStack();
+            if (stack == null || !stack.hasItemMeta()) return;
+        }
         Runnable read = () -> {
-            if (display.isValid()) record(keys(display.getItemStack()));
+            if (entity.isValid()) record(keys(entity));
         };
         try {
-            display.getScheduler().runDelayed(plugin, task -> read.run(), null, 5L);
+            entity.getScheduler().runDelayed(plugin, task -> read.run(), null, 5L);
         } catch (LinkageError | RuntimeException spigot) {
             Bukkit.getScheduler().runTaskLater(plugin, read, 5L);
         }
