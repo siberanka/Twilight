@@ -1,0 +1,283 @@
+{
+  "developmentJarSha256": "ffa682351d2893e8b2bda5cb3c8d4acc52cd651267ce584cbd8768daf5e6fb5f",
+  "fullVisualAcceptance": false,
+  "pairs": [
+    {
+      "model": "pet_griffon_phoenix",
+      "provider": "bettermodel",
+      "pose": "idle",
+      "frozen": false,
+      "visualResult": "sampled facing corrected; full animation parity not accepted",
+      "java": {
+        "file": "bettermodel-pet_griffon_phoenix-idle-java.png",
+        "sha256": "5b8efc4dd03a9e0e696a76734b95442b685b2366b5b1c0829ec2c8e93449a1e7"
+      },
+      "bedrock": {
+        "file": "bettermodel-pet_griffon_phoenix-idle-bedrock.png",
+        "sha256": "1154930f197cd3925288945da2a5ba75b22876cdb73f95a2343d4f74ca3e8cd4"
+      }
+    },
+    {
+      "model": "pet_griffon_phoenix",
+      "provider": "bettermodel",
+      "pose": "interact",
+      "frozen": false,
+      "visualResult": "sampled facing corrected; full animation parity not accepted",
+      "java": {
+        "file": "bettermodel-pet_griffon_phoenix-interact-java.png",
+        "sha256": "f4de030e08ef1edcf13f9b8d3a81d60a7ae1cd4cf0cd69ff12187153f515775c"
+      },
+      "bedrock": {
+        "file": "bettermodel-pet_griffon_phoenix-interact-bedrock.png",
+        "sha256": "b6356bad8a7c21714674af2c259154882ec632c9a19f70cd6b2cc7b30ad1f316"
+      }
+    },
+    {
+      "model": "blacksmith_hm5_npc",
+      "provider": "bettermodel",
+      "pose": "idle",
+      "frozen": false,
+      "visualResult": "sampled facing corrected; full animation parity not accepted",
+      "java": {
+        "file": "bettermodel-blacksmith_hm5_npc-idle-java.png",
+        "sha256": "0deb2dcb52251755a4b4c8b76847bf4ebd4f821f05cf3f039422070a290cf051"
+      },
+      "bedrock": {
+        "file": "bettermodel-blacksmith_hm5_npc-idle-bedrock.png",
+        "sha256": "c7b6accd7a5abd9a591332ad8339f3c9ba46fd5f2bb68c637f36fcb82c003a0e"
+      }
+    },
+    {
+      "model": "blacksmith_hm5_npc",
+      "provider": "bettermodel",
+      "pose": "wave",
+      "frozen": false,
+      "visualResult": "sampled facing corrected; full animation parity not accepted",
+      "java": {
+        "file": "bettermodel-blacksmith_hm5_npc-wave-java.png",
+        "sha256": "17146e113938ebb2669ea0170240482f6ec845973ad45f6d8fbbb8d8d56c1a60"
+      },
+      "bedrock": {
+        "file": "bettermodel-blacksmith_hm5_npc-wave-bedrock.png",
+        "sha256": "7b69fdfd2341d5523a0c99f8a1fc45ecd7791d6ebfe6ec7b73859dab501cbf1a"
+      }
+    },
+    {
+      "model": "owl_crate",
+      "provider": "bettermodel",
+      "pose": "idle",
+      "frozen": false,
+      "visualResult": "sampled facing corrected; full animation parity not accepted",
+      "java": {
+        "file": "bettermodel-owl_crate-idle-java.png",
+        "sha256": "b66d700e75104fd10d9eb0e8ba9db28a5d876e555d232b0d230f34108b93fd7c"
+      },
+      "bedrock": {
+        "file": "bettermodel-owl_crate-idle-bedrock.png",
+        "sha256": "196d83dc4076d8866a75a599a6971ccd455f4c70d49584be0095ed3a73863d78"
+      }
+    },
+    {
+      "model": "owl_crate",
+      "provider": "bettermodel",
+      "pose": "open",
+      "frozen": false,
+      "visualResult": "sampled facing corrected; full animation parity not accepted",
+      "java": {
+        "file": "bettermodel-owl_crate-open-java.png",
+        "sha256": "aa78ccce0551fa3bd677d5dd001ede8e3e06a9d678c12e4e39768661b036c1ba"
+      },
+      "bedrock": {
+        "file": "bettermodel-owl_crate-open-bedrock.png",
+        "sha256": "a98c7288059d511822581cd3f82d2ee3ac33383e11cd1ae76aa65e5ca95bbf32"
+      }
+    }
+  ],
+  "facingChecks": [
+    {
+      "yaw": 0,
+      "review": "matching sampled heading",
+      "java": {
+        "file": "owl-yaw-0-java.png",
+        "sha256": "81b193da5ccde9e41fe19ac3f294749dff677375ad4abbe5ff210a863b01dd63"
+      },
+      "bedrock": {
+        "file": "owl-yaw-0-bedrock.png",
+        "sha256": "ec2c2a6100a02705e30e66b065832d13b6bd0f57194d1c23f1dbc59d909405f4"
+      },
+      "visualResult": "sampled facing corrected; full animation parity not accepted"
+    },
+    {
+      "yaw": 90,
+      "review": "matching sampled heading",
+      "java": {
+        "file": "owl-yaw-90-java.png",
+        "sha256": "4a843fb6bad30b777caf66c12476af30e6a1f860c206d96df2bb0cb46ef913ef"
+      },
+      "bedrock": {
+        "file": "owl-yaw-90-bedrock.png",
+        "sha256": "490e4394fef35c25d7d5943d19a6904b40fa85f43009caa465eb0845e8bf866d"
+      },
+      "visualResult": "sampled facing corrected; full animation parity not accepted"
+    },
+    {
+      "yaw": -45,
+      "review": "matching sampled heading",
+      "java": {
+        "file": "owl-yaw--45-java.png",
+        "sha256": "80c9366ee1db39cee70a725ff5176046dd3d390bd38412ad2d7c985d37dd77e9"
+      },
+      "bedrock": {
+        "file": "owl-yaw--45-bedrock.png",
+        "sha256": "fffd2c41dbba3a1872316f8f1dd9ac079bec36d9ba0bc2e184f7f59801b6a30e"
+      },
+      "visualResult": "sampled facing corrected; full animation parity not accepted"
+    }
+  ],
+  "conditions": "First four BetterModel pairs in rain; weather cleared during BetterModel owl idle pair. Dedicated facing and ModelEngine checks in clear weather. BetterModel animation samples are sequential, not synchronized.",
+  "modelenginePairs": [
+    {
+      "model": "bear_brown",
+      "provider": "modelengine",
+      "pose": "idle",
+      "frozen": true,
+      "visualResult": "visible; full visual acceptance failed",
+      "java": {
+        "file": "modelengine-bear_brown-idle-java.png",
+        "sha256": "6ac895a4eb5efba7440c911fe99d98298bf9707070555bc25e4ec160e0422460"
+      },
+      "bedrock": {
+        "file": "modelengine-bear_brown-idle-bedrock.png",
+        "sha256": "ba46549a4ea4f1bdbbc679b2e015801e3344e4d71c4d30a893d713f0862385d4"
+      },
+      "issues": [
+        "unwanted black particles"
+      ]
+    },
+    {
+      "model": "bear_brown",
+      "provider": "modelengine",
+      "pose": "attack",
+      "frozen": true,
+      "visualResult": "visible; full visual acceptance failed",
+      "java": {
+        "file": "modelengine-bear_brown-attack-java.png",
+        "sha256": "1727da9abf48ce58dbfa9c3e1a0b38c0bf0a04cca03526d0aec94982e34bfd2a"
+      },
+      "bedrock": {
+        "file": "modelengine-bear_brown-attack-bedrock.png",
+        "sha256": "76f176aec2f666cff02e91aa464582ff941dcb01b096c1f7c8aafccb1faa3a9f"
+      },
+      "issues": [
+        "unwanted black particles"
+      ]
+    },
+    {
+      "model": "crab_hermit",
+      "provider": "modelengine",
+      "pose": "idle",
+      "frozen": true,
+      "visualResult": "visible; full visual acceptance failed",
+      "java": {
+        "file": "modelengine-crab_hermit-idle-java.png",
+        "sha256": "4e4c6582165ad521cf689fac5edbd539d43a0737a789f0da72c8b8fcd895eddd"
+      },
+      "bedrock": {
+        "file": "modelengine-crab_hermit-idle-bedrock.png",
+        "sha256": "11e11107f70cb584da6bfc7cb6f82fa9b05f54df7268dc82310d115d0b1fc0af"
+      },
+      "issues": [
+        "unwanted black particles"
+      ]
+    },
+    {
+      "model": "crab_hermit",
+      "provider": "modelengine",
+      "pose": "hide",
+      "frozen": true,
+      "visualResult": "visible; full visual acceptance failed",
+      "java": {
+        "file": "modelengine-crab_hermit-hide-java.png",
+        "sha256": "ac35629ec4af01e0e41311cdf34ef0f7c6eeeac3547e00d572c0a1fff20cfac7"
+      },
+      "bedrock": {
+        "file": "modelengine-crab_hermit-hide-bedrock.png",
+        "sha256": "c73cbcfa810f8cca9a9d1cf760dd237a6791fd8806fd9f0808e283a1069aadb0"
+      },
+      "issues": [
+        "unwanted black particles"
+      ]
+    },
+    {
+      "model": "angel_gm_archer_one",
+      "provider": "modelengine",
+      "pose": "idle",
+      "frozen": true,
+      "visualResult": "visible; full visual acceptance failed",
+      "java": {
+        "file": "modelengine-angel_gm_archer_one-idle-java.png",
+        "sha256": "f86aed8a1b7e161db78f3f72c8b9b02b544be20f2407995f994aee389d49f80b"
+      },
+      "bedrock": {
+        "file": "modelengine-angel_gm_archer_one-idle-bedrock.png",
+        "sha256": "e857b70e8d86ef5c93cf4b86d31dc2b32da88a742c02880d32332c0df5d67d82"
+      },
+      "issues": [
+        "unwanted black particles",
+        "full pose equality not established"
+      ]
+    },
+    {
+      "model": "angel_gm_archer_one",
+      "provider": "modelengine",
+      "pose": "attack1",
+      "frozen": true,
+      "visualResult": "visible; full visual acceptance failed",
+      "java": {
+        "file": "modelengine-angel_gm_archer_one-attack1-java.png",
+        "sha256": "713ea83cc966775a20e55ac9fd6b7d4cb3f232b121f05248ba38d0529ede27b9"
+      },
+      "bedrock": {
+        "file": "modelengine-angel_gm_archer_one-attack1-bedrock.png",
+        "sha256": "1d18b218b36b6503679431c8cafb4d7c82e121526966b074511654a0d8e3721b"
+      },
+      "issues": [
+        "unwanted black particles",
+        "full pose equality not established"
+      ]
+    },
+    {
+      "model": "basket_with_health_potions",
+      "provider": "modelengine",
+      "pose": "static",
+      "frozen": false,
+      "visualResult": "visible; full visual acceptance failed",
+      "java": {
+        "file": "modelengine-basket_with_health_potions-static-java.png",
+        "sha256": "2226e63fbe2bb3090246fdfa989f2f6238fd544000f5c09dd9eca005089a57dc"
+      },
+      "bedrock": {
+        "file": "modelengine-basket_with_health_potions-static-bedrock.png",
+        "sha256": "0226059291106a62782a82cbd23d0395c979432a24504c12362cdf71bd9677d0"
+      },
+      "issues": [
+        "unwanted black particles",
+        "severe darkening persists"
+      ]
+    }
+  ],
+  "lightingProbe": {
+    "model": "basket_with_health_potions",
+    "platform": "25 stone blocks temporarily changed to glass; restored afterward",
+    "observation": "Bedrock basket and bottles regain color over glass; unwanted particles remain",
+    "productFix": false,
+    "java": {
+      "file": "basket-glass-platform-java.png",
+      "sha256": "02b95a70909ea945486d7a6d35e483d68456f9cff9e92a3fbe8ac90b10ff340b"
+    },
+    "bedrock": {
+      "file": "basket-glass-platform-bedrock.png",
+      "sha256": "680a80780e27cee165da95b126bd67f8eba5735359897cb2c0de9bfd397adf4a"
+    }
+  }
+}

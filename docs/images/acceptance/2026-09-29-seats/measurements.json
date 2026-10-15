@@ -1,0 +1,60 @@
+{
+  "buildSha256": "2741560bf1ed26fea9bb5547beb783cd406ba810e68750647b82e932858968e1",
+  "javaCloudHeight": 0.5,
+  "javaCloudY": 199.5,
+  "javaPassengerY": 200,
+  "javaDisplayVehicleAttachment": [
+    0,
+    0,
+    0
+  ],
+  "javaDisplayEyeHeight": 0,
+  "runtimeSeatAudits": [
+    {
+      "displays": 111,
+      "seat": [
+        0,
+        0.5,
+        0
+      ]
+    },
+    {
+      "displays": 61,
+      "seat": [
+        0,
+        0.5,
+        0
+      ]
+    },
+    {
+      "displays": 121,
+      "seat": [
+        0,
+        0.5,
+        0
+      ]
+    },
+    {
+      "displays": 175,
+      "seat": [
+        0,
+        0.5,
+        0
+      ]
+    }
+  ],
+  "savedPlayerDeaths": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "sourceAssetHashesUnchanged": 7,
+  "diagnosticSeatMutationUsedInAcceptance": false
+}

@@ -1,0 +1,309 @@
+{
+  "packSha256": "28b132858cdb19a45379bc2a039001af6a4a1325c00aee10dbeb5ac2b6e73ed3",
+  "guiScale": 2,
+  "pages": {
+    "font/glyph_E0.png": [
+      4096,
+      4096
+    ],
+    "font/glyph_E1.png": [
+      256,
+      256
+    ],
+    "font/glyph_E2.png": [
+      8192,
+      8192
+    ],
+    "font/glyph_EC.png": [
+      4096,
+      4096
+    ],
+    "font/glyph_EF.png": [
+      256,
+      256
+    ]
+  },
+  "uncompressedRgbaMiB": 384.5,
+  "samples": [
+    {
+      "sample": "wide-1",
+      "codepoint": "U+EC03",
+      "sourceSize": [
+        176,
+        83
+      ],
+      "declaredSize": [
+        176,
+        83
+      ],
+      "ascent": 14,
+      "cellSize": 256,
+      "atlasPixelDifferences": 0,
+      "sourceAtDeclaredSize": true,
+      "captures": {
+        "java": {
+          "visibleOrigin": [
+            28,
+            408
+          ],
+          "visibleSize": [
+            352,
+            162
+          ],
+          "opaqueMeanChannelError": 0.0
+        },
+        "bedrock": {
+          "visibleOrigin": [
+            29,
+            709
+          ],
+          "visibleSize": [
+            352,
+            162
+          ],
+          "opaqueMeanChannelError": 0.0
+        }
+      }
+    },
+    {
+      "sample": "wide-2",
+      "codepoint": "U+E2AD",
+      "sourceSize": [
+        36,
+        36
+      ],
+      "declaredSize": [
+        72,
+        72
+      ],
+      "ascent": -1,
+      "cellSize": 512,
+      "atlasPixelDifferences": 0,
+      "sourceAtDeclaredSize": false,
+      "captures": {
+        "java": {
+          "visibleOrigin": [
+            28,
+            418
+          ],
+          "visibleSize": [
+            144,
+            144
+          ],
+          "opaqueMeanChannelError": 0.0
+        },
+        "bedrock": {
+          "visibleOrigin": [
+            29,
+            715
+          ],
+          "visibleSize": [
+            144,
+            144
+          ],
+          "opaqueMeanChannelError": 0.0
+        }
+      }
+    },
+    {
+      "sample": "wide-3",
+      "codepoint": "U+E020",
+      "sourceSize": [
+        15,
+        36
+      ],
+      "declaredSize": [
+        21,
+        50
+      ],
+      "ascent": -15,
+      "cellSize": 256,
+      "atlasPixelDifferences": 0,
+      "sourceAtDeclaredSize": false,
+      "captures": {
+        "java": {
+          "visibleOrigin": [
+            28,
+            464
+          ],
+          "visibleSize": [
+            42,
+            100
+          ],
+          "opaqueMeanChannelError": 6.751783893985729
+        },
+        "bedrock": {
+          "visibleOrigin": [
+            29,
+            765
+          ],
+          "visibleSize": [
+            42,
+            100
+          ],
+          "opaqueMeanChannelError": 0.0
+        }
+      }
+    },
+    {
+      "sample": "wide-4",
+      "codepoint": "U+E2C7",
+      "sourceSize": [
+        236,
+        245
+      ],
+      "declaredSize": [
+        236,
+        245
+      ],
+      "ascent": 81,
+      "cellSize": 512,
+      "atlasPixelDifferences": 0,
+      "sourceAtDeclaredSize": true,
+      "captures": {
+        "java": {
+          "visibleOrigin": [
+            52,
+            216
+          ],
+          "visibleSize": [
+            424,
+            322
+          ],
+          "opaqueMeanChannelError": 0.0
+        },
+        "bedrock": {
+          "visibleOrigin": [
+            29,
+            383
+          ],
+          "visibleSize": [
+            424,
+            322
+          ],
+          "opaqueMeanChannelError": 0.0
+        }
+      }
+    },
+    {
+      "sample": "wide-5",
+      "codepoint": "U+E24F",
+      "sourceSize": [
+        256,
+        256
+      ],
+      "declaredSize": [
+        256,
+        256
+      ],
+      "ascent": 48,
+      "cellSize": 512,
+      "atlasPixelDifferences": 0,
+      "sourceAtDeclaredSize": true,
+      "captures": {
+        "java": {
+          "visibleOrigin": [
+            28,
+            300
+          ],
+          "visibleSize": [
+            382,
+            442
+          ],
+          "opaqueMeanChannelError": 0.0
+        },
+        "bedrock": {
+          "visibleOrigin": [
+            29,
+            357
+          ],
+          "visibleSize": [
+            382,
+            442
+          ],
+          "opaqueMeanChannelError": 0.0
+        }
+      }
+    },
+    {
+      "sample": "wide-6",
+      "codepoint": "U+E2A5",
+      "sourceSize": [
+        193,
+        72
+      ],
+      "declaredSize": [
+        198,
+        74
+      ],
+      "ascent": 10,
+      "cellSize": 512,
+      "atlasPixelDifferences": 219,
+      "sourceAtDeclaredSize": false,
+      "captures": {
+        "java": {
+          "visibleOrigin": [
+            28,
+            418
+          ],
+          "visibleSize": [
+            396,
+            144
+          ],
+          "opaqueMeanChannelError": 8.163070787010867
+        },
+        "bedrock": {
+          "visibleOrigin": [
+            29,
+            719
+          ],
+          "visibleSize": [
+            396,
+            144
+          ],
+          "opaqueMeanChannelError": 1.554872495446266
+        }
+      }
+    },
+    {
+      "sample": "real",
+      "codepoint": "U+E24D",
+      "sourceSize": [
+        41,
+        9
+      ],
+      "declaredSize": [
+        41,
+        9
+      ],
+      "ascent": 8,
+      "cellSize": 512,
+      "atlasPixelDifferences": 0,
+      "sourceAtDeclaredSize": true,
+      "captures": {
+        "java": {
+          "visibleOrigin": [
+            120,
+            580
+          ],
+          "visibleSize": [
+            82,
+            18
+          ],
+          "opaqueMeanChannelError": 0.0
+        },
+        "bedrock": {
+          "visibleOrigin": [
+            121,
+            916
+          ],
+          "visibleSize": [
+            82,
+            18
+          ],
+          "opaqueMeanChannelError": 0.0
+        }
+      }
+    }
+  ]
+}

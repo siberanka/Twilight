@@ -1,0 +1,28 @@
+{
+  "definitions": 42,
+  "servers": {
+    "box": 17,
+    "survival": 25
+  },
+  "sizes": {
+    "45": 10,
+    "27": 12,
+    "9": 4,
+    "54": 13,
+    "36": 2,
+    "53": 1
+  },
+  "traits": {
+    "titlePrivateUse": 0,
+    "titleEscapedUnicode": 1,
+    "titleImagePlaceholder": 8,
+    "titleShift": 0,
+    "lore": 40,
+    "conditional": 21,
+    "action": 42
+  },
+  "allSourcesReadOnly": true,
+  "visualAcceptance": false,
+  "sourceHashesRecheckedUnchanged": true,
+  "method": "Read-only syntax census of menu_title and size declarations; no YAML resolution, commands or live UI checks."
+}

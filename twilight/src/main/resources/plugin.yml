@@ -1,0 +1,22 @@
+name: Twilight
+version: '${version}'
+main: com.siberanka.twilight.TwilightPlugin
+description: Server-side Java-to-Bedrock custom-content compiler and Geyser deployment manager.
+authors: [siberanka]
+website: https://github.com/siberanka/twilight
+api-version: '1.21.4'
+folia-supported: true
+softdepend: [Geyser-Spigot, floodgate, ItemsAdder, CraftEngine, Nexo, Oraxen, BetterModel, ModelEngine, RealisticSeasons]
+commands:
+  twilight:
+    description: Build, validate, deploy, inspect, and roll back Twilight packs.
+    usage: /twilight <status|scan|convert|build|deploy|rollback|reload>
+    aliases: [tw]
+    permission: twilight.admin
+permissions:
+  twilight.admin:
+    description: Allows all Twilight administration commands.
+    default: op
+  twilight.update:
+    description: Tells the player when a newer Twilight version is available.
+    default: op

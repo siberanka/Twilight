@@ -1,0 +1,17 @@
+{
+  "tests": 89,
+  "suites": 19,
+  "failures": 0,
+  "errors": 0,
+  "artifactSha256": "37a4195d2d4e36c23d7afe61d8c46741879601927fd76ff8358b9c427f6d4e24",
+  "productBytecodeChanged": false,
+  "hostedCiUsed": false,
+  "newRegressions": [
+    "namespace-qualified glyph textures with identical filenames",
+    "multi-row glyph sheet with blank cells"
+  ],
+  "catalogValidation": true,
+  "incompleteAcceptanceRejected": true,
+  "unprovenPromotionRejected": true,
+  "newLiveClientChecks": false
+}

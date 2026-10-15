@@ -1,0 +1,243 @@
+{
+  "developmentJarSha256": "ba1f08919c262375c866ae21f6f221221da513686b14d2f2e7b7192413932817",
+  "accepted": false,
+  "pairs": [
+    {
+      "model": "bear_brown",
+      "provider": "modelengine",
+      "pose": "idle",
+      "frozen": true,
+      "visualResult": "failed visual acceptance",
+      "java": {
+        "file": "modelengine-bear_brown-idle-java.png",
+        "sha256": "efafc0ffd6d90b8415388d28ab53d68d78714dd4e7578d41021bb5762c2a5cd0"
+      },
+      "bedrock": {
+        "file": "modelengine-bear_brown-idle-bedrock.png",
+        "sha256": "d4493af387c0460b07764dd5cf4ed7070c607a160147cf52353f37374598e676"
+      },
+      "issues": [
+        "unwanted black particles"
+      ]
+    },
+    {
+      "model": "bear_brown",
+      "provider": "modelengine",
+      "pose": "attack",
+      "frozen": true,
+      "visualResult": "failed visual acceptance",
+      "java": {
+        "file": "modelengine-bear_brown-attack-java.png",
+        "sha256": "3aaa9a74153848fca94b64983abf099ab24299ee2cb8d9e10c49473c9413b998"
+      },
+      "bedrock": {
+        "file": "modelengine-bear_brown-attack-bedrock.png",
+        "sha256": "576b983084b74f38f12802ae71f1d9d0898646f7427be9bbec35b96504081507"
+      },
+      "issues": [
+        "unwanted black particles"
+      ]
+    },
+    {
+      "model": "crab_hermit",
+      "provider": "modelengine",
+      "pose": "idle",
+      "frozen": true,
+      "visualResult": "failed visual acceptance",
+      "java": {
+        "file": "modelengine-crab_hermit-idle-java.png",
+        "sha256": "88235df84519fcf31647431f3b1b41ccbb5ab17c7d5ab2163170497433630858"
+      },
+      "bedrock": {
+        "file": "modelengine-crab_hermit-idle-bedrock.png",
+        "sha256": "556cf034726e14bcb631915dc672640ac202cc102bdaafce9d6f12a32f0cf878"
+      },
+      "issues": [
+        "unwanted black particles"
+      ]
+    },
+    {
+      "model": "crab_hermit",
+      "provider": "modelengine",
+      "pose": "hide",
+      "frozen": true,
+      "visualResult": "failed visual acceptance",
+      "java": {
+        "file": "modelengine-crab_hermit-hide-java.png",
+        "sha256": "13bbb225242ce79b837a5d8bb6a252f308a0fbe5ad547978b13dff137a01e018"
+      },
+      "bedrock": {
+        "file": "modelengine-crab_hermit-hide-bedrock.png",
+        "sha256": "feff602585d4dc063209e0dc6c5a5c9cca5df822b52b87cfebaacb81e64a564a"
+      },
+      "issues": [
+        "unwanted black particles"
+      ]
+    },
+    {
+      "model": "angel_gm_archer_one",
+      "provider": "modelengine",
+      "pose": "idle",
+      "frozen": true,
+      "visualResult": "failed visual acceptance",
+      "java": {
+        "file": "modelengine-angel_gm_archer_one-idle-java.png",
+        "sha256": "9e3d9746200f0003428ffd3ce0e11a47eb918fe5c854beea6faaab8d80b9369f"
+      },
+      "bedrock": {
+        "file": "modelengine-angel_gm_archer_one-idle-bedrock.png",
+        "sha256": "2f619f6f96561a31e55da1d6b5da1aaa9c6461efabd6dd7011367d8157de3755"
+      },
+      "issues": [
+        "unwanted black particles",
+        "pose/orientation requires further isolation"
+      ]
+    },
+    {
+      "model": "angel_gm_archer_one",
+      "provider": "modelengine",
+      "pose": "attack1",
+      "frozen": true,
+      "visualResult": "failed visual acceptance",
+      "java": {
+        "file": "modelengine-angel_gm_archer_one-attack1-java.png",
+        "sha256": "bbaf784765430935cbfc1b8028a238520a39ab82bfee7b662e78ba4e148a36b7"
+      },
+      "bedrock": {
+        "file": "modelengine-angel_gm_archer_one-attack1-bedrock.png",
+        "sha256": "294c5b38dadaeac863088cfcda07bc3047ad15ad59653adbb9ecc28a1cdf0a44"
+      },
+      "issues": [
+        "unwanted black particles",
+        "pose/orientation requires further isolation"
+      ]
+    },
+    {
+      "model": "basket_with_health_potions",
+      "provider": "modelengine",
+      "pose": "static",
+      "frozen": false,
+      "visualResult": "failed visual acceptance",
+      "java": {
+        "file": "modelengine-basket_with_health_potions-static-java.png",
+        "sha256": "dee2cba65910d315e359c796667684b6e67c7568a0ece5fa33f0b5cba6f122f1"
+      },
+      "bedrock": {
+        "file": "modelengine-basket_with_health_potions-static-bedrock.png",
+        "sha256": "b785dbe45831f3d06a4df8a02cd501edb2300c4e6068c292f3e1b88028c48a17"
+      },
+      "issues": [
+        "unwanted black particles",
+        "severe darkening"
+      ]
+    },
+    {
+      "model": "pet_griffon_phoenix",
+      "provider": "bettermodel",
+      "pose": "idle",
+      "frozen": false,
+      "visualResult": "failed visual acceptance",
+      "java": {
+        "file": "bettermodel-pet_griffon_phoenix-idle-java.png",
+        "sha256": "bad9d5798006c6d49730423302cb872c71a2abcf231f4b0abec40c0558c8a175"
+      },
+      "bedrock": {
+        "file": "bettermodel-pet_griffon_phoenix-idle-bedrock.png",
+        "sha256": "7f36050920fb7a3077b2d152861fc2053f6c43f545e6601ae2d2f2d7d417d304"
+      },
+      "issues": [
+        "orientation differs; sequential live animation samples"
+      ]
+    },
+    {
+      "model": "pet_griffon_phoenix",
+      "provider": "bettermodel",
+      "pose": "interact",
+      "frozen": false,
+      "visualResult": "failed visual acceptance",
+      "java": {
+        "file": "bettermodel-pet_griffon_phoenix-interact-java.png",
+        "sha256": "79212af7768dfc3d0a96368cfcd5ef6594cf8ddc8fe3d6be160adfb56941fc5f"
+      },
+      "bedrock": {
+        "file": "bettermodel-pet_griffon_phoenix-interact-bedrock.png",
+        "sha256": "0bbb08b0c9a83514c71052ca4073a4a5176da8db21cdeffa4ca7840f1d13cdee"
+      },
+      "issues": [
+        "orientation differs; sequential live animation samples"
+      ]
+    },
+    {
+      "model": "blacksmith_hm5_npc",
+      "provider": "bettermodel",
+      "pose": "idle",
+      "frozen": false,
+      "visualResult": "failed visual acceptance",
+      "java": {
+        "file": "bettermodel-blacksmith_hm5_npc-idle-java.png",
+        "sha256": "bafaac30d703c25dd8829b11e76211992788e68c74c1cf77da24d9866b35d1f2"
+      },
+      "bedrock": {
+        "file": "bettermodel-blacksmith_hm5_npc-idle-bedrock.png",
+        "sha256": "0c21d913735029cacf9e89e07ae85b5c35d95a793597617c739311f4f3726d3a"
+      },
+      "issues": [
+        "orientation differs; sequential live animation samples"
+      ]
+    },
+    {
+      "model": "blacksmith_hm5_npc",
+      "provider": "bettermodel",
+      "pose": "wave",
+      "frozen": false,
+      "visualResult": "failed visual acceptance",
+      "java": {
+        "file": "bettermodel-blacksmith_hm5_npc-wave-java.png",
+        "sha256": "b16524be2dc94bce35c425ffe5a51f990cb7fbe6e26e9a85ebe1c69a46a55745"
+      },
+      "bedrock": {
+        "file": "bettermodel-blacksmith_hm5_npc-wave-bedrock.png",
+        "sha256": "21581d18b4345b2782ed92188f3c797c9b0d5817984affea6eb7d9aedbfd92c5"
+      },
+      "issues": [
+        "orientation differs; sequential live animation samples"
+      ]
+    },
+    {
+      "model": "owl_crate",
+      "provider": "bettermodel",
+      "pose": "idle",
+      "frozen": false,
+      "visualResult": "failed visual acceptance",
+      "java": {
+        "file": "bettermodel-owl_crate-idle-java.png",
+        "sha256": "6bb053a0e6bb1843a4234da4dfe37f085231e589009b215e23e31a9dddd18ffe"
+      },
+      "bedrock": {
+        "file": "bettermodel-owl_crate-idle-bedrock.png",
+        "sha256": "fe5fbe18d348c5fb773485dae2a97fc6a6123466857776dbb26747b713c49d4e"
+      },
+      "issues": [
+        "orientation differs; sequential live animation samples"
+      ]
+    },
+    {
+      "model": "owl_crate",
+      "provider": "bettermodel",
+      "pose": "open",
+      "frozen": false,
+      "visualResult": "failed visual acceptance",
+      "java": {
+        "file": "bettermodel-owl_crate-open-java.png",
+        "sha256": "fc677a013991c63064847ed221ce0386a912c630118178ef0da2b8aff84afcb0"
+      },
+      "bedrock": {
+        "file": "bettermodel-owl_crate-open-bedrock.png",
+        "sha256": "a798ae61c4bbec2d6b09d1918b52e9c5937bace552d44b1acdeacd88d9bd1949"
+      },
+      "issues": [
+        "orientation differs; sequential live animation samples"
+      ]
+    }
+  ]
+}

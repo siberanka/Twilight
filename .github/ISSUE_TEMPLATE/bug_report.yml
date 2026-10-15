@@ -1,0 +1,104 @@
+name: Bug report / Hata bildirimi
+description: Something in Twilight or twilight-proxy does not work as documented. / Twilight veya twilight-proxy'de belgelendiği gibi çalışmayan bir şey.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Please check the [wiki's troubleshooting table](https://github.com/siberanka/twilight/blob/master/WIKI.md#troubleshooting) first. You can write in English or Turkish.
+
+        **Never post secrets:** Velocity forwarding secret, BungeeGuard token, `secret` / `proxy.secret`, Floodgate `key.pem`, passwords, server addresses or player data. Security problems go to the [security policy](https://github.com/siberanka/twilight/security/policy), not to an issue.
+
+        ---
+
+        Bildiriminiz için teşekkürler. Önce [wiki'deki sorun giderme tablosuna](https://github.com/siberanka/twilight/blob/master/WIKI.md#sorun-giderme) bakın. İngilizce veya Türkçe yazabilirsiniz.
+
+        **Gizli bilgileri asla paylaşmayın:** Velocity yönlendirme anahtarı, BungeeGuard token'ı, `secret` / `proxy.secret`, Floodgate `key.pem`, şifreler, sunucu adresleri veya oyuncu verileri. Güvenlik sorunları bir issue'ya değil, [güvenlik politikasına](https://github.com/siberanka/twilight/security/policy) gider.
+  - type: dropdown
+    id: component
+    attributes:
+      label: Plugin / Eklenti
+      options:
+        - Twilight (backend / arka uç)
+        - twilight-proxy
+        - Both / İkisi
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Twilight version / Twilight sürümü
+      description: From `/twilight status` or `/twilightproxy`. Please try the latest version first. / `/twilight status` veya `/twilightproxy` çıktısından. Lütfen önce en son sürümü deneyin.
+      placeholder: 1.0.0-beta.1
+    validations:
+      required: true
+  - type: dropdown
+    id: setup
+    attributes:
+      label: Setup / Kurulum
+      options:
+        - Single server with Geyser / Geyser'lı tek sunucu
+        - Network, Geyser on the proxy / Ağ, Geyser proxy'de
+        - Network, Geyser on the proxy and the backends / Ağ, Geyser proxy'de ve arka uçlarda
+        - Other (describe below) / Diğer (aşağıda anlatın)
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Software versions / Yazılım sürümleri
+      description: Server and proxy software, Java, Geyser, Floodgate and the content plugins involved. / Sunucu ve proxy yazılımı, Java, Geyser, Floodgate ve ilgili içerik eklentileri.
+      placeholder: |
+        Server: Paper 1.21.8, Java 21
+        Proxy: Velocity 3.4.0 (or none)
+        Geyser 2.11.3 (proxy), Floodgate 2.2.5 (proxy and backends)
+        ItemsAdder 4.0.18, ModelEngine 4.0.9
+        Bedrock client: Android 1.26.x
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area / Alan
+      options:
+        - Installation or startup / Kurulum veya açılış
+        - Build or conversion / Derleme veya dönüştürme
+        - Items, models, armour / Eşyalar, modeller, zırhlar
+        - Glyphs, text, menus, HUD / Glifler, yazı, menüler, HUD
+        - Sounds / Sesler
+        - Biomes / Biyomlar
+        - Pack loading, reconnects, pack host / Paket yükleme, yeniden bağlanma, paket sunucusu
+        - Geyser item mappings, restarts / Geyser eşya eşlemeleri, yeniden başlatmalar
+        - Update check / Güncelleme denetimi
+        - Other / Diğer
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened? / Ne oldu?
+      description: What you did, what you expected and what happened instead. Java and Bedrock screenshots help. / Ne yaptığınız, ne beklediğiniz ve bunun yerine ne olduğu. Java ve Bedrock ekran görüntüleri yardımcı olur.
+      placeholder: |
+        1. ...
+        2. ...
+        Expected / Beklenen:
+        Actual / Gerçekleşen:
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Günlükler
+      description: |
+        `/twilight status` or `/twilightproxy`, the console lines from Twilight and Geyser, and for build problems the newest file in `plugins/Twilight/logs/` or `problems` from `plugins/Twilight/build/current/build-report.json`. Remove secrets first.
+        `/twilight status` veya `/twilightproxy`, Twilight ve Geyser'ın konsol satırları; derleme sorunlarında `plugins/Twilight/logs/` içindeki en yeni dosya veya `plugins/Twilight/build/current/build-report.json` içindeki `problems`. Önce gizli bilgileri silin.
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks / Denetimler
+      options:
+        - label: I searched the existing issues. / Mevcut issue'ları aradım.
+          required: true
+        - label: I removed secrets, addresses, player data and assets I may not share. / Gizli bilgileri, adresleri, oyuncu verilerini ve paylaşamayacağım varlıkları sildim.
+          required: true

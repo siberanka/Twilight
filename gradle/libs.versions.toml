@@ -1,0 +1,7 @@
+[versions]
+junit = "5.14.1"
+junit-platform = "1.14.1"
+
+[libraries]
+junit-jupiter = {group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit"}
+junit-platform-launcher = {group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junit-platform"}

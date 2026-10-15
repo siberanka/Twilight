@@ -1,0 +1,635 @@
+{
+  "environment": {
+    "java": "26.2",
+    "bedrock": "1.26.5203.0",
+    "geyser": "2.11.3 build 1247",
+    "gui_scale": 2,
+    "unit": "GUI units, Bedrock minus Java"
+  },
+  "surfaces_after": {
+    "actionbar": {
+      "mode": "centre",
+      "pass": true,
+      "deltas": [
+        0.0,
+        0.0
+      ],
+      "found": {
+        "java": [
+          true,
+          true
+        ],
+        "bedrock": [
+          true,
+          true
+        ]
+      },
+      "fromCentre": {
+        "java": [
+          -43.0,
+          9.0
+        ],
+        "bedrock": [
+          -43.0,
+          9.0
+        ]
+      }
+    },
+    "actionbar-text": {
+      "mode": "centre",
+      "pass": true,
+      "deltas": [
+        0.0
+      ],
+      "found": {
+        "java": [
+          true
+        ],
+        "bedrock": [
+          true
+        ]
+      },
+      "fromCentre": {
+        "java": [
+          8.0
+        ],
+        "bedrock": [
+          8.0
+        ]
+      }
+    },
+    "nameplate-bar": {
+      "mode": "centre",
+      "pass": true,
+      "deltas": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "found": {
+        "java": [
+          true,
+          true,
+          true
+        ],
+        "bedrock": [
+          true,
+          true,
+          true
+        ]
+      },
+      "fromCentre": {
+        "java": [
+          -19.0,
+          -8.0,
+          9.0
+        ],
+        "bedrock": [
+          -19.0,
+          -8.0,
+          9.0
+        ]
+      }
+    },
+    "bossbar": {
+      "mode": "centre",
+      "pass": true,
+      "deltas": [
+        0.0,
+        0.0
+      ],
+      "found": {
+        "java": [
+          true,
+          true
+        ],
+        "bedrock": [
+          true,
+          true
+        ]
+      },
+      "fromCentre": {
+        "java": [
+          -47.0,
+          38.0
+        ],
+        "bedrock": [
+          -47.0,
+          38.0
+        ]
+      }
+    },
+    "bossbar-odd": {
+      "mode": "centre",
+      "pass": true,
+      "deltas": [
+        0.0,
+        0.0
+      ],
+      "found": {
+        "java": [
+          true,
+          true
+        ],
+        "bedrock": [
+          true,
+          true
+        ]
+      },
+      "fromCentre": {
+        "java": [
+          -48.0,
+          39.0
+        ],
+        "bedrock": [
+          -48.0,
+          39.0
+        ]
+      }
+    },
+    "sidebar": {
+      "mode": "presence",
+      "pass": true,
+      "deltas": null,
+      "found": {
+        "java": [
+          true,
+          true
+        ],
+        "bedrock": [
+          true,
+          true
+        ]
+      },
+      "fromCentre": {
+        "java": [
+          191.0,
+          192.0
+        ],
+        "bedrock": [
+          397.0,
+          397.0
+        ]
+      }
+    },
+    "title": {
+      "mode": "presence",
+      "pass": true,
+      "deltas": null,
+      "found": {
+        "java": [
+          true,
+          true
+        ],
+        "bedrock": [
+          true,
+          true
+        ]
+      },
+      "fromCentre": {
+        "java": [
+          -104.0,
+          -8.5
+        ],
+        "bedrock": [
+          -104.0,
+          -7.0
+        ]
+      }
+    },
+    "chat": {
+      "mode": "left",
+      "pass": true,
+      "deltas": [
+        0.0,
+        0.0
+      ],
+      "found": {
+        "java": [
+          true,
+          true
+        ],
+        "bedrock": [
+          true,
+          true
+        ]
+      },
+      "fromCentre": {
+        "java": [
+          -271.0,
+          -135.0
+        ],
+        "bedrock": [
+          -477.0,
+          -341.0
+        ]
+      }
+    }
+  },
+  "surfaces_before_text_surfaces_disabled": {
+    "actionbar": {
+      "mode": "centre",
+      "pass": false,
+      "deltas": null,
+      "found": {
+        "java": [
+          true,
+          true
+        ],
+        "bedrock": [
+          false,
+          false
+        ]
+      },
+      "fromCentre": {
+        "java": [
+          -43.0,
+          9.0
+        ],
+        "bedrock": [
+          null,
+          null
+        ]
+      }
+    },
+    "actionbar-text": {
+      "mode": "centre",
+      "pass": false,
+      "deltas": null,
+      "found": {
+        "java": [
+          true
+        ],
+        "bedrock": [
+          false
+        ]
+      },
+      "fromCentre": {
+        "java": [
+          8.0
+        ],
+        "bedrock": [
+          null
+        ]
+      }
+    },
+    "nameplate-bar": {
+      "mode": "centre",
+      "pass": false,
+      "deltas": null,
+      "found": {
+        "java": [
+          true,
+          true,
+          true
+        ],
+        "bedrock": [
+          false,
+          false,
+          false
+        ]
+      },
+      "fromCentre": {
+        "java": [
+          -19.0,
+          -8.0,
+          9.0
+        ],
+        "bedrock": [
+          null,
+          null,
+          null
+        ]
+      }
+    },
+    "bossbar": {
+      "mode": "centre",
+      "pass": false,
+      "deltas": null,
+      "found": {
+        "java": [
+          true,
+          true
+        ],
+        "bedrock": [
+          false,
+          false
+        ]
+      },
+      "fromCentre": {
+        "java": [
+          -47.0,
+          38.0
+        ],
+        "bedrock": [
+          null,
+          null
+        ]
+      }
+    },
+    "bossbar-odd": {
+      "mode": "centre",
+      "pass": false,
+      "deltas": null,
+      "found": {
+        "java": [
+          true,
+          true
+        ],
+        "bedrock": [
+          false,
+          false
+        ]
+      },
+      "fromCentre": {
+        "java": [
+          -48.0,
+          39.0
+        ],
+        "bedrock": [
+          null,
+          null
+        ]
+      }
+    },
+    "sidebar": {
+      "mode": "presence",
+      "pass": false,
+      "deltas": null,
+      "found": {
+        "java": [
+          true,
+          true
+        ],
+        "bedrock": [
+          false,
+          false
+        ]
+      },
+      "fromCentre": {
+        "java": [
+          191.0,
+          192.0
+        ],
+        "bedrock": [
+          null,
+          null
+        ]
+      }
+    },
+    "title": {
+      "mode": "presence",
+      "pass": false,
+      "deltas": null,
+      "found": {
+        "java": [
+          true,
+          true
+        ],
+        "bedrock": [
+          false,
+          false
+        ]
+      },
+      "fromCentre": {
+        "java": [
+          -104.0,
+          -8.5
+        ],
+        "bedrock": [
+          null,
+          null
+        ]
+      }
+    },
+    "chat": {
+      "mode": "left",
+      "pass": false,
+      "deltas": null,
+      "found": {
+        "java": [
+          true,
+          true
+        ],
+        "bedrock": [
+          false,
+          false
+        ]
+      },
+      "fromCentre": {
+        "java": [
+          -271.0,
+          -135.0
+        ],
+        "bedrock": [
+          null,
+          null
+        ]
+      }
+    }
+  },
+  "production_builds_pre5": {
+    "survival": {
+      "candidates": 130,
+      "converted": 125,
+      "glyphs": 767,
+      "aliased_glyphs": 4608,
+      "problems": 152,
+      "notices": 0,
+      "problem_categories": {
+        "Flat item has no texture layers": 2,
+        "Missing face texture": 3,
+        "other": 3,
+        "glyph aliases exceed": 1,
+        "references missing sound": 71,
+        "changes a vanilla sound event": 72
+      }
+    },
+    "skyblock": {
+      "candidates": 0,
+      "converted": 0,
+      "glyphs": 31,
+      "aliased_glyphs": 5632,
+      "problems": 44,
+      "notices": 0,
+      "problem_categories": {
+        "other": 2,
+        "glyph aliases exceed": 1,
+        "changes a vanilla sound event": 41
+      }
+    },
+    "boxpvp-v2": {
+      "candidates": 781,
+      "converted": 772,
+      "glyphs": 622,
+      "aliased_glyphs": 3,
+      "problems": 11,
+      "notices": 0,
+      "problem_categories": {
+        "Missing face texture": 3,
+        "Flat item has no texture layers": 6,
+        "other": 2
+      }
+    },
+    "boxpvp-legacy": {
+      "candidates": 843,
+      "converted": 532,
+      "glyphs": 0,
+      "aliased_glyphs": 1,
+      "problems": 313,
+      "notices": 0,
+      "problem_categories": {
+        "Missing Java model": 302,
+        "Missing face texture": 3,
+        "Flat item has no texture layers": 6,
+        "other": 2
+      }
+    },
+    "smp-lifesteal": {
+      "candidates": 0,
+      "converted": 0,
+      "glyphs": 0,
+      "aliased_glyphs": 0,
+      "problems": 0,
+      "notices": 0,
+      "problem_categories": {}
+    }
+  },
+  "production_builds_pre6": {
+    "survival": {
+      "candidates": 841,
+      "converted": 837,
+      "glyphs": 767,
+      "aliased_glyphs": 498,
+      "problems": 75,
+      "notices": 79,
+      "problem_categories": {
+        "Missing Java model": 1,
+        "Missing texture": 1,
+        "other": 1,
+        "changes a vanilla sound event": 72
+      }
+    },
+    "skyblock": {
+      "candidates": 52,
+      "converted": 29,
+      "glyphs": 31,
+      "aliased_glyphs": 210,
+      "problems": 43,
+      "notices": 21,
+      "problem_categories": {
+        "Missing texture": 2,
+        "changes a vanilla sound event": 41
+      }
+    },
+    "boxpvp-v2": {
+      "candidates": 811,
+      "converted": 805,
+      "glyphs": 622,
+      "aliased_glyphs": 3,
+      "problems": 1,
+      "notices": 8,
+      "problem_categories": {
+        "Missing Java model": 1
+      }
+    },
+    "boxpvp-legacy": {
+      "candidates": 845,
+      "converted": 539,
+      "glyphs": 618,
+      "aliased_glyphs": 3,
+      "problems": 301,
+      "notices": 8,
+      "problem_categories": {
+        "Missing Java model": 301
+      }
+    },
+    "smp-lifesteal": {
+      "candidates": 0,
+      "converted": 0,
+      "glyphs": 0,
+      "aliased_glyphs": 0,
+      "problems": 0,
+      "notices": 0,
+      "problem_categories": {}
+    }
+  },
+  "font_audit_pre5": {
+    "survival": {
+      "glyphs": 767,
+      "aliased_glyphs": 4608,
+      "text_layout_entries": 9312,
+      "problem_categories": {
+        "other": 3,
+        "glyph aliases exceed": 1
+      }
+    },
+    "skyblock": {
+      "glyphs": 31,
+      "aliased_glyphs": 5632,
+      "text_layout_entries": 8753,
+      "problem_categories": {
+        "other": 2,
+        "glyph aliases exceed": 1
+      }
+    },
+    "boxpvp-v2": {
+      "glyphs": 622,
+      "aliased_glyphs": 3,
+      "text_layout_entries": 1247,
+      "problem_categories": {
+        "other": 2
+      }
+    },
+    "boxpvp-legacy": {
+      "glyphs": 0,
+      "aliased_glyphs": 1,
+      "text_layout_entries": 1,
+      "problem_categories": {
+        "other": 2
+      }
+    },
+    "smp-lifesteal": {
+      "glyphs": 0,
+      "aliased_glyphs": 0,
+      "text_layout_entries": null,
+      "problem_categories": {}
+    }
+  },
+  "font_audit_pre6": {
+    "survival": {
+      "glyphs": 767,
+      "aliased_glyphs": 498,
+      "text_layout_entries": 2283,
+      "problem_categories": {
+        "other": 1
+      }
+    },
+    "skyblock": {
+      "glyphs": 31,
+      "aliased_glyphs": 210,
+      "text_layout_entries": 440,
+      "problem_categories": {}
+    },
+    "boxpvp-v2": {
+      "glyphs": 622,
+      "aliased_glyphs": 3,
+      "text_layout_entries": 1307,
+      "problem_categories": {}
+    },
+    "boxpvp-legacy": {
+      "glyphs": 0,
+      "aliased_glyphs": 1,
+      "text_layout_entries": 1,
+      "problem_categories": {
+        "other": 1
+      }
+    },
+    "smp-lifesteal": {
+      "glyphs": 0,
+      "aliased_glyphs": 0,
+      "text_layout_entries": null,
+      "problem_categories": {}
+    }
+  }
+}

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Wiki / Wiki
+    url: https://github.com/siberanka/twilight/blob/master/WIKI.md
+    about: Installation, configuration, proxy networks and troubleshooting. / Kurulum, yapılandırma, proxy'li ağlar ve sorun giderme.
+  - name: Compatibility / Uyumluluk
+    url: https://github.com/siberanka/twilight/blob/master/docs/COMPATIBILITY.md
+    about: What is supported and what is known to differ. / Neyin desteklendiği ve nelerin farklı olduğu.
+  - name: Report a security vulnerability / Güvenlik açığı bildirin
+    url: https://github.com/siberanka/twilight/security/advisories/new
+    about: Report vulnerabilities privately, never in a public issue. / Güvenlik açıklarını herkese açık bir issue'da değil, gizli olarak bildirin.

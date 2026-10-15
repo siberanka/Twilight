@@ -1,0 +1,360 @@
+{
+  "artifactSha256": "8cb2ceffd5825bcd0c6df0fead9953bfe0bfcf6d752c4167025f83dea0aa42f9",
+  "tests": 77,
+  "suites": 18,
+  "wholeSourceAudits": [
+    {
+      "label": "boxpvp",
+      "sources": 30,
+      "packSha256": "242deeeb49a921189e2934803d4fe932b61341af18428086c69b80117a118fd2",
+      "repeatPackIdentical": true,
+      "strictAccepted": false,
+      "strictProblemCount": 13,
+      "lastDiagnosticPackPreserved": true,
+      "counts": {
+        "candidates": 781,
+        "converted": 772,
+        "three_dimensional": 309,
+        "glyphs": 573,
+        "font_pages": 3,
+        "vanilla_fallback_textures": 273,
+        "named_fonts": 3,
+        "named_font_glyphs": 0,
+        "sound_definitions": 16,
+        "sound_files": 35,
+        "vanilla_fallback_sounds": 0,
+        "vanilla_asset_download": false,
+        "skipped": 9,
+        "vanilla_override": false
+      },
+      "problemEntries": 13
+    },
+    {
+      "label": "survival",
+      "sources": 138,
+      "packSha256": "38678f1a56528ad1da0d5777474fca3c1217f7407766f2dd5cccdc01f58bfe9e",
+      "repeatPackIdentical": true,
+      "strictAccepted": false,
+      "strictProblemCount": 242,
+      "lastDiagnosticPackPreserved": true,
+      "counts": {
+        "candidates": 130,
+        "converted": 125,
+        "three_dimensional": 102,
+        "glyphs": 598,
+        "font_pages": 3,
+        "vanilla_fallback_textures": 272,
+        "named_fonts": 10,
+        "named_font_glyphs": 598,
+        "sound_definitions": 84,
+        "sound_files": 131,
+        "vanilla_fallback_sounds": 0,
+        "vanilla_asset_download": false,
+        "skipped": 5,
+        "vanilla_override": false
+      },
+      "problemEntries": 242
+    }
+  ],
+  "fixture": {
+    "candidates": 106,
+    "converted": 105,
+    "three_dimensional": 102,
+    "glyphs": 28,
+    "font_pages": 3,
+    "vanilla_fallback_textures": 0,
+    "named_fonts": 0,
+    "named_font_glyphs": 0,
+    "sound_definitions": 0,
+    "sound_files": 0,
+    "vanilla_fallback_sounds": 0,
+    "minecraft_version": "26.2",
+    "vanilla_asset_download": false,
+    "skipped": 1,
+    "vanilla_override": false
+  },
+  "savedPlayerDeaths": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "currentPlayerHealth": [
+    20,
+    20
+  ],
+  "sourceManifestEntriesVerified": 175,
+  "uniqueSourceFilesVerified": 134,
+  "navigation": {
+    "java": {
+      "slot": 0,
+      "click": "LEFT",
+      "target": "Basics Menu"
+    },
+    "bedrock": {
+      "slot": 0,
+      "click": "LEFT",
+      "target": "Basics Menu"
+    }
+  },
+  "inventorySamples": [
+    {
+      "slot": 1,
+      "row": 1,
+      "column": 1,
+      "model": "terraria:auto_generated/chlorophyte_axe",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 2,
+      "row": 1,
+      "column": 2,
+      "model": "terraria:auto_generated/lead_pickaxe",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 3,
+      "row": 1,
+      "column": 3,
+      "model": "itemsadder:auto_generated/ruby_sword",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 4,
+      "row": 1,
+      "column": 4,
+      "model": "mythic_weapons:axe",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 5,
+      "row": 1,
+      "column": 5,
+      "model": "soul_eater:pickaxe",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 6,
+      "row": 1,
+      "column": 6,
+      "model": "valentineset:sword",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 7,
+      "row": 1,
+      "column": 7,
+      "model": "elitecreatures:restaurant_decoration_v1/restaurant_bed",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 8,
+      "row": 1,
+      "column": 8,
+      "model": "lootcrat_plus:legendary/gold_box",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 9,
+      "row": 1,
+      "column": 9,
+      "model": "modelengine:join_allay/head2",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 10,
+      "row": 2,
+      "column": 1,
+      "model": "myitems:zanaveski/zanaveska4",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 11,
+      "row": 2,
+      "column": 2,
+      "model": "jeqo:icons/crafting",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 12,
+      "row": 2,
+      "column": 3,
+      "model": "rpg_village_pack:furniture_basket_1",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 13,
+      "row": 2,
+      "column": 4,
+      "model": "iasurvival:item/shields/turquoise_shield",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 14,
+      "row": 2,
+      "column": 5,
+      "model": "dryadia_keeper_of_the_grove:fishing_rod_cast",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 15,
+      "row": 2,
+      "column": 6,
+      "model": "cosmetics:body/backpack_self",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 16,
+      "row": 2,
+      "column": 7,
+      "model": "frostbite_set:pickaxe",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 17,
+      "row": 2,
+      "column": 8,
+      "model": "crates2:key_lvl4",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 18,
+      "row": 2,
+      "column": 9,
+      "model": "3dfantasyweaponscit:item/staff/divine_staff_charged",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 19,
+      "row": 3,
+      "column": 1,
+      "model": "itemsadder:item/cut_spruce_log",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 20,
+      "row": 3,
+      "column": 2,
+      "model": "ender_dragonset:crossbow_1",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 21,
+      "row": 3,
+      "column": 3,
+      "model": "valentineset:bow_1",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 22,
+      "row": 3,
+      "column": 4,
+      "model": "pet_7:rpg_pet_3_model/icon_beastmaster",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 23,
+      "row": 3,
+      "column": 5,
+      "model": "mythic_weapons:wings_cosmetic_self",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 24,
+      "row": 3,
+      "column": 6,
+      "model": "gearforge_nature:crossbow",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 25,
+      "row": 3,
+      "column": 7,
+      "model": "iawearables:hat/cat_ears",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 26,
+      "row": 3,
+      "column": 8,
+      "model": "z_cosmetics:template_cursor",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 27,
+      "row": 3,
+      "column": 9,
+      "model": "soul_eater:axe",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 28,
+      "row": 4,
+      "column": 1,
+      "model": "ax_wings_pack:eagle_wings",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 29,
+      "row": 4,
+      "column": 2,
+      "model": "spectra_aurelium_skills:monster_body_left",
+      "result": "missing-source-texture"
+    },
+    {
+      "slot": 30,
+      "row": 4,
+      "column": 3,
+      "model": "cosmetic_packv6:ghost_hat",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 31,
+      "row": 4,
+      "column": 4,
+      "model": "iafestivities:christmas/christmas_tree",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 32,
+      "row": 4,
+      "column": 5,
+      "model": "iaalchemy:item/energy_extractor",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 33,
+      "row": 4,
+      "column": 6,
+      "model": "am_fantasypets_vol5:am_fantasypets_vol5_models/am_icon_skel",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 34,
+      "row": 4,
+      "column": 7,
+      "model": "littleroom_npcpack4:assassin_shuriken",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 35,
+      "row": 4,
+      "column": 8,
+      "model": "iageneric:item/carton_box",
+      "result": "visible-authored-gui-pose"
+    },
+    {
+      "slot": 36,
+      "row": 4,
+      "column": 9,
+      "model": "elitecreatures:restaurant_decoration_v1/restaurant_bar_table",
+      "result": "visible-authored-gui-pose"
+    }
+  ]
+}

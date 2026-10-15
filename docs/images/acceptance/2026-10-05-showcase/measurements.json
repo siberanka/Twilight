@@ -1,0 +1,55 @@
+{
+  "captured": "2026-10-05",
+  "client": {
+    "java": "26.2",
+    "bedrock": "1.26.5203.0"
+  },
+  "guiScale": 2,
+  "bossBars": {
+    "note": "redrawn red (364 x 10 source) and purple sprites with a notched_10 overlay, vanilla green",
+    "barTopRowsGuiUnits": {
+      "java": [
+        13.0,
+        32.0,
+        50.0
+      ],
+      "bedrock": [
+        13.0,
+        33.0,
+        52.5
+      ]
+    },
+    "firstBarExtentGuiUnits": {
+      "java": [
+        -91.0,
+        91.0
+      ],
+      "bedrock": [
+        -91.0,
+        91.0
+      ]
+    }
+  },
+  "customNameplatesBossBar": {
+    "plugin": "CustomNameplates 3.0.42, default configuration and bundled art (Apache-2.0, XiaoMoMi)",
+    "extentGuiUnits": {
+      "java": [
+        -213.0,
+        212.0
+      ],
+      "bedrock": [
+        -213.0,
+        212.0
+      ]
+    }
+  },
+  "model": {
+    "provider": "BetterModel 3.4.2-SNAPSHOT-516",
+    "model": "twilight_golem (original art)",
+    "animations": {
+      "walk": "1.0 s loop, 12 frames 83 ms apart",
+      "idle": "2.0 s loop, 16 frames 125 ms apart"
+    },
+    "note": "each client restarts the animation before its frames are taken; the two sequences are captured one after the other"
+  }
+}

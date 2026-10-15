@@ -1,0 +1,124 @@
+{
+  "time": "2026-10-03T21:51:59",
+  "real": [
+    {
+      "name": "pre5-farmer",
+      "size": 54,
+      "bestShift": [
+        0,
+        0
+      ],
+      "bestError": 25.24,
+      "unshiftedError": 25.24,
+      "titleShift": [
+        0,
+        0
+      ],
+      "titleError": 0.55
+    },
+    {
+      "name": "pre5-rules",
+      "size": 36,
+      "bestShift": [
+        0,
+        0
+      ],
+      "bestError": 24.55,
+      "unshiftedError": 24.55,
+      "titleShift": [
+        0,
+        0
+      ],
+      "titleError": 0.56
+    },
+    {
+      "name": "pre5-minion",
+      "size": 54,
+      "bestShift": [
+        0,
+        0
+      ],
+      "bestError": 23.0,
+      "unshiftedError": 23.0,
+      "titleShift": [
+        0,
+        0
+      ],
+      "titleError": 0.55
+    },
+    {
+      "name": "pre5-wallet",
+      "size": 27,
+      "bestShift": [
+        0,
+        0
+      ],
+      "bestError": 27.4,
+      "unshiftedError": 27.4,
+      "titleShift": [
+        0,
+        0
+      ],
+      "titleError": 0.58
+    },
+    {
+      "name": "pre5-bilgi",
+      "size": 54,
+      "bestShift": [
+        0,
+        0
+      ],
+      "bestError": 22.91,
+      "unshiftedError": 22.91,
+      "titleShift": [
+        0,
+        0
+      ],
+      "titleError": 0.55
+    },
+    {
+      "name": "pre5-barrel",
+      "size": 27,
+      "bestShift": [
+        0,
+        0
+      ],
+      "bestError": 26.49,
+      "unshiftedError": 26.49,
+      "titleShift": [
+        0,
+        0
+      ],
+      "titleError": 0.0
+    }
+  ],
+  "typed": {
+    "hopper": 0,
+    "furnace": 0,
+    "dispenser": 0
+  },
+  "suite": [
+    "9 {\"titleRuns\": {\"java\": [[0, 4], [6, 13], [15, 19], [21, 61], [63, 67]], \"bedrock\": [[0, 4], [7, 19], [22, 67]]}}",
+    "18 {\"titleRuns\": {\"java\": [[0, 4], [6, 13], [15, 19], [21, 61], [63, 67]], \"bedrock\": [[0, 4], [7, 19], [22, 67]]}}",
+    "27 {\"titleRuns\": {\"java\": [[0, 4], [6, 13], [15, 19], [21, 61], [63, 67]], \"bedrock\": [[0, 4], [7, 19], [22, 67]]}}",
+    "36 {\"titleRuns\": {\"java\": [[0, 4], [6, 13], [15, 19], [21, 61], [63, 67]], \"bedrock\": [[0, 4], [7, 19], [22, 67]]}}",
+    "45 {\"titleRuns\": {\"java\": [[0, 4], [6, 13], [15, 19], [21, 61], [63, 67]], \"bedrock\": [[0, 4], [7, 19], [22, 67]]}}",
+    "54 {\"titleRuns\": {\"java\": [[0, 4], [6, 13], [15, 19], [21, 61], [63, 67]], \"bedrock\": [[0, 4], [7, 19], [22, 67]]}}",
+    "report test-material\\runtime\\live-captures\\2026-10-03\\pre5-suite-report.json"
+  ],
+  "before_layout_barrel_27": {
+    "name": "release-white-27",
+    "size": 27,
+    "bestShift": [
+      0,
+      0
+    ],
+    "bestError": 29.41,
+    "unshiftedError": 29.41,
+    "titleShift": [
+      1,
+      0
+    ],
+    "titleError": 0.32
+  }
+}

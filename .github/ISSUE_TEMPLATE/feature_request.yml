@@ -1,0 +1,36 @@
+name: Compatibility or feature request / Uyumluluk veya özellik isteği
+description: Content, a plugin or a Java behaviour that Twilight should show on Bedrock. / Twilight'ın Bedrock'ta göstermesi gereken içerik, eklenti veya Java davranışı.
+labels: [enhancement, compatibility]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Check [docs/COMPATIBILITY.md](https://github.com/siberanka/twilight/blob/master/docs/COMPATIBILITY.md) for what is supported and what is known to differ. You can write in English or Turkish.
+
+        Neyin desteklendiğini ve nelerin farklı olduğunu [docs/COMPATIBILITY.md](https://github.com/siberanka/twilight/blob/master/docs/COMPATIBILITY.md) belgesinde görebilirsiniz. İngilizce veya Türkçe yazabilirsiniz.
+  - type: input
+    id: target
+    attributes:
+      label: Plugin, content or behaviour / Eklenti, içerik veya davranış
+      description: Name and version, for example a content plugin, a menu, a model or a datapack feature. / Ad ve sürüm; örneğin bir içerik eklentisi, menü, model veya datapack özelliği.
+    validations:
+      required: true
+  - type: textarea
+    id: java
+    attributes:
+      label: How it looks on Java / Java'da nasıl görünüyor
+      description: What Java players see, with screenshots if possible. / Java oyuncularının gördüğü, mümkünse ekran görüntüleriyle.
+    validations:
+      required: true
+  - type: textarea
+    id: bedrock
+    attributes:
+      label: How it looks on Bedrock now / Şu anda Bedrock'ta nasıl görünüyor
+      description: Include your Twilight version and setup (single server or proxy). / Twilight sürümünüzü ve kurulumunuzu (tek sunucu veya proxy) ekleyin.
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: Documentation and samples / Belgeler ve örnekler
+      description: Public documentation of the format or API, and a small sample you may share. Do not attach paid or private assets. / Biçimin veya API'nin herkese açık belgeleri ve paylaşabileceğiniz küçük bir örnek. Ücretli veya özel varlıkları eklemeyin.

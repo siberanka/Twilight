@@ -1,0 +1,6 @@
+name: twilight-proxy
+version: '${version}'
+main: com.siberanka.twilight.proxy.bungee.BungeePlugin
+author: siberanka
+description: Per-server Bedrock packs for Geyser on BungeeCord, from Twilight on the backends.
+softDepends: [Geyser-BungeeCord]

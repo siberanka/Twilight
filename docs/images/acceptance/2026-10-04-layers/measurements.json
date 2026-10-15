@@ -1,0 +1,151 @@
+{
+  "captured": "2026-10-04",
+  "client": {
+    "java": "26.2",
+    "bedrock": "1.26.5203.0"
+  },
+  "menus": [
+    {
+      "id": "stacked-four",
+      "size": 54,
+      "technique": "four images and text stacked: panel, banner over it, badge over the banner, bold text over the badge",
+      "bestShift": [
+        0,
+        0
+      ],
+      "titleShift": [
+        0,
+        0
+      ],
+      "artError": 0.3
+    },
+    {
+      "id": "highlight-row",
+      "size": 27,
+      "technique": "translucent highlight drawn over the first slot row, then icons and text moved back over the header",
+      "bestShift": [
+        0,
+        0
+      ],
+      "titleShift": [
+        0,
+        0
+      ],
+      "artError": 0.2
+    },
+    {
+      "id": "layered-bold",
+      "size": 54,
+      "technique": "banner moved back over the header with a negative space, then bold text",
+      "bestShift": [
+        0,
+        0
+      ],
+      "titleShift": [
+        0,
+        0
+      ],
+      "artError": 0.2
+    },
+    {
+      "id": "header-uncoloured",
+      "size": 27,
+      "technique": "header panel above the chest, no title colour (Java darkens images)",
+      "bestShift": [
+        0,
+        0
+      ],
+      "titleShift": [
+        0,
+        0
+      ],
+      "artError": 0.2
+    },
+    {
+      "id": "header-white",
+      "size": 27,
+      "technique": "the same header with a white title colour",
+      "bestShift": [
+        0,
+        0
+      ],
+      "titleShift": [
+        0,
+        0
+      ],
+      "artError": 0.2
+    },
+    {
+      "id": "icon-row",
+      "size": 27,
+      "technique": "icons separated by +4/-1 space providers, mixed with coloured text",
+      "bestShift": [
+        0,
+        0
+      ],
+      "titleShift": [
+        0,
+        0
+      ],
+      "artError": 30.4
+    },
+    {
+      "id": "negative-height",
+      "size": 36,
+      "technique": "eight Jobs-style negative-height shift glyphs, then the header",
+      "bestShift": [
+        0,
+        0
+      ],
+      "titleShift": [
+        0,
+        0
+      ],
+      "artError": 0.4
+    },
+    {
+      "id": "hex-text",
+      "size": 27,
+      "technique": "hex and legacy colours, text only",
+      "bestShift": [
+        0,
+        0
+      ],
+      "titleShift": [
+        0,
+        0
+      ],
+      "artError": 30.4
+    },
+    {
+      "id": "bold-text",
+      "size": 36,
+      "technique": "bold text title",
+      "bestShift": [
+        0,
+        0
+      ],
+      "titleShift": [
+        0,
+        0
+      ],
+      "artError": 30.9
+    }
+  ],
+  "datapackBiomeFloorMeanRgb": {
+    "java": [
+      111,
+      128,
+      64
+    ],
+    "bedrock": [
+      110,
+      127,
+      64
+    ]
+  },
+  "notes": [
+    "bestShift/titleShift in GUI units; (0, 0) means the art lands on Java's pixels",
+    "artError: mean absolute luminance difference inside the title panel (0-255)"
+  ]
+}

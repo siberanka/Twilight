@@ -1,0 +1,438 @@
+{
+  "server": "boxpvp2",
+  "published": [],
+  "menus": [
+    {
+      "id": "betterreports-gui-180",
+      "plugin": "BetterReports",
+      "size": 54,
+      "title": "'\\xa7eSayfaya Git'",
+      "comparison": {
+        "name": "uiG-betterreports-gui-180",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 14.96,
+        "unshiftedError": 14.96,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.18,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.723,
+        "artError": 31.2
+      }
+    },
+    {
+      "id": "deluxemenus-ayarlar-1",
+      "plugin": "DeluxeMenus",
+      "size": 45,
+      "title": "'\\xa70Ayarlar'",
+      "comparison": {
+        "name": "uiG-deluxemenus-ayarlar-1",
+        "size": 45,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.38,
+        "unshiftedError": 15.38,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.38,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.724,
+        "artError": 30.9
+      }
+    },
+    {
+      "id": "deluxemenus-discord-1",
+      "plugin": "DeluxeMenus",
+      "size": 27,
+      "title": "'\\xa7eDiscord'",
+      "comparison": {
+        "name": "uiG-deluxemenus-discord-1",
+        "size": 27,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 14.57,
+        "unshiftedError": 14.57,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.21,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.739,
+        "artError": 30.1
+      }
+    },
+    {
+      "id": "deluxemenus-d\u00f6n\u00fc\u015ft\u00fcr\u00fcc\u00fc-13",
+      "plugin": "DeluxeMenus",
+      "size": 54,
+      "title": "'\\xa70D\\xf6n\\xfc\\u015ft\\xfcr\\xfcc\\xfc'",
+      "comparison": {
+        "name": "uiG-deluxemenus-d\u00f6n\u00fc\u015ft\u00fcr\u00fcc\u00fc-13",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.13,
+        "unshiftedError": 15.13,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 5.29,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.717,
+        "artError": 32.1
+      }
+    },
+    {
+      "id": "deluxemenus-kurallar-1",
+      "plugin": "DeluxeMenus",
+      "size": 45,
+      "title": "'\\xa70Kurallar'",
+      "comparison": {
+        "name": "uiG-deluxemenus-kurallar-1",
+        "size": 45,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.38,
+        "unshiftedError": 15.38,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.51,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.724,
+        "artError": 30.9
+      }
+    },
+    {
+      "id": "deluxemenus-launcher-1",
+      "plugin": "DeluxeMenus",
+      "size": 27,
+      "title": "'\\xa7x\\xa7f\\xa7d\\xa7a\\xa7a\\xa75\\xa75Twilight Launcher'",
+      "comparison": {
+        "name": "uiG-deluxemenus-launcher-1",
+        "size": 27,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 14.6,
+        "unshiftedError": 14.6,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.8,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.74,
+        "artError": 30.3
+      }
+    },
+    {
+      "id": "deluxemenus-makas-13",
+      "plugin": "DeluxeMenus",
+      "size": 45,
+      "title": "'\\xa70Makas Sat\\u0131n Al'",
+      "comparison": {
+        "name": "uiG-deluxemenus-makas-13",
+        "size": 45,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.7,
+        "unshiftedError": 15.7,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 8.51,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.721,
+        "artError": 32.8
+      }
+    },
+    {
+      "id": "deluxemenus-oy-1",
+      "plugin": "DeluxeMenus",
+      "size": 27,
+      "title": "'\\xa7x\\xa7f\\xa7d\\xa7a\\xa7a\\xa75\\xa75Oy Siteleri'",
+      "comparison": {
+        "name": "uiG-deluxemenus-oy-1",
+        "size": 27,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 14.59,
+        "unshiftedError": 14.59,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.49,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.739,
+        "artError": 30.2
+      }
+    },
+    {
+      "id": "deluxemenus-portal-1",
+      "plugin": "DeluxeMenus",
+      "size": 45,
+      "title": "'Portal \\u0130zni Sat\\u0131n Al'",
+      "comparison": {
+        "name": "uiG-deluxemenus-portal-1",
+        "size": 45,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.62,
+        "unshiftedError": 15.62,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 6.61,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.722,
+        "artError": 32.4
+      }
+    },
+    {
+      "id": "deluxemenus-punish_duration_1-1",
+      "plugin": "DeluxeMenus",
+      "size": 27,
+      "title": "'\\xa78Ceza S\\xfcreleri \\xa77\\u2758 \\xa78PoseReview'",
+      "comparison": {
+        "name": "uiG-deluxemenus-punish_duration_1-1",
+        "size": 27,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.52,
+        "unshiftedError": 15.52,
+        "titleShift": [
+          0,
+          1
+        ],
+        "titleError": 22.72,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.749,
+        "artError": 35.4
+      }
+    },
+    {
+      "id": "deluxemenus-punish_duration_4-1",
+      "plugin": "DeluxeMenus",
+      "size": 9,
+      "title": "'Default Menu'",
+      "comparison": {
+        "name": "uiG-deluxemenus-punish_duration_4-1",
+        "size": 9,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.52,
+        "unshiftedError": 15.52,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.24,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.75,
+        "artError": 29.1
+      }
+    },
+    {
+      "id": "deluxemenus-punish_reason-1",
+      "plugin": "DeluxeMenus",
+      "size": 27,
+      "title": "'\\xa78Cezaland\\u0131rma Paneli \\xa77\\u2758 \\xa78PoseReview'",
+      "comparison": {
+        "name": "uiG-deluxemenus-punish_reason-1",
+        "size": 27,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.71,
+        "unshiftedError": 15.71,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 27.24,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.75,
+        "artError": 36.5
+      }
+    },
+    {
+      "id": "deluxemenus-pvpkoruma-1",
+      "plugin": "DeluxeMenus",
+      "size": 45,
+      "title": "'PVP Korumas\\u0131 Sat\\u0131n Al'",
+      "comparison": {
+        "name": "uiG-deluxemenus-pvpkoruma-1",
+        "size": 45,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.82,
+        "unshiftedError": 15.82,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 11.11,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.722,
+        "artError": 33.5
+      }
+    },
+    {
+      "id": "deluxemenus-site-1",
+      "plugin": "DeluxeMenus",
+      "size": 27,
+      "title": "'\\xa7x\\xa7f\\xa7d\\xa7a\\xa7a\\xa75\\xa75Twilight \\u0130nternet Sitesi'",
+      "comparison": {
+        "name": "uiG-deluxemenus-site-1",
+        "size": 27,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 14.61,
+        "unshiftedError": 14.61,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 2.03,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.74,
+        "artError": 30.3
+      }
+    },
+    {
+      "id": "deluxemenus-vip-1",
+      "plugin": "DeluxeMenus",
+      "size": 45,
+      "title": "'\\xa70VIP Bilgi'",
+      "comparison": {
+        "name": "uiG-deluxemenus-vip-1",
+        "size": 45,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.41,
+        "unshiftedError": 15.41,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 2.13,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.724,
+        "artError": 31.0
+      }
+    },
+    {
+      "id": "deluxemenus-vipsurem-1",
+      "plugin": "DeluxeMenus",
+      "size": 45,
+      "title": "'\\xa70Vip S\\xfcrem'",
+      "comparison": {
+        "name": "uiG-deluxemenus-vipsurem-1",
+        "size": 45,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.41,
+        "unshiftedError": 15.41,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 2.13,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.724,
+        "artError": 31.0
+      }
+    }
+  ]
+}

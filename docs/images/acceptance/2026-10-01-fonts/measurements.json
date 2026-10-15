@@ -1,0 +1,581 @@
+{
+  "candidateArtifactSha256": "e1ee4415e02154e54de1a010d92a20e87add68c63bed2e4b985f11976aaa0594",
+  "beforeArtifactSha256": "152fd07575e4a2c26b910f5ba9974ebf08c6e501eeb04e43f9c4c8f1010f24c5",
+  "tests": 84,
+  "suites": 19,
+  "finalBedrockVisualAcceptance": "passed for six measured bitmap probes, 35 supported real glyphs and the tested inventory title; broader parity not claimed",
+  "nativeCalibration": "Manual diagnostic page, not plugin output: 4x4 native squares at cell y=0,2,4,6,8,10; Bedrock 2 screen pixels per GUI unit; cell top is H top minus 4 GUI units.",
+  "metrics": [
+    {
+      "height": 4,
+      "ascent": 4,
+      "expectedJavaTop": 3,
+      "nativeCellTop": 7
+    },
+    {
+      "height": 4,
+      "ascent": 2,
+      "expectedJavaTop": 5,
+      "nativeCellTop": 9
+    },
+    {
+      "height": 4,
+      "ascent": 0,
+      "expectedJavaTop": 7,
+      "nativeCellTop": 11
+    },
+    {
+      "height": 2,
+      "ascent": -2,
+      "expectedJavaTop": 9,
+      "nativeCellTop": 13
+    },
+    {
+      "height": 8,
+      "ascent": 8,
+      "expectedJavaTop": -1,
+      "nativeCellTop": 3
+    },
+    {
+      "height": 9,
+      "ascent": 8,
+      "expectedJavaTop": -1,
+      "nativeCellTop": 3
+    }
+  ],
+  "sourceImagesVerifiedUnchanged": 36,
+  "newGlyphs": [
+    {
+      "file": "twitteremojis:font/emoji/crossedfingers.png",
+      "chars": [
+        "U+E160"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "twitteremojis:font/emoji/doubleexclamation.png",
+      "chars": [
+        "U+E168"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "twitteremojis:font/emoji/laugh4.png",
+      "chars": [
+        "U+E1AD"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "twitteremojis:font/emoji/rooster.png",
+      "chars": [
+        "U+E1F6"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "twitteremojis:font/emoji/sweat.png",
+      "chars": [
+        "U+E217"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "twitteremojis:font/emoji/fear3.png",
+      "chars": [
+        "U+E17B"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "twitteremojis:font/emoji/moon3.png",
+      "chars": [
+        "U+E1C9"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "twitteremojis:font/emoji/5.png",
+      "chars": [
+        "U+E132"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "twitteremojis:font/emoji/wink.png",
+      "chars": [
+        "U+E22F"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "twitteremojis:font/emoji/finger.png",
+      "chars": [
+        "U+E17F"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "twitteremojis:font/emoji/smilecat.png",
+      "chars": [
+        "U+E209"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "twitteremojis:font/emoji/small.png",
+      "chars": [
+        "U+E202"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "twitteremojis:font/emoji/evil.png",
+      "chars": [
+        "U+E170"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "twitteremojis:font/emoji/moon2.png",
+      "chars": [
+        "U+E1C8"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "twitteremojis:font/emoji/leo.png",
+      "chars": [
+        "U+E1B1"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "twitteremojis:font/emoji/medal.png",
+      "chars": [
+        "U+E1B9"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "twitteremojis:font/emoji/starcrescent.png",
+      "chars": [
+        "U+E20F"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "twitteremojis:font/emoji/scorpion.png",
+      "chars": [
+        "U+E1FC"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "twitteremojis:font/emoji/callme.png",
+      "chars": [
+        "U+E14D"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "twitteremojis:font/emoji/hamburger.png",
+      "chars": [
+        "U+E18F"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "twitteremojis:font/emoji/lion.png",
+      "chars": [
+        "U+E1B2"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "twitteremojis:font/emoji/9.png",
+      "chars": [
+        "U+E136"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "twitteremojis:font/emoji/bandage.png",
+      "chars": [
+        "U+E145"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "twitteremojis:font/emoji/fok.png",
+      "chars": [
+        "U+E185"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "minecraft:item/stick.png",
+      "chars": [
+        "U+E0FB"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "minecraft:item/charcoal.png",
+      "chars": [
+        "U+E033"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "minecraft:item/paper.png",
+      "chars": [
+        "U+E0CE"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "minecraft:item/sweet_berries.png",
+      "chars": [
+        "U+E106"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "minecraft:item/music_disc_wait.png",
+      "chars": [
+        "U+E0C1"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "minecraft:item/carrot.png",
+      "chars": [
+        "U+E02C"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "minecraft:item/orange_dye.png",
+      "chars": [
+        "U+E0CC"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "minecraft:item/stone_sword.png",
+      "chars": [
+        "U+E100"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "betterranks:font/rank/oyuncu.png",
+      "chars": [
+        "U+E24D"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "minecraft:item/lime_dye.png",
+      "chars": [
+        "U+E0AC"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "minecraft:item/prismarine_crystals.png",
+      "chars": [
+        "U+E0D7"
+      ],
+      "height": 9,
+      "ascent": 8
+    },
+    {
+      "file": "minecraft:item/stone_axe.png",
+      "chars": [
+        "U+E0FC"
+      ],
+      "height": 9,
+      "ascent": 8
+    }
+  ],
+  "fontOnlyReport": {
+    "candidates": 0,
+    "converted": 0,
+    "three_dimensional": 0,
+    "glyphs": 41,
+    "font_pages": 4,
+    "vanilla_fallback_textures": 0,
+    "named_fonts": 0,
+    "named_font_glyphs": 0,
+    "sound_definitions": 0,
+    "sound_files": 0,
+    "vanilla_fallback_sounds": 0,
+    "minecraft_version": "26.2",
+    "vanilla_asset_download": false,
+    "skipped": 0,
+    "problems": [
+      "1 oversized bitmap glyphs require a Bedrock UI adapter; examples: minecraft:default -> betterranks:font/rank/oyuncu.png (41.0x9)"
+    ],
+    "vanilla_override": false
+  },
+  "fullCandidateReport": {
+    "candidates": 168,
+    "converted": 167,
+    "three_dimensional": 164,
+    "glyphs": 41,
+    "font_pages": 4,
+    "vanilla_fallback_textures": 0,
+    "named_fonts": 0,
+    "named_font_glyphs": 0,
+    "sound_definitions": 0,
+    "sound_files": 0,
+    "vanilla_fallback_sounds": 0,
+    "minecraft_version": "26.2",
+    "vanilla_asset_download": false,
+    "skipped": 1,
+    "problems": [
+      "minecraft:paper -> [spectra_aurelium_skills:skill_ship]: Missing face texture #missing",
+      "1 oversized bitmap glyphs require a Bedrock UI adapter; examples: minecraft:default -> betterranks:font/rank/oyuncu.png (41.0x9)"
+    ],
+    "vanilla_override": false
+  },
+  "fontPagesMatchLiveCandidate": true,
+  "audits": {
+    "box": {
+      "sources": 30,
+      "packSha256": "91f3ebee3852466643ef44f027e0e5e61b9c7ff783e477761c8f40a3929eec1b",
+      "repeatPackIdentical": true,
+      "strictAccepted": false,
+      "strictProblemCount": 12,
+      "lastDiagnosticPackPreserved": true,
+      "counts": {
+        "candidates": 781,
+        "converted": 772,
+        "glyphs": 573,
+        "font_pages": 3
+      }
+    },
+    "survival": {
+      "sources": 138,
+      "packSha256": "0f18cd148bc676936166a57bb88a2c3e4cef3efaab437dc311ede72e6d5766ac",
+      "repeatPackIdentical": true,
+      "strictAccepted": false,
+      "strictProblemCount": 243,
+      "lastDiagnosticPackPreserved": true,
+      "counts": {
+        "candidates": 130,
+        "converted": 125,
+        "glyphs": 598,
+        "font_pages": 3
+      }
+    }
+  },
+  "savedPlayerDeaths": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "observedPixelMetrics": {
+    "java": {
+      "screenPixelsPerGuiUnit": 3,
+      "probes": [
+        {
+          "color": [
+            255,
+            0,
+            0
+          ],
+          "glyphTopScreenPx": 237,
+          "textTopScreenPx": 228,
+          "heightScreenPx": 12,
+          "topOffsetGuiUnits": 3.0,
+          "heightGuiUnits": 4.0
+        },
+        {
+          "color": [
+            0,
+            255,
+            0
+          ],
+          "glyphTopScreenPx": 297,
+          "textTopScreenPx": 282,
+          "heightScreenPx": 12,
+          "topOffsetGuiUnits": 5.0,
+          "heightGuiUnits": 4.0
+        },
+        {
+          "color": [
+            0,
+            128,
+            255
+          ],
+          "glyphTopScreenPx": 357,
+          "textTopScreenPx": 336,
+          "heightScreenPx": 12,
+          "topOffsetGuiUnits": 7.0,
+          "heightGuiUnits": 4.0
+        },
+        {
+          "color": [
+            255,
+            255,
+            0
+          ],
+          "glyphTopScreenPx": 417,
+          "textTopScreenPx": 390,
+          "heightScreenPx": 6,
+          "topOffsetGuiUnits": 9.0,
+          "heightGuiUnits": 2.0
+        },
+        {
+          "color": [
+            255,
+            0,
+            255
+          ],
+          "glyphTopScreenPx": 441,
+          "textTopScreenPx": 444,
+          "heightScreenPx": 24,
+          "topOffsetGuiUnits": -1.0,
+          "heightGuiUnits": 8.0
+        },
+        {
+          "color": [
+            0,
+            255,
+            255
+          ],
+          "glyphTopScreenPx": 495,
+          "textTopScreenPx": 498,
+          "heightScreenPx": 27,
+          "topOffsetGuiUnits": -1.0,
+          "heightGuiUnits": 9.0
+        }
+      ]
+    },
+    "bedrock": {
+      "screenPixelsPerGuiUnit": 2,
+      "probes": [
+        {
+          "color": [
+            255,
+            0,
+            0
+          ],
+          "glyphTopScreenPx": 704,
+          "textTopScreenPx": 698,
+          "heightScreenPx": 8,
+          "topOffsetGuiUnits": 3.0,
+          "heightGuiUnits": 4.0
+        },
+        {
+          "color": [
+            0,
+            255,
+            0
+          ],
+          "glyphTopScreenPx": 752,
+          "textTopScreenPx": 742,
+          "heightScreenPx": 8,
+          "topOffsetGuiUnits": 5.0,
+          "heightGuiUnits": 4.0
+        },
+        {
+          "color": [
+            0,
+            128,
+            255
+          ],
+          "glyphTopScreenPx": 800,
+          "textTopScreenPx": 786,
+          "heightScreenPx": 8,
+          "topOffsetGuiUnits": 7.0,
+          "heightGuiUnits": 4.0
+        },
+        {
+          "color": [
+            255,
+            255,
+            0
+          ],
+          "glyphTopScreenPx": 848,
+          "textTopScreenPx": 830,
+          "heightScreenPx": 4,
+          "topOffsetGuiUnits": 9.0,
+          "heightGuiUnits": 2.0
+        },
+        {
+          "color": [
+            255,
+            0,
+            255
+          ],
+          "glyphTopScreenPx": 872,
+          "textTopScreenPx": 874,
+          "heightScreenPx": 16,
+          "topOffsetGuiUnits": -1.0,
+          "heightGuiUnits": 8.0
+        },
+        {
+          "color": [
+            0,
+            255,
+            255
+          ],
+          "glyphTopScreenPx": 916,
+          "textTopScreenPx": 918,
+          "heightScreenPx": 18,
+          "topOffsetGuiUnits": -1.0,
+          "heightGuiUnits": 9.0
+        }
+      ]
+    }
+  },
+  "realGlyphsVisibleBedrock": 35,
+  "unsupportedWideGlyphs": 1,
+  "menuTitleObserved": "Metric square and real emoji visible and vertically aligned; Java dark title tint versus Bedrock original glyph colors remains different.",
+  "finalCaptureDate": "2026-10-01"
+}

@@ -1,0 +1,71 @@
+{
+  "buildSha256": "113e15741a90045f089f971453ed42b941fbfe0983dc9f2e748c5dadf15c45bf",
+  "metadataTransitions": [
+    {
+      "state": "positive",
+      "bedrockActor": "minecraft:area_effect_cloud",
+      "javaRadius": 1.5,
+      "inRangeClouds": 14,
+      "adaptedAnchors": 13,
+      "passengerLinks": 120,
+      "brokenLinks": 0,
+      "particleMetadataPreserved": true,
+      "colorMetadataPreserved": true,
+      "freshSessionWithoutStaleColor": false
+    },
+    {
+      "state": "zero-invisible",
+      "bedrockActor": "minecraft:armor_stand",
+      "javaRadius": 0.0,
+      "inRangeClouds": 14,
+      "adaptedAnchors": 14,
+      "passengerLinks": 120,
+      "brokenLinks": 0,
+      "particleMetadataPreserved": true,
+      "colorMetadataPreserved": true,
+      "freshSessionWithoutStaleColor": false
+    },
+    {
+      "state": "zero-visible",
+      "bedrockActor": "minecraft:area_effect_cloud",
+      "javaRadius": 0.0,
+      "inRangeClouds": 14,
+      "adaptedAnchors": 13,
+      "passengerLinks": 120,
+      "brokenLinks": 0,
+      "particleMetadataPreserved": true,
+      "colorMetadataPreserved": true,
+      "freshSessionWithoutStaleColor": false
+    },
+    {
+      "state": "restore",
+      "bedrockActor": "minecraft:area_effect_cloud",
+      "javaRadius": 1.5,
+      "inRangeClouds": 14,
+      "adaptedAnchors": 13,
+      "passengerLinks": 120,
+      "brokenLinks": 0,
+      "particleMetadataPreserved": true,
+      "colorMetadataPreserved": true,
+      "freshSessionWithoutStaleColor": false
+    },
+    {
+      "state": "reconnect",
+      "bedrockActor": "minecraft:armor_stand",
+      "javaRadius": 0.0,
+      "inRangeClouds": 14,
+      "adaptedAnchors": 14,
+      "passengerLinks": 120,
+      "brokenLinks": 0,
+      "particleMetadataPreserved": true,
+      "colorMetadataPreserved": null,
+      "freshSessionWithoutStaleColor": true
+    }
+  ],
+  "cleanup": {
+    "clouds": 13,
+    "passengerLinks": 119,
+    "brokenLinks": 0
+  },
+  "visualParticleStyleParity": "not asserted; preserves Geyser behavior"
+}

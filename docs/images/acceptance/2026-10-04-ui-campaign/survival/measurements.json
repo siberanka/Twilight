@@ -1,0 +1,2382 @@
+{
+  "server": "survival",
+  "published": [],
+  "menus": [
+    {
+      "id": "auraskills-abilities-1",
+      "plugin": "AuraSkills",
+      "size": 54,
+      "title": "'\\xa7f\\ue994\\ue995\\ue995 \\ue24c'",
+      "comparison": {
+        "name": "uiF-auraskills-abilities-1",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 11.7,
+        "unshiftedError": 11.7,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 3.41,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.772,
+        "artError": 18.8
+      }
+    },
+    {
+      "id": "auraskills-leaderboard-1",
+      "plugin": "AuraSkills",
+      "size": 54,
+      "title": "'\\xa7f\\ue994\\ue996 \\ue24f'",
+      "comparison": {
+        "name": "uiF-auraskills-leaderboard-1",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 13.47,
+        "unshiftedError": 13.47,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.31,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.681,
+        "artError": 21.9
+      }
+    },
+    {
+      "id": "auraskills-level_progression-1",
+      "plugin": "AuraSkills",
+      "size": 54,
+      "title": "'\\xa7f\\ue999\\ue996 \\ue24d'",
+      "comparison": {
+        "name": "uiF-auraskills-level_progression-1",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 13.53,
+        "unshiftedError": 13.53,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.31,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.68,
+        "artError": 21.9
+      }
+    },
+    {
+      "id": "auraskills-skills-1",
+      "plugin": "AuraSkills",
+      "size": 54,
+      "title": "'\\xa7f\\ue994\\ue996 \\ue24b'",
+      "comparison": {
+        "name": "uiF-auraskills-skills-1",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 13.38,
+        "unshiftedError": 13.38,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.31,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.682,
+        "artError": 21.9
+      }
+    },
+    {
+      "id": "auraskills-sources-1",
+      "plugin": "AuraSkills",
+      "size": 54,
+      "title": "'\\xa7f\\ue999\\ue996 \\ue259'",
+      "comparison": {
+        "name": "uiF-auraskills-sources-1",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 13.64,
+        "unshiftedError": 13.64,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.31,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.681,
+        "artError": 21.9
+      }
+    },
+    {
+      "id": "auraskills-stats-1",
+      "plugin": "AuraSkills",
+      "size": 54,
+      "title": "'\\xa7f\\ue994\\ue995\\ue995 \\ue24e'",
+      "comparison": {
+        "name": "uiF-auraskills-stats-1",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 13.27,
+        "unshiftedError": 13.27,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.31,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.681,
+        "artError": 21.9
+      }
+    },
+    {
+      "id": "betterreports-gui-180",
+      "plugin": "BetterReports",
+      "size": 54,
+      "title": "'\\xa7eSayfaya Git'",
+      "comparison": {
+        "name": "uiF-betterreports-gui-180",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.34,
+        "unshiftedError": 15.34,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.18,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.723,
+        "artError": 31.2
+      }
+    },
+    {
+      "id": "conquestduels-arenaselectorgui-2",
+      "plugin": "ConquestDuels",
+      "size": 54,
+      "title": "'\\xa7f\\U0002a700\\U0002a700\\U0002a700\\U0002a700\\U0002a700\\U0002a700\\U0002a700\\U0002a700\\U0002a702'",
+      "comparison": {
+        "name": "uiF-conquestduels-arenaselectorgui-2",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 10.89,
+        "unshiftedError": 10.89,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 6.21,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.726,
+        "artError": 13.0
+      }
+    },
+    {
+      "id": "conquestduels-challengegui-2",
+      "plugin": "ConquestDuels",
+      "size": 54,
+      "title": "'\\xa7f\\U0002a700\\U0002a700\\U0002a700\\U0002a700\\U0002a700\\U0002a700\\U0002a700\\U0002a700\\U0002a706'",
+      "comparison": {
+        "name": "uiF-conquestduels-challengegui-2",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 12.06,
+        "unshiftedError": 12.06,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.31,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.608,
+        "artError": 13.4
+      }
+    },
+    {
+      "id": "conquestduels-confirmgui-2",
+      "plugin": "ConquestDuels",
+      "size": 54,
+      "title": "'\\xa7f\\U0002a700\\U0002a700\\U0002a700\\U0002a700\\U0002a700\\U0002a700\\U0002a700\\U0002a700\\U0002a704'",
+      "comparison": {
+        "name": "uiF-conquestduels-confirmgui-2",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 12.06,
+        "unshiftedError": 12.06,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.31,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.618,
+        "artError": 13.4
+      }
+    },
+    {
+      "id": "conquestduels-kitselectorgui-2",
+      "plugin": "ConquestDuels",
+      "size": 54,
+      "title": "'\\xa7f\\U0002a700\\U0002a700\\U0002a700\\U0002a700\\U0002a700\\U0002a700\\U0002a700\\U0002a700\\U0002a703'",
+      "comparison": {
+        "name": "uiF-conquestduels-kitselectorgui-2",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 12.12,
+        "unshiftedError": 12.12,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.31,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.6,
+        "artError": 13.4
+      }
+    },
+    {
+      "id": "crazycrates-respin-gui-2",
+      "plugin": "CrazyCrates",
+      "size": 27,
+      "title": "'\\xa7cDo you want to keep your prize?'",
+      "comparison": {
+        "name": "uiF-crazycrates-respin-gui-2",
+        "size": 27,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 14.48,
+        "unshiftedError": 14.48,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.92,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.736,
+        "artError": 30.3
+      }
+    },
+    {
+      "id": "deluxemenus-advanced_menu-3",
+      "plugin": "DeluxeMenus",
+      "size": 27,
+      "title": "'\\xa78> \\xa76\\xa7lD\\xa7eM \\xa7bAdvanced Example'",
+      "comparison": {
+        "name": "uiF-deluxemenus-advanced_menu-3",
+        "size": 27,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 14.53,
+        "unshiftedError": 14.53,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 2.99,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.739,
+        "artError": 30.5
+      }
+    },
+    {
+      "id": "deluxemenus-aenchantshop-1",
+      "plugin": "DeluxeMenus",
+      "size": 54,
+      "title": "'\\ue994\\ue994\\ue996\\ue995\\ue995\\ue2fe'",
+      "comparison": {
+        "name": "uiF-deluxemenus-aenchantshop-1",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 12.04,
+        "unshiftedError": 12.04,
+        "titleShift": [
+          0,
+          3
+        ],
+        "titleError": 7.45,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.726,
+        "artError": 12.9
+      }
+    },
+    {
+      "id": "deluxemenus-basics_menu-31",
+      "plugin": "DeluxeMenus",
+      "size": 9,
+      "title": "'Basics Menu'",
+      "comparison": {
+        "name": "uiF-deluxemenus-basics_menu-31",
+        "size": 9,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.98,
+        "unshiftedError": 15.98,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.83,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.751,
+        "artError": 29.3
+      }
+    },
+    {
+      "id": "deluxemenus-bilgi-1",
+      "plugin": "DeluxeMenus",
+      "size": 54,
+      "title": "'\\xa7f\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u1b45'",
+      "comparison": {
+        "name": "uiF-deluxemenus-bilgi-1",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 11.74,
+        "unshiftedError": 11.74,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.31,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.661,
+        "artError": 12.1
+      }
+    },
+    {
+      "id": "deluxemenus-depolar-2",
+      "plugin": "DeluxeMenus",
+      "size": 9,
+      "title": "'\\xa78Sanal Sand\\u0131klar'",
+      "comparison": {
+        "name": "uiF-deluxemenus-depolar-2",
+        "size": 9,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 16.31,
+        "unshiftedError": 16.31,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 5.72,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.75,
+        "artError": 30.3
+      }
+    },
+    {
+      "id": "deluxemenus-discord-1",
+      "plugin": "DeluxeMenus",
+      "size": 27,
+      "title": "'\\xa7eDiscord'",
+      "comparison": {
+        "name": "uiF-deluxemenus-discord-1",
+        "size": 27,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 14.45,
+        "unshiftedError": 14.45,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.21,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.739,
+        "artError": 30.1
+      }
+    },
+    {
+      "id": "deluxemenus-eventler-1",
+      "plugin": "DeluxeMenus",
+      "size": 54,
+      "title": "'\\xa7f\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u1045'",
+      "comparison": {
+        "name": "uiF-deluxemenus-eventler-1",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 11.74,
+        "unshiftedError": 11.74,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.31,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.668,
+        "artError": 12.1
+      }
+    },
+    {
+      "id": "deluxemenus-jobs_builder-3",
+      "plugin": "DeluxeMenus",
+      "size": 54,
+      "title": "'\\xa7f\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u1f06'",
+      "comparison": {
+        "name": "uiF-deluxemenus-jobs_builder-3",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 13.59,
+        "unshiftedError": 13.59,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.31,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.652,
+        "artError": 21.9
+      }
+    },
+    {
+      "id": "deluxemenus-jobs_digger-3",
+      "plugin": "DeluxeMenus",
+      "size": 54,
+      "title": "'\\xa7f\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u1f01'",
+      "comparison": {
+        "name": "uiF-deluxemenus-jobs_digger-3",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 13.59,
+        "unshiftedError": 13.59,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.31,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.651,
+        "artError": 21.9
+      }
+    },
+    {
+      "id": "deluxemenus-jobs_farmer-3",
+      "plugin": "DeluxeMenus",
+      "size": 54,
+      "title": "'\\xa7f\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u1f03'",
+      "comparison": {
+        "name": "uiF-deluxemenus-jobs_farmer-3",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 13.56,
+        "unshiftedError": 13.56,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.31,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.651,
+        "artError": 21.9
+      }
+    },
+    {
+      "id": "deluxemenus-jobs_fisher-3",
+      "plugin": "DeluxeMenus",
+      "size": 54,
+      "title": "'\\xa7f\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u1f05'",
+      "comparison": {
+        "name": "uiF-deluxemenus-jobs_fisher-3",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 13.56,
+        "unshiftedError": 13.56,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.31,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.652,
+        "artError": 21.9
+      }
+    },
+    {
+      "id": "deluxemenus-jobs_hunter-3",
+      "plugin": "DeluxeMenus",
+      "size": 54,
+      "title": "'\\xa7f\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u1f04'",
+      "comparison": {
+        "name": "uiF-deluxemenus-jobs_hunter-3",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 13.59,
+        "unshiftedError": 13.59,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.31,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.651,
+        "artError": 21.9
+      }
+    },
+    {
+      "id": "deluxemenus-jobs_miner-3",
+      "plugin": "DeluxeMenus",
+      "size": 54,
+      "title": "'\\xa7f\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u1f00'",
+      "comparison": {
+        "name": "uiF-deluxemenus-jobs_miner-3",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 13.59,
+        "unshiftedError": 13.59,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.31,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.652,
+        "artError": 21.9
+      }
+    },
+    {
+      "id": "deluxemenus-jobs_woodcutter-3",
+      "plugin": "DeluxeMenus",
+      "size": 54,
+      "title": "'\\xa7f\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u1f02'",
+      "comparison": {
+        "name": "uiF-deluxemenus-jobs_woodcutter-3",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 13.59,
+        "unshiftedError": 13.59,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.31,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.652,
+        "artError": 21.9
+      }
+    },
+    {
+      "id": "deluxemenus-kaptan-1",
+      "plugin": "DeluxeMenus",
+      "size": 54,
+      "title": "'\\ue999\\ue2ab'",
+      "comparison": {
+        "name": "uiF-deluxemenus-kaptan-1",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 12.76,
+        "unshiftedError": 12.76,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.31,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.583,
+        "artError": 16.1
+      }
+    },
+    {
+      "id": "deluxemenus-kurallar-1",
+      "plugin": "DeluxeMenus",
+      "size": 36,
+      "title": "'\\xa7f\\ue999\\u2c28'",
+      "comparison": {
+        "name": "uiF-deluxemenus-kurallar-1",
+        "size": 36,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 11.22,
+        "unshiftedError": 11.22,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.27,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.666,
+        "artError": 11.5
+      }
+    },
+    {
+      "id": "deluxemenus-mainmenu-1",
+      "plugin": "DeluxeMenus",
+      "size": 45,
+      "title": "'\\xa7f\\ue999\\u1cb7'",
+      "comparison": {
+        "name": "uiF-deluxemenus-mainmenu-1",
+        "size": 45,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 12.6,
+        "unshiftedError": 12.6,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.27,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.678,
+        "artError": 13.2
+      }
+    },
+    {
+      "id": "deluxemenus-miniontest-1",
+      "plugin": "DeluxeMenus",
+      "size": 54,
+      "title": "'\\xa7f\\uabc8\\uabc8\\uabc8\\uabc8\\uabc8\\uabc8\\uabc8\\uabc8\\uabc4'",
+      "comparison": {
+        "name": "uiF-deluxemenus-miniontest-1",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 11.84,
+        "unshiftedError": 11.84,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.31,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.643,
+        "artError": 12.1
+      }
+    },
+    {
+      "id": "deluxemenus-nametag-1",
+      "plugin": "DeluxeMenus",
+      "size": 45,
+      "title": "'\\xa7f\\ue999\\u0b77'",
+      "comparison": {
+        "name": "uiF-deluxemenus-nametag-1",
+        "size": 45,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 12.54,
+        "unshiftedError": 12.54,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.27,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.62,
+        "artError": 13.2
+      }
+    },
+    {
+      "id": "deluxemenus-requirements_menu-13",
+      "plugin": "DeluxeMenus",
+      "size": 9,
+      "title": "'Requirements Menu'",
+      "comparison": {
+        "name": "uiF-deluxemenus-requirements_menu-13",
+        "size": 9,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.97,
+        "unshiftedError": 15.97,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.62,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.749,
+        "artError": 29.2
+      }
+    },
+    {
+      "id": "deluxemenus-rutbeler-1",
+      "plugin": "DeluxeMenus",
+      "size": 54,
+      "title": "'\\xa7f\\ue999\\u23fb'",
+      "comparison": {
+        "name": "uiF-deluxemenus-rutbeler-1",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 11.74,
+        "unshiftedError": 11.74,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.31,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.662,
+        "artError": 12.1
+      }
+    },
+    {
+      "id": "deluxemenus-sosyal-13",
+      "plugin": "DeluxeMenus",
+      "size": 27,
+      "title": "'\\xa71Sosyal Medya Linkleri'",
+      "comparison": {
+        "name": "uiF-deluxemenus-sosyal-13",
+        "size": 27,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 14.5,
+        "unshiftedError": 14.5,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 2.46,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.732,
+        "artError": 30.3
+      }
+    },
+    {
+      "id": "deluxemenus-vipler-1",
+      "plugin": "DeluxeMenus",
+      "size": 36,
+      "title": "'\\xa7f\\ue999\\u1d25'",
+      "comparison": {
+        "name": "uiF-deluxemenus-vipler-1",
+        "size": 36,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 11.22,
+        "unshiftedError": 11.22,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.27,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.661,
+        "artError": 11.5
+      }
+    },
+    {
+      "id": "deluxemenus-wallet_menu-1",
+      "plugin": "DeluxeMenus",
+      "size": 27,
+      "title": "'\\xa7f\\u3201\\u3201\\u3201\\u3201\\u3201\\u3201\\u3201\\u3201\\u3201\\u3201\\u3201\\u3201\\u3206'",
+      "comparison": {
+        "name": "uiF-deluxemenus-wallet_menu-1",
+        "size": 27,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 12.75,
+        "unshiftedError": 12.75,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.26,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.638,
+        "artError": 20.8
+      }
+    },
+    {
+      "id": "deluxemenus-warpmenu-1",
+      "plugin": "DeluxeMenus",
+      "size": 45,
+      "title": "'\\xa7f\\ue999\\u26e3'",
+      "comparison": {
+        "name": "uiF-deluxemenus-warpmenu-1",
+        "size": 45,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 12.7,
+        "unshiftedError": 12.7,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.27,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.61,
+        "artError": 13.2
+      }
+    },
+    {
+      "id": "evenmorefish-applybaits-3",
+      "plugin": "EvenMoreFish",
+      "size": 54,
+      "title": "'\\xa7l\\xa71Yemleri Uygula'",
+      "comparison": {
+        "name": "uiF-evenmorefish-applybaits-3",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.37,
+        "unshiftedError": 15.37,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.94,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.718,
+        "artError": 31.3
+      }
+    },
+    {
+      "id": "evenmorefish-baits-3",
+      "plugin": "EvenMoreFish",
+      "size": 54,
+      "title": "'\\xa71Y\\xfckl\\xfc Yemleri G\\xf6r'",
+      "comparison": {
+        "name": "uiF-evenmorefish-baits-3",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.34,
+        "unshiftedError": 15.34,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 2.51,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.717,
+        "artError": 31.4
+      }
+    },
+    {
+      "id": "evenmorefish-confirm-3",
+      "plugin": "EvenMoreFish",
+      "size": 54,
+      "title": "'\\xa7f\\ue999\\ue304'",
+      "comparison": {
+        "name": "uiF-evenmorefish-confirm-3",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 10.73,
+        "unshiftedError": 10.73,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.92,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.735,
+        "artError": 12.3
+      }
+    },
+    {
+      "id": "evenmorefish-fish-3",
+      "plugin": "EvenMoreFish",
+      "size": 54,
+      "title": "'\\xa71Bal\\u0131k G\\xfcnl\\xfc\\u011f\\xfc'",
+      "comparison": {
+        "name": "uiF-evenmorefish-fish-3",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.99,
+        "unshiftedError": 15.99,
+        "titleShift": [
+          2,
+          0
+        ],
+        "titleError": 11.86,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.717,
+        "artError": 35.3
+      }
+    },
+    {
+      "id": "evenmorefish-main-3",
+      "plugin": "EvenMoreFish",
+      "size": 54,
+      "title": "'\\xa71EvenMoreFish'",
+      "comparison": {
+        "name": "uiF-evenmorefish-main-3",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.38,
+        "unshiftedError": 15.38,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 2.06,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.718,
+        "artError": 31.4
+      }
+    },
+    {
+      "id": "fancyglow-menu-7",
+      "plugin": "FancyGlow",
+      "size": 45,
+      "title": "'\\xa74\\xa7lParlama Se\\xe7imi'",
+      "comparison": {
+        "name": "uiF-fancyglow-menu-7",
+        "size": 45,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.98,
+        "unshiftedError": 15.98,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 3.6,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.72,
+        "artError": 31.4
+      }
+    },
+    {
+      "id": "playerauctions-auction-confirm-13",
+      "plugin": "PlayerAuctions",
+      "size": 27,
+      "title": "'\\xa7b\\xa7lConfirm Purchase'",
+      "comparison": {
+        "name": "uiF-playerauctions-auction-confirm-13",
+        "size": 27,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 14.44,
+        "unshiftedError": 14.44,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.04,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.739,
+        "artError": 30.1
+      }
+    },
+    {
+      "id": "playerauctions-backpack-13",
+      "plugin": "PlayerAuctions",
+      "size": 54,
+      "title": "'\\xa7b\\xa7lS\\u0131rt \\xc7antas\\u0131 ([page]/[pages])'",
+      "comparison": {
+        "name": "uiF-playerauctions-backpack-13",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.45,
+        "unshiftedError": 15.45,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 3.15,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.726,
+        "artError": 31.8
+      }
+    },
+    {
+      "id": "playerauctions-bidding-13",
+      "plugin": "PlayerAuctions",
+      "size": 27,
+      "title": "'\\xa7b\\xa7lTeklif Verme'",
+      "comparison": {
+        "name": "uiF-playerauctions-bidding-13",
+        "size": 27,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 14.44,
+        "unshiftedError": 14.44,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.02,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.739,
+        "artError": 30.1
+      }
+    },
+    {
+      "id": "playerauctions-category-14",
+      "plugin": "PlayerAuctions",
+      "size": 45,
+      "title": "'\\xa7f\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u31fa'",
+      "comparison": {
+        "name": "uiF-playerauctions-category-14",
+        "size": 45,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 11.96,
+        "unshiftedError": 11.96,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.27,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.696,
+        "artError": 9.8
+      }
+    },
+    {
+      "id": "playerauctions-confirm-13",
+      "plugin": "PlayerAuctions",
+      "size": 27,
+      "title": "'\\xa7b\\xa7lSat\\u0131n Almay\\u0131 Onayla'",
+      "comparison": {
+        "name": "uiF-playerauctions-confirm-13",
+        "size": 27,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 14.49,
+        "unshiftedError": 14.49,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 2.18,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.739,
+        "artError": 30.4
+      }
+    },
+    {
+      "id": "playerauctions-expiredauctions-11",
+      "plugin": "PlayerAuctions",
+      "size": 54,
+      "title": "'\\xa7f\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u31fd'",
+      "comparison": {
+        "name": "uiF-playerauctions-expiredauctions-11",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 11.49,
+        "unshiftedError": 11.49,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.31,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.688,
+        "artError": 10.0
+      }
+    },
+    {
+      "id": "playerauctions-expiredauctions-41",
+      "plugin": "PlayerAuctions",
+      "size": 54,
+      "title": "'\\xa7b\\xa7lAra [search] - ([page]/[pages])'",
+      "comparison": {
+        "name": "uiF-playerauctions-expiredauctions-41",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.49,
+        "unshiftedError": 15.49,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.73,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.728,
+        "artError": 31.2
+      }
+    },
+    {
+      "id": "playerauctions-myauctions-11",
+      "plugin": "PlayerAuctions",
+      "size": 54,
+      "title": "'\\xa7f\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u31fc'",
+      "comparison": {
+        "name": "uiF-playerauctions-myauctions-11",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 11.43,
+        "unshiftedError": 11.43,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.31,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.691,
+        "artError": 10.0
+      }
+    },
+    {
+      "id": "playerauctions-playerauction-11",
+      "plugin": "PlayerAuctions",
+      "size": 54,
+      "title": "'\\xa7f\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u31fb'",
+      "comparison": {
+        "name": "uiF-playerauctions-playerauction-11",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 11.53,
+        "unshiftedError": 11.53,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.31,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.691,
+        "artError": 10.0
+      }
+    },
+    {
+      "id": "playerauctions-playerauction-75",
+      "plugin": "PlayerAuctions",
+      "size": 54,
+      "title": "'\\xa7b\\xa7l\\xd6nizleme'",
+      "comparison": {
+        "name": "uiF-playerauctions-playerauction-75",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.28,
+        "unshiftedError": 15.28,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.07,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.723,
+        "artError": 31.1
+      }
+    },
+    {
+      "id": "playerauctions-purchase-confirm-58",
+      "plugin": "PlayerAuctions",
+      "size": 54,
+      "title": "'Enter'",
+      "comparison": {
+        "name": "uiF-playerauctions-purchase-confirm-58",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.29,
+        "unshiftedError": 15.29,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.16,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.721,
+        "artError": 31.2
+      }
+    },
+    {
+      "id": "playerauctions-recent-13",
+      "plugin": "PlayerAuctions",
+      "size": 54,
+      "title": "'\\xa7b\\xa7lSon A\\xe7\\u0131k Art\\u0131rmalar - [type] ([page]/[pages])'",
+      "comparison": {
+        "name": "uiF-playerauctions-recent-13",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.83,
+        "unshiftedError": 15.83,
+        "titleShift": [
+          2,
+          0
+        ],
+        "titleError": 3.71,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.73,
+        "artError": 31.8
+      }
+    },
+    {
+      "id": "playerauctions-recent-41",
+      "plugin": "PlayerAuctions",
+      "size": 54,
+      "title": "'\\xa7b\\xa7lAra [search] - [type] ([page]/[pages])'",
+      "comparison": {
+        "name": "uiF-playerauctions-recent-41",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.39,
+        "unshiftedError": 15.39,
+        "titleShift": [
+          -1,
+          0
+        ],
+        "titleError": 1.95,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.729,
+        "artError": 31.4
+      }
+    },
+    {
+      "id": "playerauctions-startauction-13",
+      "plugin": "PlayerAuctions",
+      "size": 27,
+      "title": "'\\xa7b\\xa7lA\\xe7\\u0131k Art\\u0131rmay\\u0131 Ba\\u015flat'",
+      "comparison": {
+        "name": "uiF-playerauctions-startauction-13",
+        "size": 27,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 14.5,
+        "unshiftedError": 14.5,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 2.4,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.739,
+        "artError": 30.4
+      }
+    },
+    {
+      "id": "playerwarps-bannedplayers-7",
+      "plugin": "PlayerWarps",
+      "size": 36,
+      "title": "'\\xa7b\\xa7lYasakl\\u0131 Oyuncular ([page]/[pages])'",
+      "comparison": {
+        "name": "uiF-playerwarps-bannedplayers-7",
+        "size": 36,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.04,
+        "unshiftedError": 15.04,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 3.78,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.74,
+        "artError": 31.1
+      }
+    },
+    {
+      "id": "playerwarps-category-14",
+      "plugin": "PlayerWarps",
+      "size": 54,
+      "title": "'\\xa7f\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u1cc4'",
+      "comparison": {
+        "name": "uiF-playerwarps-category-14",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 11.4,
+        "unshiftedError": 11.4,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.31,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.691,
+        "artError": 10.0
+      }
+    },
+    {
+      "id": "playerwarps-confirm-13",
+      "plugin": "PlayerWarps",
+      "size": 27,
+      "title": "'\\xa7b\\xa7lI\\u015f\\u0131nlanmay\\u0131 Onayla'",
+      "comparison": {
+        "name": "uiF-playerwarps-confirm-13",
+        "size": 27,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 14.49,
+        "unshiftedError": 14.49,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 2.26,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.739,
+        "artError": 30.4
+      }
+    },
+    {
+      "id": "playerwarps-favourite-13",
+      "plugin": "PlayerWarps",
+      "size": 54,
+      "title": "'\\xa7b\\xa7lFavori Warplar ([page]/[pages])'",
+      "comparison": {
+        "name": "uiF-playerwarps-favourite-13",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.48,
+        "unshiftedError": 15.48,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.8,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.727,
+        "artError": 31.2
+      }
+    },
+    {
+      "id": "playerwarps-managewarp-13",
+      "plugin": "PlayerWarps",
+      "size": 54,
+      "title": "'\\xa7b\\xa7lY\\xf6net - [warp_display]'",
+      "comparison": {
+        "name": "uiF-playerwarps-managewarp-13",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.31,
+        "unshiftedError": 15.31,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.73,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.723,
+        "artError": 31.3
+      }
+    },
+    {
+      "id": "playerwarps-mywarps-11",
+      "plugin": "PlayerWarps",
+      "size": 54,
+      "title": "'\\xa7f\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u1cc6'",
+      "comparison": {
+        "name": "uiF-playerwarps-mywarps-11",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 11.53,
+        "unshiftedError": 11.53,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.31,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.688,
+        "artError": 10.0
+      }
+    },
+    {
+      "id": "playerwarps-playerwarp-11",
+      "plugin": "PlayerWarps",
+      "size": 54,
+      "title": "'\\xa7f\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u4e03\\u1cc5'",
+      "comparison": {
+        "name": "uiF-playerwarps-playerwarp-11",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 11.43,
+        "unshiftedError": 11.43,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.31,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.688,
+        "artError": 10.0
+      }
+    },
+    {
+      "id": "playerwarps-rate-13",
+      "plugin": "PlayerWarps",
+      "size": 54,
+      "title": "'\\xa7b\\xa7lWarp Oylar\\u0131 - ([page]/[pages])'",
+      "comparison": {
+        "name": "uiF-playerwarps-rate-13",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.57,
+        "unshiftedError": 15.57,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 2.69,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.727,
+        "artError": 31.5
+      }
+    },
+    {
+      "id": "playerwarps-set-confirm-13",
+      "plugin": "PlayerWarps",
+      "size": 27,
+      "title": "'\\xa7b\\xa7lConfirm Set'",
+      "comparison": {
+        "name": "uiF-playerwarps-set-confirm-13",
+        "size": 27,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 14.44,
+        "unshiftedError": 14.44,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.02,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.739,
+        "artError": 30.1
+      }
+    },
+    {
+      "id": "playerwarps-setwarp-13",
+      "plugin": "PlayerWarps",
+      "size": 27,
+      "title": "'\\xa7b\\xa7lWarp Ayarla'",
+      "comparison": {
+        "name": "uiF-playerwarps-setwarp-13",
+        "size": 27,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 14.44,
+        "unshiftedError": 14.44,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.01,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.739,
+        "artError": 30.1
+      }
+    },
+    {
+      "id": "playerwarps-teleport-confirm-13",
+      "plugin": "PlayerWarps",
+      "size": 27,
+      "title": "'\\xa7b\\xa7lConfirm Teleport'",
+      "comparison": {
+        "name": "uiF-playerwarps-teleport-confirm-13",
+        "size": 27,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 14.44,
+        "unshiftedError": 14.44,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.03,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.739,
+        "artError": 30.1
+      }
+    },
+    {
+      "id": "playerwarps-visitedit-13",
+      "plugin": "PlayerWarps",
+      "size": 27,
+      "title": "'\\xa7b\\xa7lZiyaret Y\\xf6netimi'",
+      "comparison": {
+        "name": "uiF-playerwarps-visitedit-13",
+        "size": 27,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 14.44,
+        "unshiftedError": 14.44,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.03,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.739,
+        "artError": 30.1
+      }
+    },
+    {
+      "id": "playerwarps-visitedplayers-13",
+      "plugin": "PlayerWarps",
+      "size": 36,
+      "title": "'\\xa7b\\xa7lZiyaret Edilen Oyuncular ([page]/[pages])'",
+      "comparison": {
+        "name": "uiF-playerwarps-visitedplayers-13",
+        "size": 36,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 14.63,
+        "unshiftedError": 14.63,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.54,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.739,
+        "artError": 30.5
+      }
+    },
+    {
+      "id": "playerwarps-visitedplayers-37",
+      "plugin": "PlayerWarps",
+      "size": 54,
+      "title": "'\\xa7b\\xa7lArama [search] - ([page]/[pages])'",
+      "comparison": {
+        "name": "uiF-playerwarps-visitedplayers-37",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.49,
+        "unshiftedError": 15.49,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.71,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.729,
+        "artError": 31.3
+      }
+    },
+    {
+      "id": "playerwarps-visitedwarps-13",
+      "plugin": "PlayerWarps",
+      "size": 36,
+      "title": "'\\xa7b\\xa7lZiyaret Edilen Warps ([page]/[pages])'",
+      "comparison": {
+        "name": "uiF-playerwarps-visitedwarps-13",
+        "size": 36,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 14.79,
+        "unshiftedError": 14.79,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.7,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.74,
+        "artError": 30.4
+      }
+    },
+    {
+      "id": "quickshop-hikari-gui-123",
+      "plugin": "QuickShop-Hikari",
+      "size": 36,
+      "title": "'\\xa73Shop Management'",
+      "comparison": {
+        "name": "uiF-quickshop-hikari-gui-123",
+        "size": 36,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 14.67,
+        "unshiftedError": 14.67,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.5,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.73,
+        "artError": 30.5
+      }
+    },
+    {
+      "id": "quickshop-hikari-gui-217",
+      "plugin": "QuickShop-Hikari",
+      "size": 54,
+      "title": "'\\xa73Staff Management'",
+      "comparison": {
+        "name": "uiF-quickshop-hikari-gui-217",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.35,
+        "unshiftedError": 15.35,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.34,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.72,
+        "artError": 31.2
+      }
+    },
+    {
+      "id": "quickshop-hikari-gui-284",
+      "plugin": "QuickShop-Hikari",
+      "size": 54,
+      "title": "'\\xa73Transaction History'",
+      "comparison": {
+        "name": "uiF-quickshop-hikari-gui-284",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.31,
+        "unshiftedError": 15.31,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.69,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.72,
+        "artError": 31.3
+      }
+    },
+    {
+      "id": "quickshop-hikari-gui-358",
+      "plugin": "QuickShop-Hikari",
+      "size": 54,
+      "title": "'\\xa73Market Browser'",
+      "comparison": {
+        "name": "uiF-quickshop-hikari-gui-358",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.31,
+        "unshiftedError": 15.31,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.64,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.72,
+        "artError": 31.3
+      }
+    },
+    {
+      "id": "quickshop-hikari-gui-37",
+      "plugin": "QuickShop-Hikari",
+      "size": 54,
+      "title": "'\\xa73Shop'",
+      "comparison": {
+        "name": "uiF-quickshop-hikari-gui-37",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.29,
+        "unshiftedError": 15.29,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.34,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.722,
+        "artError": 31.2
+      }
+    },
+    {
+      "id": "ultimateshop-buy-more-1",
+      "plugin": "UltimateShop",
+      "size": 36,
+      "title": "'\\xa7f\\ue2ee\\ue2dc'",
+      "comparison": {
+        "name": "uiF-ultimateshop-buy-more-1",
+        "size": 36,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 11.07,
+        "unshiftedError": 11.07,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.0,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.721,
+        "artError": 12.8
+      }
+    },
+    {
+      "id": "ultimateshop-buy-more-buy-1",
+      "plugin": "UltimateShop",
+      "size": 54,
+      "title": "'Select Quantity'",
+      "comparison": {
+        "name": "uiF-ultimateshop-buy-more-buy-1",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.37,
+        "unshiftedError": 15.37,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.81,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.718,
+        "artError": 31.3
+      }
+    },
+    {
+      "id": "ultimateshop-daily-shop-menu-3",
+      "plugin": "UltimateShop",
+      "size": 36,
+      "title": "'{shop-name}'",
+      "comparison": {
+        "name": "uiF-ultimateshop-daily-shop-menu-3",
+        "size": 36,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.18,
+        "unshiftedError": 15.18,
+        "titleShift": [
+          1,
+          0
+        ],
+        "titleError": 5.07,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.73,
+        "artError": 33.4
+      }
+    },
+    {
+      "id": "ultimateshop-example-shop-menu-2",
+      "plugin": "UltimateShop",
+      "size": 54,
+      "title": "'{shop-name}'",
+      "comparison": {
+        "name": "uiF-ultimateshop-example-shop-menu-2",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.81,
+        "unshiftedError": 15.81,
+        "titleShift": [
+          1,
+          0
+        ],
+        "titleError": 5.09,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.719,
+        "artError": 34.1
+      }
+    },
+    {
+      "id": "ultimateshop-main-2",
+      "plugin": "UltimateShop",
+      "size": 54,
+      "title": "'Ma\\u011faza'",
+      "comparison": {
+        "name": "uiF-ultimateshop-main-2",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.36,
+        "unshiftedError": 15.36,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 2.45,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.72,
+        "artError": 31.6
+      }
+    },
+    {
+      "id": "ultimateshop-shop-layout-2",
+      "plugin": "UltimateShop",
+      "size": 54,
+      "title": "'\\xa7f\\ue2ee\\ue2dd'",
+      "comparison": {
+        "name": "uiF-ultimateshop-shop-layout-2",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 11.62,
+        "unshiftedError": 11.62,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.0,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.712,
+        "artError": 13.4
+      }
+    },
+    {
+      "id": "ultrarepair-menus-17",
+      "plugin": "UltraRepair",
+      "size": 9,
+      "title": "'\\xa7f\\ue994\\ue994\\ue996\\ue995\\ue995\\ue2ff'",
+      "comparison": {
+        "name": "uiF-ultrarepair-menus-17",
+        "size": 9,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 11.12,
+        "unshiftedError": 11.12,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 0.0,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.763,
+        "artError": 5.8
+      }
+    },
+    {
+      "id": "wildstacker-spawner-amounts-9",
+      "plugin": "WildStacker",
+      "size": 54,
+      "title": "'Spawner Amounts'",
+      "comparison": {
+        "name": "uiF-wildstacker-spawner-amounts-9",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.32,
+        "unshiftedError": 15.32,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.91,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.718,
+        "artError": 31.3
+      }
+    },
+    {
+      "id": "wildstacker-spawner-manage-9",
+      "plugin": "WildStacker",
+      "size": 54,
+      "title": "'Spawner Information'",
+      "comparison": {
+        "name": "uiF-wildstacker-spawner-manage-9",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.37,
+        "unshiftedError": 15.37,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 2.01,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.717,
+        "artError": 31.3
+      }
+    },
+    {
+      "id": "wildstacker-spawner-upgrade-9",
+      "plugin": "WildStacker",
+      "size": 54,
+      "title": "'Spawner Upgrade'",
+      "comparison": {
+        "name": "uiF-wildstacker-spawner-upgrade-9",
+        "size": 54,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 15.32,
+        "unshiftedError": 15.32,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 2.0,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.718,
+        "artError": 31.3
+      }
+    },
+    {
+      "id": "xltournaments-menu-4",
+      "plugin": "XLTournaments",
+      "size": 36,
+      "title": "'\\xa7lTURNUVALAR'",
+      "comparison": {
+        "name": "uiF-xltournaments-menu-4",
+        "size": 36,
+        "bestShift": [
+          0,
+          0
+        ],
+        "bestError": 14.69,
+        "unshiftedError": 14.69,
+        "titleShift": [
+          0,
+          0
+        ],
+        "titleError": 1.74,
+        "structureShift": [
+          0,
+          0
+        ],
+        "brightnessRatio": 0.726,
+        "artError": 30.6
+      }
+    }
+  ]
+}

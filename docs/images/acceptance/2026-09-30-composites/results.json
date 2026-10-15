@@ -1,0 +1,301 @@
+[
+  {
+    "case": "before-bettermodel-blue_wizard-idle",
+    "buildSha256": "8cb2ceffd5825bcd0c6df0fead9953bfe0bfcf6d752c4167025f83dea0aa42f9",
+    "result": "Composite child pose loss: head tilt or detached head/horn pieces. Zero-speed baseline is not animation synchronization evidence.",
+    "java": {
+      "file": "before-bettermodel-blue_wizard-idle-java.png",
+      "sha256": "3b91a916062ceea37c649ceebcc2856703ceff064b144441657d6d3856f05c32"
+    },
+    "bedrock": {
+      "file": "before-bettermodel-blue_wizard-idle-bedrock.png",
+      "sha256": "18cc8b9e518d8c97e8fae7c669661bc0313a95f324696744a9db70b5110b4e12"
+    }
+  },
+  {
+    "case": "before-bettermodel-demon_knight-idle",
+    "buildSha256": "8cb2ceffd5825bcd0c6df0fead9953bfe0bfcf6d752c4167025f83dea0aa42f9",
+    "result": "Composite child pose loss: head tilt or detached head/horn pieces. Zero-speed baseline is not animation synchronization evidence.",
+    "java": {
+      "file": "before-bettermodel-demon_knight-idle-java.png",
+      "sha256": "9cfd26a2ba9621e706578a191743590767f6a83db538d497ef4ba888edc49c18"
+    },
+    "bedrock": {
+      "file": "before-bettermodel-demon_knight-idle-bedrock.png",
+      "sha256": "d192b532458b82a4071e3e9066825fd7107c2cc4c8414b81ab696820b952405d"
+    }
+  },
+  {
+    "case": "bettermodel-blue_wizard-idle",
+    "buildSha256": "152fd07575e4a2c26b910f5ba9974ebf08c6e501eeb04e43f9c4c8f1010f24c5",
+    "result": "Composite mesh assembly and authored child rotations corrected. Normal animation, sequential frames; exact timing/lighting parity not established.",
+    "java": {
+      "file": "bettermodel-blue_wizard-idle-java.png",
+      "sha256": "353960f40754d51970d7a085a4185a19c727855ace50d93e29393eef1778d458"
+    },
+    "bedrock": {
+      "file": "bettermodel-blue_wizard-idle-bedrock.png",
+      "sha256": "a099a7c5a858ec34d60e36f57c53c9e8d1883590b7e218090d41ad835a385261"
+    }
+  },
+  {
+    "case": "bettermodel-blue_wizard-walk",
+    "buildSha256": "152fd07575e4a2c26b910f5ba9974ebf08c6e501eeb04e43f9c4c8f1010f24c5",
+    "result": "Composite mesh assembly and authored child rotations corrected. Normal animation, sequential frames; exact timing/lighting parity not established.",
+    "java": {
+      "file": "bettermodel-blue_wizard-walk-java.png",
+      "sha256": "b928974ecfd8b759f87c69d30b894c4ada2b2eb6be2460c93fa735be669cd42f"
+    },
+    "bedrock": {
+      "file": "bettermodel-blue_wizard-walk-bedrock.png",
+      "sha256": "ff595acee496b616023fa5a1d86612ae2b5b2d519019ad47c76f37aa60b44576"
+    }
+  },
+  {
+    "case": "bettermodel-demon_knight-idle",
+    "buildSha256": "152fd07575e4a2c26b910f5ba9974ebf08c6e501eeb04e43f9c4c8f1010f24c5",
+    "result": "Composite mesh assembly and authored child rotations corrected. Normal animation, sequential frames; exact timing/lighting parity not established.",
+    "java": {
+      "file": "bettermodel-demon_knight-idle-java.png",
+      "sha256": "051a5c0a971fae41146c2070299aa592b5aaf4d888078f4ea1d3843919c2905b"
+    },
+    "bedrock": {
+      "file": "bettermodel-demon_knight-idle-bedrock.png",
+      "sha256": "416f0c48899f7943508482bcf4cfef96aebea6995f828bd4e2558f3a3aaa4bc5"
+    }
+  },
+  {
+    "case": "bettermodel-demon_knight-walk",
+    "buildSha256": "152fd07575e4a2c26b910f5ba9974ebf08c6e501eeb04e43f9c4c8f1010f24c5",
+    "result": "Composite mesh assembly and authored child rotations corrected. Normal animation, sequential frames; exact timing/lighting parity not established.",
+    "java": {
+      "file": "bettermodel-demon_knight-walk-java.png",
+      "sha256": "334a9e164c3a1421a541e241cc2c6b38a135c7c7d92a88ba3e7e4d3e89c2242b"
+    },
+    "bedrock": {
+      "file": "bettermodel-demon_knight-walk-bedrock.png",
+      "sha256": "dfeb835567bdb43b62fd030abbd8402a37e074e11c62fc3dd649670b0b00e6ea"
+    }
+  },
+  {
+    "case": "bettermodel-demon_knight-guard",
+    "buildSha256": "152fd07575e4a2c26b910f5ba9974ebf08c6e501eeb04e43f9c4c8f1010f24c5",
+    "result": "Composite mesh assembly and authored child rotations corrected. Normal animation, sequential frames; exact timing/lighting parity not established.",
+    "java": {
+      "file": "bettermodel-demon_knight-guard-java.png",
+      "sha256": "d7b7ce2554d28c04cb3023647fe4c52e5568981a73ded7d8d88ec05277af6d57"
+    },
+    "bedrock": {
+      "file": "bettermodel-demon_knight-guard-bedrock.png",
+      "sha256": "0efbf244d587c7ca428113d9a9b3af4aea761b51ad12d205dcb6ee51917054b5"
+    }
+  },
+  {
+    "case": "bettermodel-demon_knight-hammer_attack_1",
+    "buildSha256": "152fd07575e4a2c26b910f5ba9974ebf08c6e501eeb04e43f9c4c8f1010f24c5",
+    "result": "Composite mesh assembly and authored child rotations corrected. Normal animation, sequential frames; exact timing/lighting parity not established.",
+    "java": {
+      "file": "bettermodel-demon_knight-hammer_attack_1-java.png",
+      "sha256": "f8a17a282df1304d35c6cdbdc959cf16186b40c6e8334cac9131260520d9be33"
+    },
+    "bedrock": {
+      "file": "bettermodel-demon_knight-hammer_attack_1-bedrock.png",
+      "sha256": "5e95d13413987367fe097adadbe8d09fe4fd9f3e246e505a513611c6369e5b69"
+    }
+  },
+  {
+    "case": "inventory-new36",
+    "buildSha256": "152fd07575e4a2c26b910f5ba9974ebf08c6e501eeb04e43f9c4c8f1010f24c5",
+    "result": "35 rendered Bedrock previews;34 usable Java references. Slot19 Java missing-texture reference;slot26 missing source #missing/unmapped paper. Static previews, not animated icons.",
+    "java": {
+      "file": "inventory-new36-java.png",
+      "sha256": "854f509ef6a1968e6e866c18d31711cfe54ef325ee6e0acbaff8b8d56b9144c6"
+    },
+    "bedrock": {
+      "file": "inventory-new36-bedrock.png",
+      "sha256": "4881e895183e4d2fc112d900e9b6cf8df419ce2d25824bdbdcf31587a8f69661"
+    }
+  },
+  {
+    "case": "new-item-1",
+    "buildSha256": "152fd07575e4a2c26b910f5ba9974ebf08c6e501eeb04e43f9c4c8f1010f24c5",
+    "result": "Visible in both clients; first-person position, angle and scale parity fails.",
+    "java": {
+      "file": "new-item-1-java.png",
+      "sha256": "c20a66fca5c02aecd5a789d59c3b5dfbc2ccacee9e7a5cdc26c00ef3a181f6b9"
+    },
+    "bedrock": {
+      "file": "new-item-1-bedrock.png",
+      "sha256": "df03f842012376f9355216c4ff63354c4d7d6921f03074ca84164ce4dcf19cf5"
+    }
+  },
+  {
+    "case": "new-item-3",
+    "buildSha256": "152fd07575e4a2c26b910f5ba9974ebf08c6e501eeb04e43f9c4c8f1010f24c5",
+    "result": "Visible in both clients; first-person position, angle and scale parity fails.",
+    "java": {
+      "file": "new-item-3-java.png",
+      "sha256": "8afd7f643a94c372d346ceb1e91f85f1d9366bc318299b0be6f942e2208ad3fc"
+    },
+    "bedrock": {
+      "file": "new-item-3-bedrock.png",
+      "sha256": "acb3d89d6176e8a6e44587d7c2a45dca0631f775043b78b41ddf783917c9b146"
+    }
+  },
+  {
+    "case": "new-item-11",
+    "buildSha256": "152fd07575e4a2c26b910f5ba9974ebf08c6e501eeb04e43f9c4c8f1010f24c5",
+    "result": "Visible in both clients; first-person position, angle and scale parity fails.",
+    "java": {
+      "file": "new-item-11-java.png",
+      "sha256": "622220f8d69c8a2fafa729615cba8e74787e4465f86be5566348984dcd6c79d2"
+    },
+    "bedrock": {
+      "file": "new-item-11-bedrock.png",
+      "sha256": "489287a37dc2ab81945d3a24e663eac18d0f71e7d6e31a372f56de0a287dd1e9"
+    }
+  },
+  {
+    "case": "new-item-13",
+    "buildSha256": "152fd07575e4a2c26b910f5ba9974ebf08c6e501eeb04e43f9c4c8f1010f24c5",
+    "result": "Visible in both clients; first-person position, angle and scale parity fails.",
+    "java": {
+      "file": "new-item-13-java.png",
+      "sha256": "e914876b4a81efe09bdaa89ae9c1f2eaebaf63dcbd1e70df410edb9eb50893a9"
+    },
+    "bedrock": {
+      "file": "new-item-13-bedrock.png",
+      "sha256": "a50f44fec5a401905f35c9c3dfebbf45a900a7f61a6149d39cf2fdfbaefe793d"
+    }
+  },
+  {
+    "case": "new-item-15",
+    "buildSha256": "152fd07575e4a2c26b910f5ba9974ebf08c6e501eeb04e43f9c4c8f1010f24c5",
+    "result": "Visible in both clients; first-person position, angle and scale parity fails.",
+    "java": {
+      "file": "new-item-15-java.png",
+      "sha256": "41c70ca22e16fccb3c8bd7af74a978349cf4d4d241f738a27ce5fe2df4f6b1a1"
+    },
+    "bedrock": {
+      "file": "new-item-15-bedrock.png",
+      "sha256": "3d2eac39d618a2b7cbdbb00fdf90bea420d164ed5af31b6204ab4a58cc69ac9c"
+    }
+  },
+  {
+    "case": "new-item-16",
+    "buildSha256": "152fd07575e4a2c26b910f5ba9974ebf08c6e501eeb04e43f9c4c8f1010f24c5",
+    "result": "Visible in both clients; first-person position, angle and scale parity fails.",
+    "java": {
+      "file": "new-item-16-java.png",
+      "sha256": "b392dd846c1f6a7788dc8b5419f928f8b4b3b502095da1a7e78a67256c86927d"
+    },
+    "bedrock": {
+      "file": "new-item-16-bedrock.png",
+      "sha256": "75641e5ba132d9da473051f1ed523af71b6114e220e9e81a1d2e01a45b11c660"
+    }
+  },
+  {
+    "case": "emoji-new24",
+    "buildSha256": "152fd07575e4a2c26b910f5ba9974ebf08c6e501eeb04e43f9c4c8f1010f24c5",
+    "result": "24 glyphs transferred. Baseline/size differ and bottom row clipped in Bedrock chat.",
+    "java": {
+      "file": "emoji-new24-java.png",
+      "sha256": "9e13d5b1ec33da2c3ffec84c1fb3ecbb95bba0a5e58fbc1d5462840e6430cc9f"
+    },
+    "bedrock": {
+      "file": "emoji-new24-bedrock.png",
+      "sha256": "886524f4209e5f0d03e0b7a05a5a630c7fef7d9ca6d5becf3ea046c3749178d8"
+    }
+  },
+  {
+    "case": "modelengine-bl_earth_small_spider-idle",
+    "buildSha256": "152fd07575e4a2c26b910f5ba9974ebf08c6e501eeb04e43f9c4c8f1010f24c5",
+    "result": "Geometry visible and pose state reaches both clients; sequential captures, not frame-identical acceptance.",
+    "java": {
+      "file": "modelengine-bl_earth_small_spider-idle-java.png",
+      "sha256": "c9439e50116d3348c3036f4d466021b1ee199f92eaccd16486d3bff3c6513e6f"
+    },
+    "bedrock": {
+      "file": "modelengine-bl_earth_small_spider-idle-bedrock.png",
+      "sha256": "1b9f57a0f10a976a701f8adad8db51bf52d5f66b6cece410e6744da44ffea4fb"
+    }
+  },
+  {
+    "case": "modelengine-bl_earth_small_spider-walk",
+    "buildSha256": "152fd07575e4a2c26b910f5ba9974ebf08c6e501eeb04e43f9c4c8f1010f24c5",
+    "result": "Geometry visible and pose state reaches both clients; sequential captures, not frame-identical acceptance.",
+    "java": {
+      "file": "modelengine-bl_earth_small_spider-walk-java.png",
+      "sha256": "1ea69f6393049262923cd937442aa6bce282d8351817e5ba55e5a39a8c0072f2"
+    },
+    "bedrock": {
+      "file": "modelengine-bl_earth_small_spider-walk-bedrock.png",
+      "sha256": "dc130e74a79b6bd54fe884b48f8b69ece23a4f6db5f96b70fb110c4f31d81e98"
+    }
+  },
+  {
+    "case": "modelengine-bl_earth_small_spider-fangs_attack",
+    "buildSha256": "152fd07575e4a2c26b910f5ba9974ebf08c6e501eeb04e43f9c4c8f1010f24c5",
+    "result": "Geometry visible and pose state reaches both clients; sequential captures, not frame-identical acceptance.",
+    "java": {
+      "file": "modelengine-bl_earth_small_spider-fangs_attack-java.png",
+      "sha256": "5b9dfa9bc87972a0a627c49b6af303cb4c5bc56c3f3a75deafefcbc48b1169ee"
+    },
+    "bedrock": {
+      "file": "modelengine-bl_earth_small_spider-fangs_attack-bedrock.png",
+      "sha256": "5591a1355fb2cc05f86ff42c236c34edf5304de3da9ae46fb83201115363f05c"
+    }
+  },
+  {
+    "case": "modelengine-angel_gm_lancer_one-idle",
+    "buildSha256": "152fd07575e4a2c26b910f5ba9974ebf08c6e501eeb04e43f9c4c8f1010f24c5",
+    "result": "Geometry visible and pose state reaches both clients; sequential captures, not frame-identical acceptance.",
+    "java": {
+      "file": "modelengine-angel_gm_lancer_one-idle-java.png",
+      "sha256": "0e691f844ccedab874c41f9985f494116dc87a5e3c0940e6d2ddf4fae8ebd84d"
+    },
+    "bedrock": {
+      "file": "modelengine-angel_gm_lancer_one-idle-bedrock.png",
+      "sha256": "5a7f539fd14e98a84c0200893e416f4d2affb7876d5d9f92f618cb4471b41a58"
+    }
+  },
+  {
+    "case": "modelengine-angel_gm_lancer_one-walk",
+    "buildSha256": "152fd07575e4a2c26b910f5ba9974ebf08c6e501eeb04e43f9c4c8f1010f24c5",
+    "result": "Geometry visible and pose state reaches both clients; sequential captures, not frame-identical acceptance.",
+    "java": {
+      "file": "modelengine-angel_gm_lancer_one-walk-java.png",
+      "sha256": "3b66a52ea4c546899f9aece2d04090bef2c48678f474cc874024fd0a06b53c39"
+    },
+    "bedrock": {
+      "file": "modelengine-angel_gm_lancer_one-walk-bedrock.png",
+      "sha256": "7b4290579c8e608253bc08e602943ced3cda1928769fdba52103c411d39d2e5e"
+    }
+  },
+  {
+    "case": "modelengine-angel_gm_lancer_one-attack2",
+    "buildSha256": "152fd07575e4a2c26b910f5ba9974ebf08c6e501eeb04e43f9c4c8f1010f24c5",
+    "result": "Geometry visible and pose state reaches both clients; sequential captures, not frame-identical acceptance.",
+    "java": {
+      "file": "modelengine-angel_gm_lancer_one-attack2-java.png",
+      "sha256": "86565c5aa9c8203a2f80f250334af6e397619e2d81aa0aec01f1d79ac774b3d9"
+    },
+    "bedrock": {
+      "file": "modelengine-angel_gm_lancer_one-attack2-bedrock.png",
+      "sha256": "c4afa8b6df46679aac45764394728eb835febe6b8cd84292c82f6a9b9bdb8855"
+    }
+  },
+  {
+    "case": "mythic-new-lancer",
+    "buildSha256": "152fd07575e4a2c26b910f5ba9974ebf08c6e501eeb04e43f9c4c8f1010f24c5",
+    "result": "Retaken 2026-10-01: fresh stationary invulnerable MythicMobs carrier with API-verified ModelEngine lancer binding, full model visible in both clients. Sequential frames. Previous persisted carrier was unbound after server restart; provider restart persistence is not accepted.",
+    "java": {
+      "file": "mythic-new-lancer-java.png",
+      "sha256": "2a3ea9a2d75bf12ecbf6aee1fccb69c7a2ab70ff2a5d49a3fd730b18f027bffb"
+    },
+    "bedrock": {
+      "file": "mythic-new-lancer-bedrock.png",
+      "sha256": "b6acef525d7e522487c8e9183405fe88dd96c53976d74a189fd679b2f63ca2df"
+    }
+  }
+]

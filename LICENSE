@@ -1,0 +1,159 @@
+# Twilight License
+
+Required Notice: Copyright (c) 2026 siberanka (https://github.com/siberanka/Twilight)
+
+Twilight, which includes twilight-proxy and every file in this repository unless a file says otherwise, is
+licensed under the PolyForm Noncommercial License 1.0.0 (Part 2) together with the additional terms in
+Part 1. The two parts form one license: you get a license to Twilight only if you accept both, and by using,
+copying, changing or sharing any part of Twilight you accept them. Where the parts differ, Part 1 applies.
+
+Part 2 is reproduced without change. This combined license is not the PolyForm Noncommercial License itself,
+and the PolyForm Project has neither written nor endorsed Part 1.
+
+Source: https://github.com/siberanka/Twilight and https://gitlab.com/siberanka/twilight
+
+## Part 1: Additional terms
+
+### 1. Running Twilight on servers
+
+As an additional permission, siberanka allows anyone to build, install, configure, change and run Twilight,
+and changed versions of it, on any Minecraft server, proxy or network that they run or administer, including
+servers and networks that earn money (for example through store sales, ranks, subscriptions, paid access,
+donations or advertising). This use is a permitted purpose under Part 2.
+
+### 2. No selling
+
+Neither Part 2 nor the permission in section 1 allows selling Twilight. Without a separate written license
+from siberanka, nobody may, under the name Twilight or under any other name:
+
+- sell, rent, sublicense for a fee or put behind a paywall Twilight, a copy of it, a changed version, a fork
+  or a renamed copy of it, or any part of its source code;
+- include it in a plugin bundle, server setup, template or other package that is sold;
+- offer a paid product or service whose value comes mainly from Twilight.
+
+Copies and changed versions may be shared free of charge as Part 2 allows, together with this license and the
+NOTICE file.
+
+### 3. Credit for copied, quoted and adapted material
+
+Anyone who copies, quotes, adapts, translates or ports any part of Twilight into another work must credit
+Twilight. This covers every part, however small: a file, a class, a method, a single code block or snippet,
+the implementation of an algorithm, configuration, documentation text, images and other assets. It covers
+every kind of work: software, plugins, forks, articles, posts, videos, courses and answers on forums or
+question sites. The credit must:
+
+- (a) name Twilight and siberanka as the source;
+- (b) link to https://github.com/siberanka/Twilight or https://gitlab.com/siberanka/twilight;
+- (c) say that the material was changed, if it was;
+- (d) in source code, stand in a comment next to the copied material and in the work's notices (README,
+  NOTICE or credits); in other works, stand where readers of the material see it, such as the description,
+  credits or footnotes;
+- (e) stay with every copy and every later version of the work.
+
+For example:
+
+> Adapted from Twilight by siberanka (https://github.com/siberanka/Twilight), Twilight License.
+
+The credit does not replace the notices Part 2 requires: whoever receives a copy of any part of Twilight must
+also receive this license or a link to it, and the Required Notice line above. Material copied from Twilight
+stays under this license in the new work; the credit does not license the rest of that work, and it must not
+suggest that siberanka endorses or supports it.
+
+Where the law allows quoting a work without permission (for example for criticism, review, teaching or
+research), these terms do not limit that right, and the source must still be cited as above.
+
+### 4. Names and logos
+
+This license gives no right to use the Twilight name or logo except to name the source truthfully as
+section 3 requires. A changed version must not be presented as an official Twilight release or as made or
+endorsed by siberanka.
+
+### 5. Conditions
+
+Every term of Part 1 is a condition of the license. Breaking one of them is a violation of the license, and
+the Violations section of Part 2 applies to it.
+
+### 6. Other uses
+
+Any use these terms do not allow, including selling Twilight or using it commercially beyond section 1, needs
+a separate written license from siberanka. Ask through https://github.com/siberanka or
+https://gitlab.com/siberanka.
+
+## Part 2: PolyForm Noncommercial License 1.0.0
+
+The text below is the PolyForm Noncommercial License 1.0.0, unchanged. In it, "the licensor" is siberanka and
+"the software" is Twilight.
+
+# PolyForm Noncommercial License 1.0.0
+
+<https://polyformproject.org/licenses/noncommercial/1.0.0>
+
+## Acceptance
+
+In order to get any license under these terms, you must agree to them as both strict obligations and conditions to all your licenses.
+
+## Copyright License
+
+The licensor grants you a copyright license for the software to do everything you might do with the software that would otherwise infringe the licensor's copyright in it for any permitted purpose.  However, you may only distribute the software according to [Distribution License](#distribution-license) and make changes or new works based on the software according to [Changes and New Works License](#changes-and-new-works-license).
+
+## Distribution License
+
+The licensor grants you an additional copyright license to distribute copies of the software.  Your license to distribute covers distributing the software with changes and new works permitted by [Changes and New Works License](#changes-and-new-works-license).
+
+## Notices
+
+You must ensure that anyone who gets a copy of any part of the software from you also gets a copy of these terms or the URL for them above, as well as copies of any plain-text lines beginning with `Required Notice:` that the licensor provided with the software.  For example:
+
+> Required Notice: Copyright Yoyodyne, Inc. (http://example.com)
+
+## Changes and New Works License
+
+The licensor grants you an additional copyright license to make changes and new works based on the software for any permitted purpose.
+
+## Patent License
+
+The licensor grants you a patent license for the software that covers patent claims the licensor can license, or becomes able to license, that you would infringe by using the software.
+
+## Noncommercial Purposes
+
+Any noncommercial purpose is a permitted purpose.
+
+## Personal Uses
+
+Personal use for research, experiment, and testing for the benefit of public knowledge, personal study, private entertainment, hobby projects, amateur pursuits, or religious observance, without any anticipated commercial application, is use for a permitted purpose.
+
+## Noncommercial Organizations
+
+Use by any charitable organization, educational institution, public research organization, public safety or health organization, environmental protection organization, or government institution is use for a permitted purpose regardless of the source of funding or obligations resulting from the funding.
+
+## Fair Use
+
+You may have "fair use" rights for the software under the law. These terms do not limit them.
+
+## No Other Rights
+
+These terms do not allow you to sublicense or transfer any of your licenses to anyone else, or prevent the licensor from granting licenses to anyone else.  These terms do not imply any other licenses.
+
+## Patent Defense
+
+If you make any written claim that the software infringes or contributes to infringement of any patent, your patent license for the software granted under these terms ends immediately. If your company makes such a claim, your patent license ends immediately for work on behalf of your company.
+
+## Violations
+
+The first time you are notified in writing that you have violated any of these terms, or done anything with the software not covered by your licenses, your licenses can nonetheless continue if you come into full compliance with these terms, and take practical steps to correct past violations, within 32 days of receiving notice.  Otherwise, all your licenses end immediately.
+
+## No Liability
+
+***As far as the law allows, the software comes as is, without any warranty or condition, and the licensor will not be liable to you for any damages arising out of these terms or the use or nature of the software, under any kind of legal claim.***
+
+## Definitions
+
+The **licensor** is the individual or entity offering these terms, and the **software** is the software the licensor makes available under these terms.
+
+**You** refers to the individual or entity agreeing to these terms.
+
+**Your company** is any legal entity, sole proprietorship, or other kind of organization that you work for, plus all organizations that have control over, are under the control of, or are under common control with that organization.  **Control** means ownership of substantially all the assets of an entity, or the power to direct its management and policies by vote, contract, or otherwise.  Control can be direct or indirect.
+
+**Your licenses** are all the licenses granted to you for the software under these terms.
+
+**Use** means anything you do with the software requiring one of your licenses.

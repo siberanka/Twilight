@@ -1,0 +1,47 @@
+{
+  "artifactSha256": "37a4195d2d4e36c23d7afe61d8c46741879601927fd76ff8358b9c427f6d4e24",
+  "tests": 87,
+  "suites": 19,
+  "originalPngsVerifiedUnchanged": 42,
+  "realGlyphsVisible": 36,
+  "newWideSamples": 6,
+  "menuParity": false,
+  "savedPlayerRecords": 10,
+  "totalDeaths": 0,
+  "healthLastVerified": {
+    "java": 20,
+    "bedrock": 20
+  },
+  "healthEvidenceTime": "2026-10-02T22:12:17+03:00",
+  "saveCompleted": true,
+  "audits": {
+    "box": {
+      "sources": 30,
+      "repeatPackIdentical": true,
+      "strictAccepted": false,
+      "lastDiagnosticPackPreserved": true,
+      "packSha256": "89c9bda7be9ebfe5ab2a5328f2f2b421fe2e639eb66c55537c6beb2228bb1dae",
+      "candidates": 781,
+      "converted": 772,
+      "glyphs": 622,
+      "font_pages": 4
+    },
+    "survival": {
+      "sources": 138,
+      "repeatPackIdentical": true,
+      "strictAccepted": false,
+      "lastDiagnosticPackPreserved": true,
+      "packSha256": "8c37fcffbfd43c027df159f201b4946449646e0d48b39d82503df4a96a53b6c7",
+      "candidates": 130,
+      "converted": 125,
+      "glyphs": 751,
+      "font_pages": 6
+    },
+    "mixedFixture": {
+      "repeatPackIdentical": true,
+      "strictAccepted": false,
+      "packPreserved": true,
+      "packSha256": "28b132858cdb19a45379bc2a039001af6a4a1325c00aee10dbeb5ac2b6e73ed3"
+    }
+  }
+}

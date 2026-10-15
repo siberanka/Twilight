@@ -1,0 +1,249 @@
+[
+  {
+    "case": "item-1",
+    "buildSha256": "5c6dc62ebc0d5bdb0ce3bbd527ca79e4499d8e7874230a35593cade2ba1cc6cd",
+    "result": "Both visible; hand scale/grip not accepted.",
+    "java": {
+      "file": "item-1-java.png",
+      "sha256": "3280d78ff54fe25af10c3769c225c013dd3475d0eaa55ce215a56647de238348"
+    },
+    "bedrock": {
+      "file": "item-1-bedrock.png",
+      "sha256": "f9f0265ffc9aa46436ab2787cf0594ce07aa07633bc8169b1bb81c6fa8aae4f3"
+    }
+  },
+  {
+    "case": "item-2",
+    "buildSha256": "5c6dc62ebc0d5bdb0ce3bbd527ca79e4499d8e7874230a35593cade2ba1cc6cd",
+    "result": "Both visible; hand scale/grip not accepted.",
+    "java": {
+      "file": "item-2-java.png",
+      "sha256": "acf1936f82e19b9978e2fdafcc41d0363492fdf96451e6af87672e40c1cc63a7"
+    },
+    "bedrock": {
+      "file": "item-2-bedrock.png",
+      "sha256": "606579216ac99a1e4fbbad9d437eb13dd4fafed0be1e224de14ce567727babf0"
+    }
+  },
+  {
+    "case": "item-3",
+    "buildSha256": "5c6dc62ebc0d5bdb0ce3bbd527ca79e4499d8e7874230a35593cade2ba1cc6cd",
+    "result": "Both visible; hand scale/grip not accepted.",
+    "java": {
+      "file": "item-3-java.png",
+      "sha256": "322cae4bf517f989cea8ccae17e3d5651bad6db944283bb6e5c129325152690b"
+    },
+    "bedrock": {
+      "file": "item-3-bedrock.png",
+      "sha256": "7c6b0d9ea32ef47bedf0c71f3c1a9cc073b98f6c8527b0a6f3e5c89ad9793d07"
+    }
+  },
+  {
+    "case": "item-4",
+    "buildSha256": "5c6dc62ebc0d5bdb0ce3bbd527ca79e4499d8e7874230a35593cade2ba1cc6cd",
+    "result": "First-person pose mismatch and raw-texture hotbar icon in baseline.",
+    "java": {
+      "file": "item-4-java.png",
+      "sha256": "07730514a00d8ed2008c723ef0dbe06c3baa40bf4b14e332977b9493af62045e"
+    },
+    "bedrock": {
+      "file": "item-4-bedrock.png",
+      "sha256": "9e75b51210d91409ce0720db462e9cf87cf0b2d78c844522623acdadfe8b3af1"
+    }
+  },
+  {
+    "case": "item-5",
+    "buildSha256": "5c6dc62ebc0d5bdb0ce3bbd527ca79e4499d8e7874230a35593cade2ba1cc6cd",
+    "result": "First-person pose mismatch and raw-texture hotbar icon in baseline.",
+    "java": {
+      "file": "item-5-java.png",
+      "sha256": "05f953943fb4852cc530eff1aed3475504146305c8b095ebe2e62737fdb9d80f"
+    },
+    "bedrock": {
+      "file": "item-5-bedrock.png",
+      "sha256": "5b562e871fcee55e6176c77b5f855a10457454ea865a0b0089ef3cadb3775115"
+    }
+  },
+  {
+    "case": "item-6",
+    "buildSha256": "5c6dc62ebc0d5bdb0ce3bbd527ca79e4499d8e7874230a35593cade2ba1cc6cd",
+    "result": "First-person pose mismatch and raw-texture hotbar icon in baseline.",
+    "java": {
+      "file": "item-6-java.png",
+      "sha256": "e6b9bff281b0737f152304ac34dfb3ccc851bb05f5774fed2069af9dc972c708"
+    },
+    "bedrock": {
+      "file": "item-6-bedrock.png",
+      "sha256": "fa0780a76996062d0dac5b8ea5c9e9ba77faa8df370af60d6ef2850a4df60895"
+    }
+  },
+  {
+    "case": "emoji-chat",
+    "buildSha256": "5c6dc62ebc0d5bdb0ce3bbd527ca79e4499d8e7874230a35593cade2ba1cc6cd",
+    "result": "All 28 emoji visible; glyph size/baseline differ.",
+    "java": {
+      "file": "emoji-chat-java.png",
+      "sha256": "b2ff01ef44be79a3d79a88fd005dbebd0fb950efec999723a67048ee047983b2"
+    },
+    "bedrock": {
+      "file": "emoji-chat-bedrock.png",
+      "sha256": "fcb12369456fbc21e7006c5af8c2d7ef6fb44a0bb51fad9fbe507eb14f18eecb"
+    }
+  },
+  {
+    "case": "ui-abilities_menu",
+    "buildSha256": "5c6dc62ebc0d5bdb0ce3bbd527ca79e4499d8e7874230a35593cade2ba1cc6cd",
+    "result": "Java font background visible; Bedrock custom background absent. Font probe, not full AuraSkills gameplay.",
+    "java": {
+      "file": "ui-abilities_menu-java.png",
+      "sha256": "5d470cdbd03f908d92eea1f20dce1df521cea0e508173681daa6699a32135ca9"
+    },
+    "bedrock": {
+      "file": "ui-abilities_menu-bedrock.png",
+      "sha256": "1863945e8245c6004763e66d6314d57621984ffe666bca89387ab71f1dd9b2bc"
+    }
+  },
+  {
+    "case": "ui-progress_menu",
+    "buildSha256": "5c6dc62ebc0d5bdb0ce3bbd527ca79e4499d8e7874230a35593cade2ba1cc6cd",
+    "result": "Java font background visible; Bedrock custom background absent. Font probe, not full AuraSkills gameplay.",
+    "java": {
+      "file": "ui-progress_menu-java.png",
+      "sha256": "d856d94d4f35754226cee49c6d7b95ab48f73b56421374b714cd13ae774a0f88"
+    },
+    "bedrock": {
+      "file": "ui-progress_menu-bedrock.png",
+      "sha256": "f15e1af76ded2e4911b14aadb470841d872a51330d0861ec4880f057169246bf"
+    }
+  },
+  {
+    "case": "ui-skills_menu_book",
+    "buildSha256": "5c6dc62ebc0d5bdb0ce3bbd527ca79e4499d8e7874230a35593cade2ba1cc6cd",
+    "result": "Java font background visible; Bedrock custom background absent. Font probe, not full AuraSkills gameplay.",
+    "java": {
+      "file": "ui-skills_menu_book-java.png",
+      "sha256": "1a561ab7c02b302df9c8e2ab7d2e16c0a1377fa971dd671dc4a1f292f3c1fc28"
+    },
+    "bedrock": {
+      "file": "ui-skills_menu_book-bedrock.png",
+      "sha256": "764fedca21892dec5326422982be6af50b014e40eaa0dbb0326a86dcc51179c6"
+    }
+  },
+  {
+    "case": "ui-stats_menu",
+    "buildSha256": "5c6dc62ebc0d5bdb0ce3bbd527ca79e4499d8e7874230a35593cade2ba1cc6cd",
+    "result": "Java font background visible; Bedrock custom background absent. Font probe, not full AuraSkills gameplay.",
+    "java": {
+      "file": "ui-stats_menu-java.png",
+      "sha256": "91192a224c5a7212b90d2811afcefae8ee8eaf7479a2f4188ee6b4392f45f4fa"
+    },
+    "bedrock": {
+      "file": "ui-stats_menu-bedrock.png",
+      "sha256": "0cf4b8de2470024939510a335c57aad00ff89efc59c24f71d9df18fe6f085f4a"
+    }
+  },
+  {
+    "case": "deluxemenus-mainmenu",
+    "buildSha256": "5c6dc62ebc0d5bdb0ce3bbd527ca79e4499d8e7874230a35593cade2ba1cc6cd",
+    "result": "Menu opens in both clients; original menus have missing production dependencies. Dedicated navigation control has no economy/combat actions.",
+    "java": {
+      "file": "deluxemenus-mainmenu-java.png",
+      "sha256": "41695e62afcf7c387d19b8241b4b2ec45c9345e9931cf57f76d9fc955baabae8"
+    },
+    "bedrock": {
+      "file": "deluxemenus-mainmenu-bedrock.png",
+      "sha256": "3c6f6c0c59039c07496739666328c87e9e23dd453d8b935fd9bec34f593a6691"
+    }
+  },
+  {
+    "case": "deluxemenus-warpmenu",
+    "buildSha256": "5c6dc62ebc0d5bdb0ce3bbd527ca79e4499d8e7874230a35593cade2ba1cc6cd",
+    "result": "Menu opens in both clients; original menus have missing production dependencies. Dedicated navigation control has no economy/combat actions.",
+    "java": {
+      "file": "deluxemenus-warpmenu-java.png",
+      "sha256": "07792c98fc5403e00dd3e2e8336c8be667815f598a9e1821edfc73b75c031968"
+    },
+    "bedrock": {
+      "file": "deluxemenus-warpmenu-bedrock.png",
+      "sha256": "981c5c68a84c489f3affba5556104c1e8f6b20b5aefd45ee04e9cb30daff8f2c"
+    }
+  },
+  {
+    "case": "deluxemenus-review_navigation",
+    "buildSha256": "5c6dc62ebc0d5bdb0ce3bbd527ca79e4499d8e7874230a35593cade2ba1cc6cd",
+    "result": "Menu opens in both clients; original menus have missing production dependencies. Dedicated navigation control has no economy/combat actions.",
+    "java": {
+      "file": "deluxemenus-review_navigation-java.png",
+      "sha256": "9dc9b223e33952de8e491630ba4ec188e502eb8bbd593f4b80a74fa3bc051b5b"
+    },
+    "bedrock": {
+      "file": "deluxemenus-review_navigation-bedrock.png",
+      "sha256": "420a51ec5fbae96a067b60cd7cdd03fda42eb3d16adc480d3424604dded8ea60"
+    }
+  },
+  {
+    "case": "navigation-after",
+    "buildSha256": "5c6dc62ebc0d5bdb0ce3bbd527ca79e4499d8e7874230a35593cade2ba1cc6cd",
+    "result": "Both clients delivered slot 0 LEFT and opened Basics Menu; confirmed by Bukkit event log.",
+    "java": {
+      "file": "navigation-after-java.png",
+      "sha256": "e3c0fb02410c38784cc4775dda2779d46efdf0a0554ef0e9b70f850761cf6b15"
+    },
+    "bedrock": {
+      "file": "navigation-after-bedrock.png",
+      "sha256": "c8cc75044b6976e23fcfbdc8d0a424526bed378189dcbb5ed305ddb4846a771f"
+    }
+  },
+  {
+    "case": "inventory-36",
+    "buildSha256": "8cb2ceffd5825bcd0c6df0fead9953bfe0bfcf6d752c4167025f83dea0aa42f9",
+    "result": "35 valid model previews visible with authored GUI pose; slot 29 has missing source texture (Java missing-texture, Bedrock unmapped paper). No frame/pixel parity claim.",
+    "java": {
+      "file": "inventory-36-java.png",
+      "sha256": "201248b045aee0a33530fd7d978da44652828d9117036fdfd0780412c4013efd"
+    },
+    "bedrock": {
+      "file": "inventory-36-bedrock.png",
+      "sha256": "537db8f22829fa5aeb6047e204a26bdc7f6b504a14774402cc05bc59216bf915"
+    }
+  },
+  {
+    "case": "mythic-salamander",
+    "buildSha256": "2741560bf1ed26fea9bb5547beb783cd406ba810e68750647b82e932858968e1",
+    "result": "Full model visible in both clients; stationary invulnerable MythicMobs carrier with ModelEngine binding. Sequential animation frames.",
+    "java": {
+      "file": "mythic-salamander-java.png",
+      "sha256": "ef4356140a8a3fa266dc57893a88699ad5463a6856fe8f15de1856a66738cb6d"
+    },
+    "bedrock": {
+      "file": "mythic-salamander-bedrock.png",
+      "sha256": "6ec1d666de9f1acf44dd5aa72c6b9179d6b1fabf9348ce0d2355d57a32d9d90f"
+    }
+  },
+  {
+    "case": "bettermodel-pet_griffon_phoenix-walk",
+    "buildSha256": "2741560bf1ed26fea9bb5547beb783cd406ba810e68750647b82e932858968e1",
+    "result": "Model visible; sequential animation samples, not matching frames.",
+    "java": {
+      "file": "bettermodel-pet_griffon_phoenix-walk-java.png",
+      "sha256": "2e542b447d15d4fcbc5bb6dceb2dd61f420161728fff22a345457cbc7f7ef4a3"
+    },
+    "bedrock": {
+      "file": "bettermodel-pet_griffon_phoenix-walk-bedrock.png",
+      "sha256": "902114566350f94ade3ca3f82e8b121ba6c5d782e35cf99b01ea6280f20efb6f"
+    }
+  },
+  {
+    "case": "bettermodel-pet_griffon_phoenix-skill",
+    "buildSha256": "2741560bf1ed26fea9bb5547beb783cd406ba810e68750647b82e932858968e1",
+    "result": "Model visible; sequential animation samples, not matching frames.",
+    "java": {
+      "file": "bettermodel-pet_griffon_phoenix-skill-java.png",
+      "sha256": "3530ffe424cb08273a435fcfdcf6faf3ec6c88a6a84962070a3fb452f4b4918b"
+    },
+    "bedrock": {
+      "file": "bettermodel-pet_griffon_phoenix-skill-bedrock.png",
+      "sha256": "e1246959b3931fa4484abe95fdb20d46b4c3803357516609bbefa149205928b4"
+    }
+  }
+]

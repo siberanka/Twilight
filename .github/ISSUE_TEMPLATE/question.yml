@@ -1,0 +1,24 @@
+name: Question / Soru
+description: Help with installation, configuration or a network setup. / Kurulum, yapılandırma veya ağ düzeni için yardım.
+labels: [question]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Most answers are in the [wiki](https://github.com/siberanka/twilight/blob/master/WIKI.md): installation, every configuration key, proxy networks and troubleshooting. You can write in English or Turkish.
+
+        Çoğu yanıt [wiki'de](https://github.com/siberanka/twilight/blob/master/WIKI.md#türkçe): kurulum, her yapılandırma anahtarı, proxy'li ağlar ve sorun giderme. İngilizce veya Türkçe yazabilirsiniz.
+  - type: textarea
+    id: question
+    attributes:
+      label: Question / Soru
+    validations:
+      required: true
+  - type: textarea
+    id: setup
+    attributes:
+      label: Setup / Kurulum
+      description: Twilight version, server and proxy software, where Geyser and Floodgate run. Remove secrets and addresses. / Twilight sürümü, sunucu ve proxy yazılımı, Geyser ve Floodgate'in nerede çalıştığı. Gizli bilgileri ve adresleri silin.
+      placeholder: |
+        Twilight 1.0.0-beta.1, Paper 1.21.8
+        Velocity 3.4.0 with Geyser 2.11.3 and TwilightProxy 1.0.0-beta.1

@@ -1,0 +1,670 @@
+{
+  "schemaVersion": 1,
+  "reviewedOn": "2026-10-04",
+  "baselineCommit": "30511e9fc1f0e946d66734218525c8f5f7ad1d7e",
+  "purpose": "Required acceptance scope. Listed scenarios are obligations, not executed or passed tests.",
+  "stages": [
+    "structural",
+    "java_reference",
+    "bedrock_visual",
+    "runtime_behavior",
+    "reload_reconnect",
+    "source_integrity"
+  ],
+  "cases": [
+    {
+      "id": "source.providers",
+      "area": "discovery",
+      "status": "partial",
+      "scenarios": [
+        "ItemsAdder",
+        "CraftEngine",
+        "Nexo",
+        "Oraxen",
+        "EcoItems",
+        "configured ZIP/folder",
+        "multiple providers together"
+      ],
+      "existingEvidence": [
+        "docs/TEXT_SURFACES_2026-10-04.md",
+        "docs/UI_CAMPAIGN_2026-10-04.md"
+      ]
+    },
+    {
+      "id": "source.resolution",
+      "area": "discovery",
+      "status": "partial",
+      "scenarios": [
+        "authored/generated precedence",
+        "overlay version selection",
+        "namespace collisions",
+        "missing material",
+        "API unavailable",
+        "provider disabled"
+      ],
+      "existingEvidence": [
+        "docs/TEXT_SURFACES_2026-10-04.md",
+        "docs/UI_CAMPAIGN_2026-10-04.md"
+      ]
+    },
+    {
+      "id": "source.immutability",
+      "area": "discovery",
+      "status": "partial",
+      "scenarios": [
+        "before/after source hashes",
+        "no Java config rewrites",
+        "no writes to provider databases",
+        "repeat conversion after source reload"
+      ],
+      "existingEvidence": []
+    },
+    {
+      "id": "item.geometry",
+      "area": "items",
+      "status": "partial",
+      "scenarios": [
+        "2D layers",
+        "3D cubes",
+        "zero-thickness planes",
+        "UV quarter turns",
+        "rescaled elements",
+        "mirrored elements",
+        "translucent overlap"
+      ],
+      "existingEvidence": [
+        "docs/COMPOSITE_MODELS_2026-09-30.md"
+      ]
+    },
+    {
+      "id": "item.poses",
+      "area": "items",
+      "status": "partial",
+      "scenarios": [
+        "GUI",
+        "first-person right",
+        "first-person left",
+        "third-person right",
+        "third-person left",
+        "ground",
+        "head",
+        "fixed item frame"
+      ],
+      "existingEvidence": [
+        "docs/REAL_CONTENT_REVIEW.md"
+      ]
+    },
+    {
+      "id": "item.definitions",
+      "area": "items",
+      "status": "partial",
+      "scenarios": [
+        "legacy custom model data",
+        "modern item_model",
+        "display_context",
+        "condition",
+        "range boundaries",
+        "select fallback",
+        "static composite",
+        "dynamic composite"
+      ],
+      "existingEvidence": []
+    },
+    {
+      "id": "item.weapons",
+      "area": "items",
+      "status": "partial",
+      "scenarios": [
+        "bow pull stages",
+        "crossbow unloaded/arrow/rocket",
+        "offhand charging",
+        "shield blocking",
+        "trident throw/return",
+        "fishing cast/hook/line",
+        "spear use"
+      ],
+      "existingEvidence": []
+    },
+    {
+      "id": "item.components",
+      "area": "items",
+      "status": "planned",
+      "scenarios": [
+        "food and hunger",
+        "consumption duration",
+        "cooldowns",
+        "repair recipes",
+        "tool mining",
+        "durability",
+        "creative inventory",
+        "recipe results"
+      ],
+      "existingEvidence": []
+    },
+    {
+      "id": "item.animation",
+      "area": "items",
+      "status": "partial",
+      "scenarios": [
+        "nonuniform frame durations",
+        "explicit frame ordering",
+        "interpolation",
+        "horizontal sheet",
+        "multi-row sheet",
+        "inventory/hand/world playback"
+      ],
+      "existingEvidence": []
+    },
+    {
+      "id": "equipment.armor",
+      "area": "equipment",
+      "status": "planned",
+      "scenarios": [
+        "legacy texture layers",
+        "modern equipment layers",
+        "helmet/chest/legs/boots",
+        "trim/tint",
+        "enchant glint",
+        "3D rig with joints"
+      ],
+      "existingEvidence": []
+    },
+    {
+      "id": "equipment.elytra",
+      "area": "equipment",
+      "status": "planned",
+      "scenarios": [
+        "equipped standing",
+        "gliding",
+        "landing",
+        "creative flight",
+        "other-player view",
+        "unequip and reconnect"
+      ],
+      "existingEvidence": []
+    },
+    {
+      "id": "equipment.cosmetics",
+      "area": "equipment",
+      "status": "planned",
+      "scenarios": [
+        "hat",
+        "backpack",
+        "offhand accessory",
+        "pose changes",
+        "visibility toggle",
+        "player skin change",
+        "rig-pack coexistence"
+      ],
+      "existingEvidence": []
+    },
+    {
+      "id": "block.states",
+      "area": "blocks",
+      "status": "planned",
+      "scenarios": [
+        "note/string/chorus hosts",
+        "stairs/slabs",
+        "doors/trapdoors/gates",
+        "plants/crops",
+        "ores",
+        "orientation",
+        "waterlogging",
+        "invisible light"
+      ],
+      "existingEvidence": []
+    },
+    {
+      "id": "block.behavior",
+      "area": "blocks",
+      "status": "planned",
+      "scenarios": [
+        "placement",
+        "break progress and tool speed",
+        "drops",
+        "collision",
+        "selection box",
+        "sounds",
+        "chunk reload",
+        "client reconnect"
+      ],
+      "existingEvidence": []
+    },
+    {
+      "id": "furniture.placement",
+      "area": "entities",
+      "status": "partial",
+      "scenarios": [
+        "floor/wall/ceiling",
+        "negative scale",
+        "body/head yaw",
+        "display mount",
+        "item-frame emulation",
+        "shulker carrier",
+        "light changes"
+      ],
+      "existingEvidence": [
+        "docs/DISPLAY_SEATS_2026-09-29.md",
+        "docs/CLOUD_ANCHORS_2026-09-29.md"
+      ]
+    },
+    {
+      "id": "furniture.interaction",
+      "area": "entities",
+      "status": "planned",
+      "scenarios": [
+        "click hitbox",
+        "seat height",
+        "mount/dismount",
+        "multiple passengers",
+        "remove/reload",
+        "dye in hand and world"
+      ],
+      "existingEvidence": []
+    },
+    {
+      "id": "model.providers",
+      "area": "entities",
+      "status": "partial",
+      "scenarios": [
+        "BetterModel",
+        "ModelEngine",
+        "MythicMobs-triggered model",
+        "standalone bbmodel",
+        "multiple plugins sharing identifiers"
+      ],
+      "existingEvidence": [
+        "docs/MODEL_MATRIX_2026-09-28.md",
+        "docs/COMPOSITE_MODELS_2026-09-30.md"
+      ]
+    },
+    {
+      "id": "model.animation",
+      "area": "entities",
+      "status": "partial",
+      "scenarios": [
+        "idle/walk/run/attack",
+        "blend and interpolation",
+        "independent head look",
+        "spawn/remove/disguise",
+        "late observer",
+        "chunk unload",
+        "teleport",
+        "passenger retention"
+      ],
+      "existingEvidence": [
+        "docs/COMPOSITE_MODELS_2026-09-30.md"
+      ]
+    },
+    {
+      "id": "model.material",
+      "area": "entities",
+      "status": "partial",
+      "scenarios": [
+        "alpha cutout",
+        "translucency",
+        "emissive layer",
+        "zero view range",
+        "invisibility",
+        "billboarding",
+        "hurt tint",
+        "texture animation"
+      ],
+      "existingEvidence": []
+    },
+    {
+      "id": "glyph.metrics",
+      "area": "fonts",
+      "status": "partial",
+      "scenarios": [
+        "wide rank",
+        "negative ascent",
+        "transparent bearings",
+        "fractional height ratio",
+        "high-resolution small icon",
+        "mixed-size neighbors",
+        "every supported atlas size"
+      ],
+      "existingEvidence": [
+        "docs/WIDE_GLYPHS_2026-10-02.md",
+        "docs/FONT_METRICS_2026-10-01.md"
+      ]
+    },
+    {
+      "id": "glyph.context",
+      "area": "fonts",
+      "status": "partial",
+      "scenarios": [
+        "chat",
+        "inventory title",
+        "item name/lore",
+        "nametag",
+        "TAB",
+        "scoreboard",
+        "title/subtitle",
+        "actionbar",
+        "hologram",
+        "dialogue"
+      ],
+      "existingEvidence": [
+        "docs/WIDE_GLYPHS_2026-10-02.md",
+        "docs/TEXT_SURFACES_2026-10-04.md"
+      ]
+    },
+    {
+      "id": "glyph.fonts",
+      "area": "fonts",
+      "status": "partial",
+      "scenarios": [
+        "named-font collision",
+        "bitmap grid",
+        "reference graph",
+        "positive/negative space",
+        "CJK page behavior",
+        "non-BMP characters",
+        "TTF/unihex",
+        "vanilla letters preserved"
+      ],
+      "existingEvidence": [
+        "docs/TEXT_LAYOUT_2026-10-03.md",
+        "docs/TEXT_SURFACES_2026-10-04.md",
+        "docs/UI_CAMPAIGN_2026-10-04.md"
+      ]
+    },
+    {
+      "id": "gui.discovery",
+      "area": "ui",
+      "status": "partial",
+      "scenarios": [
+        "menu config row count",
+        "runtime inventory size",
+        "declared offsets",
+        "decorative grid false positive",
+        "identical filenames in distinct namespaces",
+        "invalid size 53"
+      ],
+      "existingEvidence": [
+        "docs/TEXT_LAYOUT_2026-10-03.md",
+        "docs/UI_CAMPAIGN_2026-10-04.md"
+      ]
+    },
+    {
+      "id": "gui.composition",
+      "area": "ui",
+      "status": "partial",
+      "scenarios": [
+        "rows 1 through 6",
+        "single image",
+        "three or more image layers",
+        "negative advances",
+        "text plus image",
+        "alpha holes",
+        "slot artwork",
+        "native frame policy"
+      ],
+      "existingEvidence": [
+        "docs/WIDE_GLYPHS_2026-10-02.md",
+        "docs/CONTAINER_LAYOUT_2026-10-03.md",
+        "docs/TEXT_LAYOUT_2026-10-03.md",
+        "docs/UI_CAMPAIGN_2026-10-04.md"
+      ]
+    },
+    {
+      "id": "gui.interaction",
+      "area": "ui",
+      "status": "planned",
+      "scenarios": [
+        "left/right click",
+        "shift click",
+        "drag",
+        "hotbar swap",
+        "pagination",
+        "permission conditions",
+        "placeholder refresh",
+        "server-driven close/reopen",
+        "no item duplication"
+      ],
+      "existingEvidence": []
+    },
+    {
+      "id": "gui.tooltip",
+      "area": "ui",
+      "status": "planned",
+      "scenarios": [
+        "vanilla frame retexture",
+        "custom tooltip_style",
+        "glyph frame",
+        "multiline lore",
+        "color and alpha",
+        "edge-of-screen wrapping",
+        "long locale strings"
+      ],
+      "existingEvidence": []
+    },
+    {
+      "id": "gui.devices",
+      "area": "ui",
+      "status": "partial",
+      "scenarios": [
+        "desktop classic UI",
+        "touch pocket UI",
+        "controller focus",
+        "GUI scale changes",
+        "portrait and landscape",
+        "narrow window",
+        "accessibility text sizes"
+      ],
+      "existingEvidence": [
+        "docs/CONTAINER_LAYOUT_2026-10-03.md",
+        "docs/TEXT_LAYOUT_2026-10-03.md"
+      ]
+    },
+    {
+      "id": "hud.vanilla",
+      "area": "ui",
+      "status": "planned",
+      "scenarios": [
+        "hotbar selection",
+        "hearts/armor/food/air",
+        "experience",
+        "effects",
+        "locator bar",
+        "safe-area resize",
+        "untouched elements preserved"
+      ],
+      "existingEvidence": []
+    },
+    {
+      "id": "hud.providers",
+      "area": "ui",
+      "status": "partial",
+      "scenarios": [
+        "BetterHud",
+        "MythicHUD",
+        "CustomNameplates",
+        "LuxDialogues",
+        "CustomFishing",
+        "simultaneous layers"
+      ],
+      "existingEvidence": [
+        "docs/TEXT_SURFACES_2026-10-04.md"
+      ]
+    },
+    {
+      "id": "hud.runtime",
+      "area": "ui",
+      "status": "planned",
+      "scenarios": [
+        "live health/mana",
+        "animation timing",
+        "conditional visibility",
+        "dialogue answers",
+        "fishing state sequence",
+        "idle/resume",
+        "world change",
+        "reconnect cleanup"
+      ],
+      "existingEvidence": []
+    },
+    {
+      "id": "scoreboard.layout",
+      "area": "ui",
+      "status": "partial",
+      "scenarios": [
+        "multiple logos",
+        "source baseline",
+        "title shifts",
+        "line order",
+        "score suppression",
+        "background alpha",
+        "dynamic values",
+        "no sidebar case"
+      ],
+      "existingEvidence": [
+        "docs/TEXT_SURFACES_2026-10-04.md"
+      ]
+    },
+    {
+      "id": "skull.profiles",
+      "area": "entities",
+      "status": "planned",
+      "scenarios": [
+        "held",
+        "worn",
+        "inventory",
+        "placed",
+        "profile/UUID/hash",
+        "existing manual mappings preserved",
+        "cache/restart",
+        "duplicate profiles"
+      ],
+      "existingEvidence": []
+    },
+    {
+      "id": "world.extended",
+      "area": "world",
+      "status": "partial",
+      "scenarios": [
+        "mob armor",
+        "custom paintings",
+        "biome colors",
+        "season changes",
+        "waypoint icons",
+        "vanilla resource overrides opt-in"
+      ],
+      "existingEvidence": [
+        "docs/UI_CAMPAIGN_2026-10-04.md"
+      ]
+    },
+    {
+      "id": "sound.events",
+      "area": "audio",
+      "status": "partial",
+      "scenarios": [
+        "file/event references",
+        "namespace defaults",
+        "replace layering",
+        "weight/pitch/volume",
+        "streaming",
+        "attenuation",
+        "live provider trigger"
+      ],
+      "existingEvidence": []
+    },
+    {
+      "id": "deployment.topology",
+      "area": "operations",
+      "status": "partial",
+      "scenarios": [
+        "local Geyser-Spigot",
+        "Velocity",
+        "BungeeCord",
+        "Standalone",
+        "several backends",
+        "several Geyser hosts",
+        "backend switch",
+        "offline delivery"
+      ],
+      "existingEvidence": []
+    },
+    {
+      "id": "deployment.recovery",
+      "area": "operations",
+      "status": "partial",
+      "scenarios": [
+        "mapping startup mismatch",
+        "pack-only reload",
+        "rollback",
+        "dropped connection",
+        "partial write",
+        "stale cache",
+        "concurrent conversion",
+        "unrelated packs retained"
+      ],
+      "existingEvidence": []
+    },
+    {
+      "id": "operations.controls",
+      "area": "operations",
+      "status": "partial",
+      "scenarios": [
+        "progress",
+        "cancel",
+        "last report",
+        "unresolved materials",
+        "exclude source",
+        "settings persistence",
+        "duplicate plugin detection",
+        "offline diagnostics"
+      ],
+      "existingEvidence": []
+    },
+    {
+      "id": "performance.resources",
+      "area": "quality",
+      "status": "planned",
+      "scenarios": [
+        "peak heap",
+        "native texture memory",
+        "pack size/splitting",
+        "join latency",
+        "tick impact",
+        "long path limits",
+        "Android/iOS constrained memory"
+      ],
+      "existingEvidence": []
+    },
+    {
+      "id": "compatibility.versions",
+      "area": "quality",
+      "status": "partial",
+      "scenarios": [
+        "minimum supported Java server",
+        "current Java server",
+        "Paper",
+        "Spigot",
+        "Folia region safety",
+        "Geyser update",
+        "standard Bedrock",
+        "NetEase profile"
+      ],
+      "existingEvidence": []
+    },
+    {
+      "id": "quality.validation",
+      "area": "quality",
+      "status": "partial",
+      "scenarios": [
+        "repeat bytes",
+        "strict failure preserves output",
+        "malformed JSON/PNG/ZIP",
+        "path traversal",
+        "missing textures",
+        "source hashes",
+        "licensed fixture exclusion",
+        "no hosted CI"
+      ],
+      "existingEvidence": []
+    }
+  ]
+}

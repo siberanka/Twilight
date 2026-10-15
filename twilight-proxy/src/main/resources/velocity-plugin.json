@@ -1,0 +1,12 @@
+{
+  "id": "twilight-proxy",
+  "name": "twilight-proxy",
+  "version": "${version}",
+  "description": "Per-server Bedrock packs for Geyser on Velocity, from Twilight on the backends.",
+  "url": "https://github.com/siberanka/twilight",
+  "authors": ["siberanka"],
+  "dependencies": [
+    {"id": "geyser", "optional": true}
+  ],
+  "main": "com.siberanka.twilight.proxy.velocity.VelocityPlugin"
+}

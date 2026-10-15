@@ -1,0 +1,197 @@
+[
+  {
+    "model": "bear_brown",
+    "provider": "modelengine",
+    "pose": "idle",
+    "frozen": true,
+    "visualResult": "Unwanted cloud particles absent; mesh visible. Full pose and lighting parity not accepted.",
+    "java": {
+      "file": "modelengine-bear_brown-idle-java.png",
+      "sha256": "0c5629d6fea7e95e61360155e2f799f1bb173f972aecb70909079d2e7260e2cc"
+    },
+    "bedrock": {
+      "file": "modelengine-bear_brown-idle-bedrock.png",
+      "sha256": "cf138dc74aa542359c610a6394a06f3a263e56c7740f5eca363989cf1d068343"
+    }
+  },
+  {
+    "model": "bear_brown",
+    "provider": "modelengine",
+    "pose": "attack",
+    "frozen": true,
+    "visualResult": "Unwanted cloud particles absent; mesh visible. Full pose and lighting parity not accepted.",
+    "java": {
+      "file": "modelengine-bear_brown-attack-java.png",
+      "sha256": "df9f621b94d5dc8142195c5c9ff0de150250bf0a349a5be5b61f79cf03dea9e1"
+    },
+    "bedrock": {
+      "file": "modelengine-bear_brown-attack-bedrock.png",
+      "sha256": "7efa2aa559357ac1231ac2c394edc448e0cec54e6f76cfbb909440e64556e026"
+    }
+  },
+  {
+    "model": "crab_hermit",
+    "provider": "modelengine",
+    "pose": "idle",
+    "frozen": true,
+    "visualResult": "Unwanted cloud particles absent; mesh visible. Full pose and lighting parity not accepted.",
+    "java": {
+      "file": "modelengine-crab_hermit-idle-java.png",
+      "sha256": "af73de5c56936ba704bcae9a9adb30d8da6fc0d70fdd8527e67ddb2836345dbf"
+    },
+    "bedrock": {
+      "file": "modelengine-crab_hermit-idle-bedrock.png",
+      "sha256": "6e5ce3979ae3330552229eae7a37510bd9a5f3ecb321f5b6ed53511dedb541a7"
+    }
+  },
+  {
+    "model": "crab_hermit",
+    "provider": "modelengine",
+    "pose": "hide",
+    "frozen": true,
+    "visualResult": "Unwanted cloud particles absent; mesh visible. Full pose and lighting parity not accepted.",
+    "java": {
+      "file": "modelengine-crab_hermit-hide-java.png",
+      "sha256": "950f82c296967e47f3e33dedc619db677bb78cb296ba2103215b81e23e665a0a"
+    },
+    "bedrock": {
+      "file": "modelengine-crab_hermit-hide-bedrock.png",
+      "sha256": "785ae368732becf1d8dc78e6fd5bcf1bc954bd0aa28bf51c17292fc3f661ee16"
+    }
+  },
+  {
+    "model": "angel_gm_archer_one",
+    "provider": "modelengine",
+    "pose": "idle",
+    "frozen": true,
+    "visualResult": "Unwanted cloud particles absent; mesh visible. Full pose and lighting parity not accepted.",
+    "java": {
+      "file": "modelengine-angel_gm_archer_one-idle-java.png",
+      "sha256": "7d705e7df7a88f603280484cfd87b09d0810ecb1a7485be339ad4f8b2583b7a0"
+    },
+    "bedrock": {
+      "file": "modelengine-angel_gm_archer_one-idle-bedrock.png",
+      "sha256": "0ef54e5e88d4c4dc5628ce5fd55bae0e41efbec5914bfdf0330f5723a15070d8"
+    }
+  },
+  {
+    "model": "angel_gm_archer_one",
+    "provider": "modelengine",
+    "pose": "attack1",
+    "frozen": true,
+    "visualResult": "Unwanted cloud particles absent; mesh visible. Full pose and lighting parity not accepted.",
+    "java": {
+      "file": "modelengine-angel_gm_archer_one-attack1-java.png",
+      "sha256": "1737e0ee36bc269b61b0eadf77096667a7351a73c0bc8cf36024b664f3400c9f"
+    },
+    "bedrock": {
+      "file": "modelengine-angel_gm_archer_one-attack1-bedrock.png",
+      "sha256": "93383db837569b702b5eb8983a5b0c57741cbd90382b6ab5aa660cc9810566c0"
+    }
+  },
+  {
+    "model": "basket_with_health_potions",
+    "provider": "modelengine",
+    "pose": "static",
+    "frozen": false,
+    "visualResult": "Unwanted cloud particles absent; mesh visible. Full pose and lighting parity not accepted. Severe darkening on stone remains.",
+    "java": {
+      "file": "modelengine-basket_with_health_potions-static-java.png",
+      "sha256": "2c9741868e2509cfdb97456db3f1b7be81a1456264dff3b2ce1b813da8334a9c"
+    },
+    "bedrock": {
+      "file": "modelengine-basket_with_health_potions-static-bedrock.png",
+      "sha256": "4f0cacdf691ead0d6f1f4f5f20549ea5be70712b8218267de8371b7e586a28b5"
+    }
+  },
+  {
+    "model": "pet_griffon_phoenix",
+    "provider": "bettermodel",
+    "pose": "idle",
+    "frozen": false,
+    "visualResult": "Mesh visible and corrected facing retained. Sequential live captures do not establish frame-exact animation parity.",
+    "java": {
+      "file": "bettermodel-pet_griffon_phoenix-idle-java.png",
+      "sha256": "dcd67241acd42a8c00faa3adc801350278a62b46a94a32600917a6532ecd7d92"
+    },
+    "bedrock": {
+      "file": "bettermodel-pet_griffon_phoenix-idle-bedrock.png",
+      "sha256": "ecdef2afdf9c2a2fca645e8f53fb64a0454fd3c36b86e9186f33e771e1d887cc"
+    }
+  },
+  {
+    "model": "pet_griffon_phoenix",
+    "provider": "bettermodel",
+    "pose": "interact",
+    "frozen": false,
+    "visualResult": "Mesh visible and corrected facing retained. Sequential live captures do not establish frame-exact animation parity.",
+    "java": {
+      "file": "bettermodel-pet_griffon_phoenix-interact-java.png",
+      "sha256": "d364b9b6852e6ca2f979142cf7f06bdcd43a59c6741778d63c8315788bddc7f8"
+    },
+    "bedrock": {
+      "file": "bettermodel-pet_griffon_phoenix-interact-bedrock.png",
+      "sha256": "7d551a8800b1906464bbcbbb47609355e8e6f19c281122e5d777f9c8c04e1669"
+    }
+  },
+  {
+    "model": "blacksmith_hm5_npc",
+    "provider": "bettermodel",
+    "pose": "idle",
+    "frozen": false,
+    "visualResult": "Mesh visible and corrected facing retained. Sequential live captures do not establish frame-exact animation parity.",
+    "java": {
+      "file": "bettermodel-blacksmith_hm5_npc-idle-java.png",
+      "sha256": "fa9a384bbbb0643fbae27ec95920d26da8e2a39faf7069b0cd17e5fcbb6361fa"
+    },
+    "bedrock": {
+      "file": "bettermodel-blacksmith_hm5_npc-idle-bedrock.png",
+      "sha256": "dd242f5364ba46e373dfcdbba1362bd4c6ed47aabe0a5f7de2e4992e914e2490"
+    }
+  },
+  {
+    "model": "blacksmith_hm5_npc",
+    "provider": "bettermodel",
+    "pose": "wave",
+    "frozen": false,
+    "visualResult": "Mesh visible and corrected facing retained. Sequential live captures do not establish frame-exact animation parity.",
+    "java": {
+      "file": "bettermodel-blacksmith_hm5_npc-wave-java.png",
+      "sha256": "9bc91e9e2684d150060c8e352aa685548d753cc4b42e0f60a0b955a335f0ec51"
+    },
+    "bedrock": {
+      "file": "bettermodel-blacksmith_hm5_npc-wave-bedrock.png",
+      "sha256": "8102f566290adb7d3401788744fc5746b03135a40345b6dce9625803dbd1bd05"
+    }
+  },
+  {
+    "model": "owl_crate",
+    "provider": "bettermodel",
+    "pose": "idle",
+    "frozen": false,
+    "visualResult": "Mesh visible and corrected facing retained. Sequential live captures do not establish frame-exact animation parity.",
+    "java": {
+      "file": "bettermodel-owl_crate-idle-java.png",
+      "sha256": "68e1cfb792abb25049b80bdc2fcfed77d02b706c44a27e9390ad09c6874d7d44"
+    },
+    "bedrock": {
+      "file": "bettermodel-owl_crate-idle-bedrock.png",
+      "sha256": "fefe181d8678237197be4fe0c070f1a60b291e861f5aecffbdd9c377fc1c21dc"
+    }
+  },
+  {
+    "model": "owl_crate",
+    "provider": "bettermodel",
+    "pose": "open",
+    "frozen": false,
+    "visualResult": "Mesh visible and corrected facing retained. Sequential live captures do not establish frame-exact animation parity.",
+    "java": {
+      "file": "bettermodel-owl_crate-open-java.png",
+      "sha256": "bae7d63c28082436aa2bfc53db9e6e87b95c84119279c845c46001812b25b52c"
+    },
+    "bedrock": {
+      "file": "bettermodel-owl_crate-open-bedrock.png",
+      "sha256": "858ae6e63f3e67912184e1754a18ae6da09734bfdd1d7f4f5142f8de3269abac"
+    }
+  }
+]

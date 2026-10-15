@@ -1,0 +1,329 @@
+{
+  "artifactSha256": "152fd07575e4a2c26b910f5ba9974ebf08c6e501eeb04e43f9c4c8f1010f24c5",
+  "tests": 80,
+  "suites": 18,
+  "sourceIntegrity": {
+    "manifestEntries": 163,
+    "uniqueCopiedFiles": 135,
+    "originalModels": 4,
+    "savedPlayerDeaths": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "builds": {
+    "bettermodel": {
+      "report": {
+        "candidates": 168,
+        "converted": 167,
+        "three_dimensional": 164,
+        "glyphs": 24,
+        "font_pages": 2,
+        "vanilla_fallback_textures": 0,
+        "named_fonts": 0,
+        "named_font_glyphs": 0,
+        "sound_definitions": 0,
+        "sound_files": 0,
+        "vanilla_fallback_sounds": 0,
+        "minecraft_version": "26.2",
+        "vanilla_asset_download": false,
+        "skipped": 1,
+        "problems": [
+          "minecraft:paper -> [spectra_aurelium_skills:skill_ship]: Missing face texture #missing"
+        ],
+        "vanilla_override": false
+      },
+      "audit": {
+        "repeatPackIdentical": true,
+        "strictAccepted": false,
+        "packPreserved": true,
+        "packSha256": "e71a57f851eba12b620cdc4b0ab17ba7ce55d76def9046c5c96a5000475ef0ab"
+      }
+    },
+    "modelengine": {
+      "report": {
+        "candidates": 278,
+        "converted": 278,
+        "three_dimensional": 278,
+        "glyphs": 0,
+        "font_pages": 0,
+        "vanilla_fallback_textures": 0,
+        "named_fonts": 0,
+        "named_font_glyphs": 0,
+        "sound_definitions": 0,
+        "sound_files": 0,
+        "vanilla_fallback_sounds": 0,
+        "minecraft_version": "26.2",
+        "vanilla_asset_download": false,
+        "skipped": 0,
+        "problems": [],
+        "vanilla_override": false
+      },
+      "audit": {
+        "repeatPackIdentical": true,
+        "strictAccepted": true,
+        "packPreserved": true,
+        "packSha256": "53563e8ffd152054a0032404f8af3608bd493eea0f1f830f53f6639dae4ae790"
+      }
+    }
+  },
+  "models": [
+    {
+      "provider": "BetterModel",
+      "name": "blue_wizard",
+      "sha256": "d2f9ad1d2ff87f75567538aaec0845601a64d4f8bdd62dd52708b205d707a063",
+      "elements": 211,
+      "animations": [
+        "idle",
+        "walk",
+        "death"
+      ]
+    },
+    {
+      "provider": "BetterModel",
+      "name": "demon_knight",
+      "sha256": "8fa15535f9276527f688ef9dab3b6b5623d2892fc32de2ab6406aff370086a58",
+      "elements": 323,
+      "animations": [
+        "idle",
+        "death",
+        "walk",
+        "run",
+        "guard",
+        "hammer_attack_1",
+        "hammer_attack_2",
+        "hammer_attack_3",
+        "shield_attack_1",
+        "shield_attack_2"
+      ]
+    },
+    {
+      "provider": "ModelEngine",
+      "name": "bl_earth_small_spider",
+      "sha256": "33ec0279a927e24fc4a67cc11946d7e5c2f01644173927ec707264740dd34d46",
+      "elements": 49,
+      "animations": [
+        "idle",
+        "walk",
+        "spawn",
+        "fangs_attack",
+        "death"
+      ]
+    },
+    {
+      "provider": "ModelEngine",
+      "name": "angel_gm_lancer_one",
+      "sha256": "1da1d0fc893a103b6c42fa9a6ee17b6bf6dece2268d12479547b2764a788e0bd",
+      "elements": 24,
+      "animations": [
+        "idle",
+        "walk",
+        "attack1",
+        "attack2"
+      ]
+    }
+  ],
+  "inventory": [
+    {
+      "slot": 1,
+      "model": "3dfantasyweaponscit:item/lance/runic_piercer",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 2,
+      "model": "modelengine:leave_dighole/rightarm",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 3,
+      "model": "valentineset:crossbow",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 4,
+      "model": "itemsadder:item/orange_bar_chair",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 5,
+      "model": "myitems:other_new/chest_close",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 6,
+      "model": "elitecreatures:bakery_decoration_v1/table",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 7,
+      "model": "rpg_village_pack:cooking_knives_1",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 8,
+      "model": "lootcrat_plus:epic/amethyst_key",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 9,
+      "model": "dryadia_keeper_of_the_grove:crossbow_1",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 10,
+      "model": "jeqo:icons/gray_boxed_arrow_down",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 11,
+      "model": "soul_eater:dagger",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 12,
+      "model": "iawearables:back/template_backpack",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 13,
+      "model": "gearforge_nature:staff",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 14,
+      "model": "z_cosmetics:cursor_scroll",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 15,
+      "model": "ender_dragonset:pickaxe",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 16,
+      "model": "frostbite_set:shield_blocking",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 17,
+      "model": "mythic_weapons:crossbow_firework",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 18,
+      "model": "pet_7:rpg_pet_3_model/fx_arrow_archer",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 19,
+      "model": "iasurvival:item/shields/ruby_shield",
+      "result": "invalid-java-reference"
+    },
+    {
+      "slot": 20,
+      "model": "cosmetic_packv6:end_hand",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 21,
+      "model": "cosmetics:body/leather_backpack",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 22,
+      "model": "crates2:crate_lvl2",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 23,
+      "model": "iaalchemy:item/mysterious_hood",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 24,
+      "model": "iafestivities:halloween/bat_wings",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 25,
+      "model": "ax_wings_pack:bluefire_wings",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 26,
+      "model": "spectra_aurelium_skills:skill_ship",
+      "result": "missing-source-texture"
+    },
+    {
+      "slot": 27,
+      "model": "am_fantasypets_vol5:am_fantasypets_vol5_models/am_icon_beepu",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 28,
+      "model": "modelengine:death_sword/leftarm",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 29,
+      "model": "myitems:naves/4blocks_naves3",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 30,
+      "model": "3dfantasyweaponscit:item/staff/bermunde_hermit_staff_charged",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 31,
+      "model": "myitems:chairs/brown/chair_3",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 32,
+      "model": "elitecreatures:nightclub_furniture_v1/nightclub_fridge_1",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 33,
+      "model": "itemsadder:item/yellow_bar_chair",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 34,
+      "model": "myitems:other_new/big_mushroom_4",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 35,
+      "model": "elitecreatures:sign_decoration_v1/sign_furniture",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    },
+    {
+      "slot": 36,
+      "model": "myitems:chairs/yellow/chair_2",
+      "result": "both-visible-static-preview-no-pixel-parity-claim"
+    }
+  ],
+  "glyphCount": 24,
+  "heldSlots": [
+    1,
+    3,
+    11,
+    13,
+    15,
+    16
+  ],
+  "playerHealthAtFinalPark": [
+    20,
+    20
+  ]
+}

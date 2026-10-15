@@ -1,0 +1,167 @@
+{
+  "modelengine": [
+    {
+      "model": "bear_brown",
+      "provider": "modelengine",
+      "pose": "idle",
+      "frozen": true,
+      "visualResult": "Reviewed: mesh visible; full visual parity not asserted.",
+      "java": {
+        "file": "modelengine-bear_brown-idle-java.png",
+        "sha256": "a783a7e58b6aa26df8f9dd9ae61bbb6828e8a8d09aae6c10c9fe706ee2b6fe7c"
+      },
+      "bedrock": {
+        "file": "modelengine-bear_brown-idle-bedrock.png",
+        "sha256": "620713c980fa4e069b37e8f23e61a1758a3120369427631d1c4f4ba22df3c54f"
+      }
+    },
+    {
+      "model": "bear_brown",
+      "provider": "modelengine",
+      "pose": "attack",
+      "frozen": true,
+      "visualResult": "Reviewed: mesh visible; full visual parity not asserted.",
+      "java": {
+        "file": "modelengine-bear_brown-attack-java.png",
+        "sha256": "c3a4fb8d43cd8c27c78ecdcfcd7d9963eae843065136f056f4d22a91f6e91599"
+      },
+      "bedrock": {
+        "file": "modelengine-bear_brown-attack-bedrock.png",
+        "sha256": "18fd7e059721a56879dbf56e431dfaf32c593aa57805ecafeba01451345f1185"
+      }
+    },
+    {
+      "model": "crab_hermit",
+      "provider": "modelengine",
+      "pose": "idle",
+      "frozen": true,
+      "visualResult": "Reviewed: mesh visible; full visual parity not asserted.",
+      "java": {
+        "file": "modelengine-crab_hermit-idle-java.png",
+        "sha256": "81d1f6af4785e50f3d7a29258a571b145cae36426210f4179059dc856efd2f33"
+      },
+      "bedrock": {
+        "file": "modelengine-crab_hermit-idle-bedrock.png",
+        "sha256": "e9d75d0fa6847cf4f17d9503a54ca31fae8773c048866f890299f02483a34215"
+      }
+    },
+    {
+      "model": "crab_hermit",
+      "provider": "modelengine",
+      "pose": "hide",
+      "frozen": true,
+      "visualResult": "Reviewed: mesh visible; full visual parity not asserted.",
+      "java": {
+        "file": "modelengine-crab_hermit-hide-java.png",
+        "sha256": "2f72df071f7ca910a87e881e01f2bcfc887f27da7d55b53cbd379d549bb3e6de"
+      },
+      "bedrock": {
+        "file": "modelengine-crab_hermit-hide-bedrock.png",
+        "sha256": "bc54e72ff7a7917ba5b3aaa55bb36582a4dcf92b1558c6d08d6fff3439337635"
+      }
+    },
+    {
+      "model": "angel_gm_archer_one",
+      "provider": "modelengine",
+      "pose": "idle",
+      "frozen": true,
+      "visualResult": "Reviewed: mesh visible; full visual parity not asserted.",
+      "java": {
+        "file": "modelengine-angel_gm_archer_one-idle-java.png",
+        "sha256": "b96f993e45866f99e37c7778518bd51bd6066151a7482e28196595f0ffde0edf"
+      },
+      "bedrock": {
+        "file": "modelengine-angel_gm_archer_one-idle-bedrock.png",
+        "sha256": "3f6163edcb12b736532756f0e140372ac15b9e33fce05195d1ea5c92873d144a"
+      }
+    },
+    {
+      "model": "angel_gm_archer_one",
+      "provider": "modelengine",
+      "pose": "attack1",
+      "frozen": true,
+      "visualResult": "Reviewed: mesh visible; full visual parity not asserted.",
+      "java": {
+        "file": "modelengine-angel_gm_archer_one-attack1-java.png",
+        "sha256": "e6361b5e4ecafe2615d54bc0469d72b0eb5ae0b010573af37b0297ba189a20f2"
+      },
+      "bedrock": {
+        "file": "modelengine-angel_gm_archer_one-attack1-bedrock.png",
+        "sha256": "09f582592997dd0076168598b1b62a76b1ae8666c07fea1e68ce5f872020f103"
+      }
+    },
+    {
+      "model": "basket_with_health_potions",
+      "provider": "modelengine",
+      "pose": "static",
+      "frozen": false,
+      "visualResult": "Reviewed: basket colors visible over unchanged stone; lighting responds to world time.",
+      "java": {
+        "file": "modelengine-basket_with_health_potions-static-java.png",
+        "sha256": "36cf36f46fa98d4fc77b8bf9a86cdc8f393eee8a6e911081dc1279549a4c117b"
+      },
+      "bedrock": {
+        "file": "modelengine-basket_with_health_potions-static-bedrock.png",
+        "sha256": "eb159708917053e003eb78f8ca37b3ffe8a9ed73041522af30f7c0661c1edc45"
+      }
+    }
+  ],
+  "lighting": [
+    {
+      "lighting": "noon",
+      "visualResult": "Reviewed: basket colors visible over unchanged stone; lighting responds to world time.",
+      "java": {
+        "file": "basket-noon-java.png",
+        "sha256": "97b45ec301b468f10ad1da7e9d1cd78f94259b5342ebea19933aa00ffc5cdc2c"
+      },
+      "bedrock": {
+        "file": "basket-noon-bedrock.png",
+        "sha256": "853a7fba517e1c820d55e9df3612dea9b612bb48dad4f2961bfb2274facf8dff"
+      }
+    },
+    {
+      "lighting": "midnight",
+      "visualResult": "Reviewed: basket colors visible over unchanged stone; lighting responds to world time.",
+      "java": {
+        "file": "basket-midnight-java.png",
+        "sha256": "f9cad47f8d7325cae3e0f7f3d423bb56eff7cf1dc20120ea116d62b22da9a93c"
+      },
+      "bedrock": {
+        "file": "basket-midnight-bedrock.png",
+        "sha256": "8e70b2f95e9abebeafaae82d8643f66079a74ac9242b49eaf42cfea12ff9dfc6"
+      }
+    }
+  ],
+  "bettermodel": [
+    {
+      "model": "owl_crate",
+      "provider": "bettermodel",
+      "pose": "idle",
+      "frozen": false,
+      "visualResult": "Reviewed: mesh visible; full visual parity not asserted.",
+      "java": {
+        "file": "bettermodel-owl_crate-idle-java.png",
+        "sha256": "9219b566c66198a6ed6a1796a64727e25357211a97fe69296817b0602a8db171"
+      },
+      "bedrock": {
+        "file": "bettermodel-owl_crate-idle-bedrock.png",
+        "sha256": "8f692c89dca6540f18ea3c23e79d760e5f075135044d1597c2ecea94ac499bf7"
+      }
+    },
+    {
+      "model": "owl_crate",
+      "provider": "bettermodel",
+      "pose": "open",
+      "frozen": false,
+      "visualResult": "Reviewed: mesh visible; full visual parity not asserted.",
+      "java": {
+        "file": "bettermodel-owl_crate-open-java.png",
+        "sha256": "0bb5e695fc8812b83a3529134636a92a420867d1676ac711c98d6eac8ac4e175"
+      },
+      "bedrock": {
+        "file": "bettermodel-owl_crate-open-bedrock.png",
+        "sha256": "b4d06ebd4f5ada902a752a34a668af1fed1328a106e91d9e9d01322d41f29b5d"
+      }
+    }
+  ]
+}
