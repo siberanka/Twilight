@@ -4,7 +4,7 @@
 
 All notable changes in Twilight are documented here.
 
-## 1.0.0-beta.3 - unreleased
+## 1.0.0-beta.3 - 2026-10-16
 
 - Bedrock network layer on every Geyser Twilight runs on (backend or proxy): movement and data of entities a
   Bedrock player cannot see, behind them or behind walls of at least three solid blocks, are held back and
@@ -81,7 +81,7 @@ First public beta of Twilight and twilight-proxy.
 
 Twilight'taki tüm önemli değişiklikler burada belgelenir.
 
-#### 1.0.0-beta.3 - yayımlanmadı
+#### 1.0.0-beta.3 - 2026-10-16
 
 - Twilight'ın çalıştığı her Geyser'da (arka uç veya proxy) Bedrock ağ katmanı: bir Bedrock oyuncusunun
   göremediği, arkasındaki veya en az üç katı bloktan oluşan duvarların ardındaki varlıkların hareketi ve

@@ -1,6 +1,33 @@
-# Twilight 1.0.0-beta.2
+# Twilight 1.0.0-beta.3
 
 > Türkçe: [aşağıda](#türkçe)
+
+**Lighter traffic for Bedrock players.** A new network layer runs in every Bedrock connection of the Geyser
+Twilight runs on, on a backend or on the proxy. Movement and data of entities a player cannot see (behind
+them, or behind walls of at least three solid blocks) are held back, merged and sent as one up-to-date
+update when the entity comes into view or every few seconds. Distant entities get fewer movement updates,
+every connection has an update budget, and struggling connections get stronger compression. Every limit
+is `auto` by default and follows the player's ping and how well the client keeps up; entities close by,
+entities with a name tag and display entities are never held by walls, and nothing but entity movement and
+data is ever held or reordered. In a test with 1200 moving mobs, 59 percent of the entity updates were
+spared at about 1.5 microseconds per packet, and the client ended with exactly the server's state.
+
+Settings are in `bedrock-network` (both configurations; every key defaults to `auto` or on).
+`/twilight network` and `/twilightproxy network` show the effect per player. The line-of-sight workers
+follow spigot.yml's `netty-threads` on a backend and the processor count on a proxy.
+
+Update both JARs and restart the server and the proxy once.
+
+The [JARs and SHA-256 files](artifacts/) were built locally under siberanka using Java 25; 318 tests
+across 55 suites passed. No hosted CI was run.
+
+Runtime requirements: Java 21+, Paper/Folia/Spigot 1.21.4+, Geyser with custom content enabled;
+for twilight-proxy, Velocity or BungeeCord with Geyser on the proxy. The runtime bridges target
+Geyser 2.11.3; other Geyser core versions require validation.
+
+The notes below describe the previous beta.
+
+## Twilight 1.0.0-beta.2
 
 **Holograms, displays and dropped items like Java.** FancyHolograms, DecentHolograms, furniture plugins and
 display builds show on Bedrock as on Java, also when plugins send them only as packets: block displays with the
@@ -37,7 +64,7 @@ Geyser 2.11.3; other Geyser core versions require validation.
 
 The notes below describe the previous beta.
 
-## Twilight 1.0.0-beta.1
+### Twilight 1.0.0-beta.1
 
 The first public beta of Twilight: Java custom content for Bedrock players through Geyser, without a client
 mod. Twilight reads your server's plugins, datapacks and resource packs (ItemsAdder, CraftEngine, Nexo, Oraxen,
@@ -75,7 +102,35 @@ Geyser 2.11.3; other Geyser core versions require validation.
 
 ## Türkçe
 
-### Twilight 1.0.0-beta.2
+### Twilight 1.0.0-beta.3
+
+**Bedrock oyuncuları için daha hafif trafik.** Yeni bir ağ katmanı, Twilight'ın çalıştığı Geyser'ın (bir arka
+uçta veya proxy'de) her Bedrock bağlantısında çalışır. Bir oyuncunun göremediği varlıkların (arkasındakilerin
+veya en az üç katı bloktan oluşan duvarların ardındakilerin) hareketi ve verileri bekletilir, birleştirilir ve
+varlık görüşe girdiğinde veya birkaç saniyede bir tek bir güncel güncelleme olarak gönderilir. Uzaktaki
+varlıklar daha az hareket güncellemesi alır, her bağlantının bir güncelleme bütçesi vardır ve zorlanan
+bağlantılar daha güçlü sıkıştırma alır. Her sınır varsayılan olarak `auto` olur ve oyuncunun ping'ini ve
+istemcinin ne kadar yetişebildiğini izler; yakındaki varlıklar, ad etiketi olan varlıklar ve görüntü
+varlıkları duvarlarla asla bekletilmez ve varlık hareketi ve verileri dışında hiçbir şey bekletilmez veya
+yeniden sıralanmaz. Hareket eden 1200 mobluk bir testte varlık güncellemelerinin yüzde 59'u paket başına
+yaklaşık 1,5 mikrosaniyeyle düşürüldü ve istemci sonunda tam olarak sunucunun durumuyla kaldı.
+
+Ayarlar `bedrock-network` bölümündedir (iki yapılandırmada da; her anahtar varsayılan olarak `auto` veya
+açıktır). `/twilight network` ve `/twilightproxy network` etkisini oyuncu başına gösterir. Görüş çizgisi iş
+parçacıkları arka uçta spigot.yml'deki `netty-threads` değerini, proxy'de işlemci sayısını izler.
+
+İki JAR'ı da güncelleyin ve sunucuyu ve proxy'yi bir kez yeniden başlatın.
+
+[JAR'lar ve SHA-256 dosyaları](artifacts/) siberanka adına Java 25 ile yerelde derlendi; 55 paketteki 318
+test geçti. Barındırılan CI çalıştırılmadı.
+
+Çalışma zamanı gereksinimleri: Java 21+, Paper/Folia/Spigot 1.21.4+, özel içeriği açık Geyser; twilight-proxy
+için proxy'de Geyser bulunan Velocity veya BungeeCord. Çalışma zamanı köprüleri Geyser 2.11.3'ü hedefler;
+diğer Geyser çekirdek sürümleri doğrulama gerektirir.
+
+Aşağıdaki notlar önceki betayı anlatır.
+
+#### Twilight 1.0.0-beta.2
 
 **Hologramlar, görüntüler ve düşen eşyalar Java gibi.** FancyHolograms, DecentHolograms, mobilya eklentileri ve
 görüntü yapıları, eklentiler onları yalnızca paket olarak gönderdiğinde de Bedrock'ta Java'daki gibi görünür:
