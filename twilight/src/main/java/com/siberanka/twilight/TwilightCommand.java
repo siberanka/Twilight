@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Locale;
 
 final class TwilightCommand implements CommandExecutor, TabCompleter {
-    private static final List<String> SUBCOMMANDS = List.of("status", "scan", "convert", "build", "deploy", "rollback", "reload", "menus");
+    private static final List<String> SUBCOMMANDS = List.of("status", "scan", "convert", "build", "deploy", "rollback", "reload", "menus", "network");
     private final TwilightPlugin plugin;
 
     TwilightCommand(TwilightPlugin plugin) {
@@ -35,6 +35,7 @@ final class TwilightCommand implements CommandExecutor, TabCompleter {
                 plugin.rollback(sender, index);
             }
             case "reload" -> plugin.reloadTwilight(sender);
+            case "network" -> plugin.network(sender);
             case "menus" -> plugin.menus(sender, arguments.length > 1 && arguments[1].equalsIgnoreCase("reset"));
             default -> plugin.send(sender, "Usage: /twilight <status|scan|convert|deploy|rollback|reload|menus>");
         }

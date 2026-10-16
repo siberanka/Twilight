@@ -25,16 +25,17 @@ are in the [reports](docs/); limits per feature are in [docs/COMPATIBILITY.md](d
 4. [Commands and permissions](#commands-and-permissions)
 5. [Configuration reference: Twilight](#configuration-reference-twilight)
 6. [twilight-proxy](#twilight-proxy-1)
-7. [Player heads](#player-heads)
-8. [Custom blocks](#custom-blocks)
-9. [Pack hosting](#pack-hosting)
-10. [Updates](#updates)
-11. [Files and folders](#files-and-folders)
-12. [Developer API](#developer-api)
-13. [Plugin-message protocol](#plugin-message-protocol)
-14. [Security model](#security-model)
-15. [Troubleshooting](#troubleshooting)
-16. [Building from source](#building-from-source)
+7. [Bedrock network](#bedrock-network)
+8. [Player heads](#player-heads)
+9. [Custom blocks](#custom-blocks)
+10. [Pack hosting](#pack-hosting)
+11. [Updates](#updates)
+12. [Files and folders](#files-and-folders)
+13. [Developer API](#developer-api)
+14. [Plugin-message protocol](#plugin-message-protocol)
+15. [Security model](#security-model)
+16. [Troubleshooting](#troubleshooting)
+17. [Building from source](#building-from-source)
 
 ## Requirements
 
@@ -113,6 +114,7 @@ season changes. Unchanged inputs are detected by a fingerprint and skipped.
 | `/twilight deploy` | Deploy the last build to Geyser again |
 | `/twilight rollback [n]` | Restore the n-th newest Geyser snapshot (default 1) |
 | `/twilight reload` | Reload and validate `config.yml` |
+| `/twilight network` | The [Bedrock network](#bedrock-network) layer per Bedrock player: round trip, inputs per second, strain, hidden and waiting entities, updates merged away, zlib level |
 | `/twilight menus [reset]` | The menus players opened since start, whatever plugin made them, and how Bedrock gets their titles: plain or laid out, offset tags a plugin left unreplaced, characters the pack has no image for, player heads and custom items. Writes `reports/menus.json`; `reset` starts over |
 
 Alias: `/tw`. Permission: `twilight.admin` (default: operators). Long operations run off the server
@@ -125,6 +127,7 @@ new versions ([updates](#updates)).
 |---|---|
 | `/twilightproxy` | Shared-secret state, Geyser presence, update check and the pack of every server |
 | `/twilightproxy reload` | Reload `config.yml` and every pack |
+| `/twilightproxy network` | The [Bedrock network](#bedrock-network) layer per Bedrock player on the proxy's Geyser |
 
 Alias: `/twproxy`. Permission: `twilight.proxy.admin`. Players with `twilight.proxy.update` or
 `twilight.proxy.admin` are told about new versions; proxies have no operators, so grant it with a
@@ -214,6 +217,27 @@ The [pack host](#pack-hosting): Bedrock players download Geyser's packs from thi
 runs only when Geyser is installed on this server. The keys are listed in the [pack host](#pack-hosting)
 section; the proxy uses the same section.
 
+### `bedrock-network`
+
+The [Bedrock network](#bedrock-network) layer on this server's Geyser. Numbers accept `auto`, which follows
+each player's connection.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `enabled` | `true` | Run the layer (restart to apply) |
+| `threads` | `auto` | Line-of-sight worker threads; `auto` = half of `netty-threads` in spigot.yml, 1-4 (restart to apply) |
+| `culling` | `true` | Hold back entities outside the view |
+| `cull-players` | `true` | Other players too, with 1.5 times the distances |
+| `view-angle` | `auto` | Degrees of view counted as visible (90-360); `auto` = 220, wider with ping; 360 turns view culling off |
+| `behind-distance` | `auto` | Entities closer than this always get every update; `auto` = 10-24 blocks by ping |
+| `wall-culling` | `true` | Hold back entities behind walls |
+| `wall-distance` | `auto` | Walls hide only from this distance on; `auto` = 16-32 blocks by ping |
+| `wall-thickness` | `auto` | Solid, opaque blocks every line of sight must cross; `auto` = 3 |
+| `far-distance` | `auto` | Visible entities beyond it get fewer movement updates; `auto` = 40 blocks |
+| `hidden-update-ms` | `auto` | How often hidden entities are brought up to date anyway; `auto` = 1000-3000 ms by connection |
+| `packets-per-second` | `auto` | Entity updates per player and second that may wait; `auto` = 2400 down to 600 |
+| `adaptive-compression` | `true` | Up to two zlib levels more for struggling connections |
+
 ### `update-check`
 
 | Key | Default | Meaning |
@@ -222,7 +246,8 @@ section; the proxy uses the same section.
 | `notify-players` | `true` | Tell players with `twilight.update` when they join and when a version is found |
 
 Changes to `ui` and `world` keys need a new build (`/twilight convert`); `proxy` and `pack-host` keys
-and `geyser.send-pack-to-bedrock` take effect on restart; `update-check` on `/twilight reload`.
+and `geyser.send-pack-to-bedrock` take effect on restart; `update-check` and `bedrock-network` (except
+`enabled` and `threads`) on `/twilight reload`.
 
 ## twilight-proxy
 
@@ -290,6 +315,7 @@ bedrock:                 # see "Bedrock runtime on the proxy"
 | `bedrock.custom-blocks` | Register the servers' custom blocks with the proxy's Geyser and show their items in 3D ([custom blocks](#custom-blocks)) |
 | `bedrock.player-heads` | Register the player heads the servers' packs list with the proxy's Geyser, so they show their skins ([player heads](#player-heads)) |
 | `bedrock.item-displays` | Show Java item displays with the servers' models: furniture, ModelEngine and BetterModel models, the mobs and NPCs built from them ([item displays](#item-displays)); also applies Java's rule that a ridden mob shows no name |
+| `bedrock-network.*` | The [Bedrock network](#bedrock-network) layer on the proxy's Geyser, with the same keys as on a backend; `threads: auto` = a quarter of the processors (1-4) |
 
 Every pack is checked before use: it must be a ZIP below the size limit with `manifest.json` at its
 root and no entry that could escape a folder. A pack that fails the check, a failed download or an
@@ -567,6 +593,52 @@ plugins, anti-bot checks, connection limits) sees it, so these settings keep it 
   account is bound to that player's XUID (checked through the Floodgate API, never by name).
 - If the plugin refuses a login while the same name is still online, a reconnect can be refused for a
   moment; the player then lands on the proxy's fallback server.
+
+## Bedrock network
+
+Bedrock clients pay for every entity update they receive, also for entities they cannot see: a crowded
+farm behind the player, mobs behind a mountain, a hologram that animates in the next room. Twilight's
+network layer sits in every Bedrock connection of the Geyser it runs on (a backend's own Geyser or the
+proxy's) and holds back what the player cannot see (`bedrock-network`):
+
+- **Behind the player.** Movement and data (names, poses, animations) of entities outside the view are
+  held. Entities closer than `behind-distance` always get every update, wherever they are.
+- **Behind walls.** An entity counts as hidden only when every line of sight to it (feet, middle, top
+  and both sides) crosses at least `wall-thickness` solid, opaque blocks (3 by default). One wall, glass,
+  leaves, fences, doorways and unloaded chunks never hide anything, and neither do entities with a name
+  tag (Bedrock draws name tags through walls) or display entities (their model may sit away from them).
+  Lines of sight are tested from a snapshot on a few shared worker threads (`threads`), at most 256
+  entities per player and round, with a lookup budget; a result needs two rounds in a row to hide.
+- **Far away.** Visible entities beyond `far-distance` get fewer movement updates the farther they are
+  (up to 4 to 10 a second).
+- **Budget.** Entity movement and data that may wait are limited per player and second
+  (`packets-per-second`); the nearest go first and nothing waits longer than three refresh intervals.
+- **Compression.** A struggling connection gets zlib compression up to two levels above Geyser's
+  (`adaptive-compression`); a healthy one keeps Geyser's level.
+
+Held updates are merged: the latest position, rotation and data win and a teleport stays a teleport. They
+are sent as one update when the entity comes into view (a turn of 15 degrees or a few blocks of movement
+checks at once, a clear line of sight within a round), every `hidden-update-ms` meanwhile, or when the
+budget allows. The view counted is wider than the screen (220 degrees by default), so entities are brought
+up to date shortly before they can appear. Spawns, removals, chunks, inventories, chat, sounds, effects
+and entity motion always pass unchanged and in order, and a revealed entity always shows the server's
+latest state. While a plugin moves the camera elsewhere (camera instructions), nothing is culled.
+
+**Following the connection.** Every value set to `auto` follows each player: the round trip widens the
+margins (a player with 300 ms ping is revealed earlier and with a wider view), and a client that does not
+keep up (fewer than 20 inputs a second, or a full send buffer) gets fewer updates, a slower refresh of
+hidden entities and stronger compression. Limits tighten at once and relax over a few seconds.
+`/twilight network` (on a proxy `/twilightproxy network`) shows per player the round trip, the input rate,
+the strain, how many entities are hidden or waiting, the share of updates merged away and the zlib level.
+
+**Measured.** A test pipeline with Geyser's packets and 1200 mobs moving every tick around a turning
+player behind walls spares 59 percent of the entity updates at about 1.5 microseconds per packet, and
+afterwards the client agrees with the server about every entity. On a test server with 300 cows around a
+Bedrock player and a wall, 37 percent of the updates were merged away; the server's tick time stayed at
+1.7 ms. Random traffic (unknown ids, NaN and huge coordinates, removals, garbage input) is part of the tests.
+
+If anything in the layer fails, it sends everything it held and passes all packets unchanged for the rest
+of that session; a failure to read the world only turns off wall culling for that player.
 
 ## Player heads
 
@@ -921,6 +993,12 @@ the receiver's clock; messages larger than 30128 bytes are dropped unread.
   put in `packs/` are used, never those in download links. Only Geyser's documented keys are kept;
   Java items, models, Bedrock identifiers (`twilight:` only) and icons must match strict patterns, and
   sizes and counts are limited. Clients can neither send nor change them.
+- **Bedrock network layer.** It only reads what clients send (positions and rotations, checked for
+  finite values within the world) and only holds back or merges entity updates the server sent; every
+  other packet passes unchanged and in order. Its state per connection is bounded (16384 entities, 256
+  line-of-sight tests a round with a lookup budget, a bounded worker queue) and confined to the
+  connection's thread; a client can only change what it sees itself, and turning quickly triggers at
+  most one reveal per tick. Any failure makes the connection a plain pass-through.
 - **Update check.** Read-only HTTPS requests to GitHub and GitLab that send nothing about the server;
   only version tags are used from the answer, nothing is downloaded or installed, and the check can be
   turned off ([updates](#updates)).
@@ -947,6 +1025,7 @@ the receiver's clock; messages larger than 30128 bytes are dropped unread.
 | Menu art sits behind the slots or in a header bar on phones | Bedrock's pocket screens. Keep `ui.pocket-container-layout: java`; Bedrock players load the new pack on their next join |
 | Images in chat or menus show as Unicode characters on a proxy network | Install twilight-proxy on the proxy and keep `bedrock.text-layout: true`: with Geyser on the proxy, the text runtime runs there |
 | "glyph pages of 8192x8192 pixels ..." notice | Glyphs need 512-pixel cells. With the text layout they share pages of their own, so only one or two such pages remain; `ui.max-glyph-cell: 256` makes them smaller but moves menu art drawn far from the line |
+| Entities slide into place or show late when a Bedrock player turns or steps around a corner | Raise `bedrock-network.behind-distance` or `view-angle`, set `wall-thickness` higher, or turn `culling` / `wall-culling` off; `/twilight network` shows the player's round trip and strain |
 | A plain menu title is shifted or missing on a phone | Update to 1.0.0-beta.2: titles without images, offsets or shifts are sent unchanged and shown at Java's position by a label of their own; only titles that need it are laid out |
 | Menu backgrounds are shifted on Bedrock and the menu title shows a tag such as `:offset_-8:` | Rebuild with the text layout on ([offset tags](#offset-tags)). If Java players see the tag too, update the plugin that should replace it |
 | ModelEngine, BetterModel or MythicMobs mobs and NPCs are invisible on a proxy network | Needs the same Twilight version on the backends and on the proxy, Geyser on the proxy and `bedrock.item-displays: true`; restart the proxy once. The backend then builds the display models by itself ([item displays](#item-displays)) |
@@ -997,16 +1076,17 @@ Bu sayfa yöneticiler ve eklenti geliştiricileri için başvuru kaynağıdır. 
 4. [Komutlar ve izinler](#komutlar-ve-izinler)
 5. [Yapılandırma başvurusu: Twilight](#yapılandırma-başvurusu-twilight)
 6. [twilight-proxy](#twilight-proxy-4)
-7. [Oyuncu kafaları](#oyuncu-kafaları)
-8. [Özel bloklar](#özel-bloklar)
-9. [Paket sunucusu](#paket-sunucusu)
-10. [Güncellemeler](#güncellemeler)
-11. [Dosyalar ve klasörler](#dosyalar-ve-klasörler)
-12. [Geliştirici API'si](#geliştirici-apisi)
-13. [Eklenti mesajı protokolü](#eklenti-mesajı-protokolü)
-14. [Güvenlik modeli](#güvenlik-modeli)
-15. [Sorun giderme](#sorun-giderme)
-16. [Kaynaktan derleme](#kaynaktan-derleme)
+7. [Bedrock ağı](#bedrock-ağı)
+8. [Oyuncu kafaları](#oyuncu-kafaları)
+9. [Özel bloklar](#özel-bloklar)
+10. [Paket sunucusu](#paket-sunucusu)
+11. [Güncellemeler](#güncellemeler)
+12. [Dosyalar ve klasörler](#dosyalar-ve-klasörler)
+13. [Geliştirici API'si](#geliştirici-apisi)
+14. [Eklenti mesajı protokolü](#eklenti-mesajı-protokolü)
+15. [Güvenlik modeli](#güvenlik-modeli)
+16. [Sorun giderme](#sorun-giderme)
+17. [Kaynaktan derleme](#kaynaktan-derleme)
 
 #### Gereksinimler
 
@@ -1087,6 +1167,7 @@ atlanır.
 | `/twilight deploy` | Son derlemeyi Geyser'a yeniden dağıtır |
 | `/twilight rollback [n]` | En yeni n'inci Geyser anlık görüntüsünü geri yükler (varsayılan 1) |
 | `/twilight reload` | `config.yml` dosyasını yeniden yükler ve doğrular |
+| `/twilight network` | Bedrock oyuncusu başına [Bedrock ağı](#bedrock-ağı) katmanı: gidiş-dönüş süresi, saniyedeki girdiler, zorlanma, gizli ve bekleyen varlıklar, birleştirilerek düşülen güncellemeler, zlib seviyesi |
 | `/twilight menus [reset]` | Açılıştan beri oyuncuların açtığı menüler (hangi eklenti yapmış olursa olsun) ve Bedrock'un başlıklarını nasıl aldığı: düz mü yerleştirilmiş mi, bir eklentinin değiştirmeden bıraktığı offset etiketleri, paketin görseli olmayan karakterler, oyuncu kafaları ve özel eşyalar. `reports/menus.json` dosyasını yazar; `reset` baştan başlatır |
 
 Takma ad: `/tw`. İzin: `twilight.admin` (varsayılan: operatörler). Uzun işlemler sunucu iş parçacığı
@@ -1099,6 +1180,7 @@ operatörler) yeni sürümler bildirilir ([güncellemeler](#güncellemeler)).
 |---|---|
 | `/twilightproxy` | Paylaşılan gizli anahtar durumu, Geyser varlığı, güncelleme denetimi ve her sunucunun paketi |
 | `/twilightproxy reload` | `config.yml` dosyasını ve her paketi yeniden yükler |
+| `/twilightproxy network` | Proxy'nin Geyser'ındaki Bedrock oyuncusu başına [Bedrock ağı](#bedrock-ağı) katmanı |
 
 Takma ad: `/twproxy`. İzin: `twilight.proxy.admin`. `twilight.proxy.update` veya `twilight.proxy.admin`
 iznine sahip oyunculara yeni sürümler bildirilir; proxy'lerde operatör yoktur, bu yüzden izni bir izin
@@ -1188,6 +1270,27 @@ değiştirmek için düzenlenmesi gerekir.
 Yalnızca Geyser bu sunucuda kuruluysa çalışır. Anahtarlar [paket sunucusu](#paket-sunucusu) bölümünde
 listelenir; proxy aynı bölümü kullanır.
 
+##### `bedrock-network`
+
+Bu sunucunun Geyser'ındaki [Bedrock ağı](#bedrock-ağı) katmanı. Sayılar `auto` kabul eder; o zaman her
+oyuncunun bağlantısını izler.
+
+| Anahtar | Varsayılan | Anlamı |
+|---|---|---|
+| `enabled` | `true` | Katmanı çalıştırır (yeniden başlatmada etkinleşir) |
+| `threads` | `auto` | Görüş çizgisi iş parçacıkları; `auto` = spigot.yml'deki `netty-threads` değerinin yarısı, 1-4 (yeniden başlatmada etkinleşir) |
+| `culling` | `true` | Görüş dışındaki varlıkları bekletir |
+| `cull-players` | `true` | Diğer oyuncuları da, 1,5 kat mesafelerle |
+| `view-angle` | `auto` | Görünür sayılan görüş açısı (90-360 derece); `auto` = 220, ping ile genişler; 360 görüş ayıklamasını kapatır |
+| `behind-distance` | `auto` | Bundan yakın varlıklar her zaman her güncellemeyi alır; `auto` = ping'e göre 10-24 blok |
+| `wall-culling` | `true` | Duvarların ardındaki varlıkları bekletir |
+| `wall-distance` | `auto` | Duvarlar ancak bu mesafeden itibaren gizler; `auto` = ping'e göre 16-32 blok |
+| `wall-thickness` | `auto` | Her görüş çizgisinin geçmesi gereken katı, opak blok sayısı; `auto` = 3 |
+| `far-distance` | `auto` | Bunun ötesindeki görünür varlıklar daha az hareket güncellemesi alır; `auto` = 40 blok |
+| `hidden-update-ms` | `auto` | Gizli varlıkların yine de ne sıklıkla güncelleneceği; `auto` = bağlantıya göre 1000-3000 ms |
+| `packets-per-second` | `auto` | Oyuncu ve saniye başına bekleyebilen varlık güncellemeleri; `auto` = 2400'den 600'e kadar |
+| `adaptive-compression` | `true` | Zorlanan bağlantılara en fazla iki zlib seviyesi fazlası |
+
 ##### `update-check`
 
 | Anahtar | Varsayılan | Anlamı |
@@ -1196,8 +1299,8 @@ listelenir; proxy aynı bölümü kullanır.
 | `notify-players` | `true` | `twilight.update` iznine sahip oyunculara katıldıklarında ve bir sürüm bulunduğunda bildirir |
 
 `ui` ve `world` anahtarlarındaki değişiklikler yeni bir derleme gerektirir (`/twilight convert`); `proxy` ve
-`pack-host` anahtarları ile `geyser.send-pack-to-bedrock` yeniden başlatmada, `update-check` ise
-`/twilight reload` ile etkinleşir.
+`pack-host` anahtarları ile `geyser.send-pack-to-bedrock` yeniden başlatmada, `update-check` ve
+`bedrock-network` (`enabled` ve `threads` dışında) ise `/twilight reload` ile etkinleşir.
 
 #### twilight-proxy
 
@@ -1265,6 +1368,7 @@ bedrock:                 # "Proxy'de Bedrock çalışma zamanı" bölümüne bak
 | `bedrock.custom-blocks` | Sunucuların özel bloklarını proxy'deki Geyser'a kaydeder ve eşyalarını 3B gösterir ([özel bloklar](#özel-bloklar)) |
 | `bedrock.player-heads` | Sunucuların paketlerinin listelediği oyuncu kafalarını proxy'deki Geyser'a kaydeder; böylece kendi skinleriyle görünürler ([oyuncu kafaları](#oyuncu-kafaları)) |
 | `bedrock.item-displays` | Java eşya görüntülerini sunucuların modelleriyle gösterir: mobilyalar, ModelEngine ve BetterModel modelleri, onlardan yapılan moblar ve NPC'ler ([eşya görüntüleri](#eşya-görüntüleri)); ayrıca binilen bir mobun ad göstermediği Java kuralını uygular |
+| `bedrock-network.*` | Proxy'nin Geyser'ındaki [Bedrock ağı](#bedrock-ağı) katmanı, arka uçtakiyle aynı anahtarlarla; `threads: auto` = işlemcilerin dörtte biri (1-4) |
 
 Her paket kullanılmadan önce denetlenir: boyut sınırının altında, kökünde `manifest.json` bulunan ve hiçbir
 girdisi klasör dışına çıkamayan bir ZIP olmalıdır. Denetimi geçemeyen bir paket, başarısız bir indirme veya
@@ -1546,6 +1650,56 @@ eklentileri, anti-bot denetimleri, bağlantı sınırları) onu görür; bu ayar
   XUID'sine bağlıysa güvenlidir (Floodgate API'siyle denetlenir, asla adla değil).
 - Eklenti aynı ad hâlâ çevrimiçiyken bir girişi reddediyorsa, bir yeniden bağlanma bir anlığına reddedilebilir;
   oyuncu o zaman proxy'nin yedek sunucusuna düşer.
+
+#### Bedrock ağı
+
+Bedrock istemcileri aldıkları her varlık güncellemesinin bedelini öder; göremedikleri varlıklarınkini de:
+oyuncunun arkasındaki kalabalık bir çiftlik, bir dağın ardındaki moblar, yan odada hareket eden bir hologram.
+Twilight'ın ağ katmanı, çalıştığı Geyser'ın (bir arka ucun kendi Geyser'ı veya proxy'ninki) her Bedrock
+bağlantısına yerleşir ve oyuncunun göremediklerini bekletir (`bedrock-network`):
+
+- **Oyuncunun arkasında.** Görüş dışındaki varlıkların hareketi ve verileri (adlar, pozlar, animasyonlar)
+  bekletilir. `behind-distance` mesafesinden yakın varlıklar nerede olursa olsun her güncellemeyi alır.
+- **Duvarların arkasında.** Bir varlık ancak ona giden her görüş çizgisi (ayakları, ortası, tepesi ve iki
+  yanı) en az `wall-thickness` kadar katı, opak bloktan (varsayılan 3) geçiyorsa gizli sayılır. Tek bir
+  duvar, cam, yapraklar, çitler, kapı aralıkları ve yüklenmemiş yığınlar hiçbir şeyi gizlemez; ad etiketi
+  olan varlıklar (Bedrock ad etiketlerini duvarların ardından çizer) ve görüntü varlıkları (modelleri
+  kendilerinden uzakta durabilir) da gizlenmez. Görüş çizgileri birkaç ortak iş parçacığında (`threads`)
+  bir anlık görüntüden sınanır; oyuncu ve tur başına en fazla 256 varlık, bir arama bütçesiyle. Gizlemek
+  için art arda iki turun sonucu gerekir.
+- **Uzakta.** `far-distance` ötesindeki görünür varlıklar uzaklaştıkça daha az hareket güncellemesi alır
+  (saniyede 4 ila 10'a kadar).
+- **Bütçe.** Bekleyebilen varlık hareketi ve verileri oyuncu ve saniye başına sınırlanır
+  (`packets-per-second`); en yakınlar önce gider ve hiçbir şey üç yenileme aralığından uzun beklemez.
+- **Sıkıştırma.** Zorlanan bir bağlantı Geyser'ınkinden en fazla iki seviye yüksek zlib sıkıştırması alır
+  (`adaptive-compression`); sağlıklı bir bağlantı Geyser'ın seviyesinde kalır.
+
+Bekletilen güncellemeler birleştirilir: en son konum, dönüş ve veri kazanır, bir ışınlanma ışınlanma olarak
+kalır. Varlık görüşe girdiğinde (15 derecelik bir dönüş veya birkaç blokluk hareket hemen denetlenir, açılan
+bir görüş çizgisi bir tur içinde), arada her `hidden-update-ms` sürede bir veya bütçe izin verdiğinde tek bir
+güncelleme olarak gönderilir. Sayılan görüş ekrandan geniştir (varsayılan 220 derece); böylece varlıklar
+görünebilmelerinden kısa süre önce güncellenir. Doğmalar, kaldırmalar, yığınlar, envanterler, sohbet,
+sesler, efektler ve varlık hızı her zaman değişmeden ve sırasıyla geçer; görüşe giren bir varlık her zaman
+sunucunun en son durumunu gösterir. Bir eklenti kamerayı başka bir yere taşırken (kamera talimatları)
+hiçbir şey ayıklanmaz.
+
+**Bağlantıyı izleme.** `auto` olan her değer her oyuncuyu izler: gidiş-dönüş süresi payları genişletir
+(300 ms ping'i olan bir oyuncu daha erken ve daha geniş bir görüşle güncellenir), yetişemeyen bir istemci
+(saniyede 20'den az girdi veya dolu bir gönderme arabelleği) daha az güncelleme, gizli varlıklar için daha
+seyrek yenileme ve daha güçlü sıkıştırma alır. Sınırlar hemen sıkılaşır ve birkaç saniyede gevşer.
+`/twilight network` (proxy'de `/twilightproxy network`) oyuncu başına gidiş-dönüş süresini, girdi hızını,
+zorlanmayı, kaç varlığın gizli veya beklemede olduğunu, birleştirilerek düşülen güncellemelerin oranını ve
+zlib seviyesini gösterir.
+
+**Ölçümler.** Geyser'ın paketleriyle bir test hattında, dönen bir oyuncunun çevresinde duvarların ardında
+her tikte hareket eden 1200 mob, varlık güncellemelerinin yüzde 59'unu paket başına yaklaşık 1,5
+mikrosaniyeyle düşürür ve sonunda istemci her varlık için sunucuyla aynı fikirdedir. Bir Bedrock oyuncusunun
+çevresinde 300 inek ve bir duvar bulunan bir test sunucusunda güncellemelerin yüzde 37'si birleştirilerek
+düşüldü; sunucunun tik süresi 1,7 ms'de kaldı. Rastgele trafik (bilinmeyen kimlikler, NaN ve devasa
+koordinatlar, kaldırmalar, bozuk girdiler) testlerin parçasıdır.
+
+Katmanda herhangi bir şey başarısız olursa, beklettiği her şeyi gönderir ve o oturumun geri kalanında tüm
+paketleri değiştirmeden geçirir; dünyanın okunamaması yalnızca o oyuncu için duvar ayıklamasını kapatır.
 
 #### Oyuncu kafaları
 
@@ -1902,6 +2056,12 @@ içinde olmalıdır; 30128 bayttan büyük mesajlar okunmadan atılır.
   dosyalarındaki eşlemeler kullanılır, indirme bağlantılarındakiler asla. Yalnızca Geyser'ın belgelenmiş
   anahtarları tutulur; Java eşyaları, modeller, Bedrock kimlikleri (yalnızca `twilight:`) ve simgeler sıkı
   kalıplara uymalıdır, boyut ve sayılar sınırlıdır. İstemciler bunları ne gönderebilir ne değiştirebilir.
+- **Bedrock ağı katmanı.** Yalnızca istemcilerin gönderdiklerini okur (dünya içinde sonlu değerler olarak
+  denetlenen konumlar ve dönüşler) ve yalnızca sunucunun gönderdiği varlık güncellemelerini bekletir veya
+  birleştirir; diğer her paket değişmeden ve sırasıyla geçer. Bağlantı başına durumu sınırlıdır (16384
+  varlık, arama bütçesiyle tur başına 256 görüş çizgisi sınaması, sınırlı bir iş kuyruğu) ve bağlantının
+  iş parçacığına bağlıdır; bir istemci yalnızca kendi gördüğünü değiştirebilir ve hızlı dönmek tik başına
+  en fazla bir yeniden göstermeyi tetikler. Herhangi bir hata bağlantıyı düz bir geçişe çevirir.
 - **Güncelleme denetimi.** GitHub ve GitLab'a, sunucu hakkında hiçbir şey göndermeyen salt okunur HTTPS
   istekleri; yanıttan yalnızca sürüm etiketleri kullanılır, hiçbir şey indirilmez veya kurulmaz ve denetim
   kapatılabilir ([güncellemeler](#güncellemeler)).
@@ -1928,6 +2088,7 @@ içinde olmalıdır; 30128 bayttan büyük mesajlar okunmadan atılır.
 | Telefonlarda menü görselleri yuvaların arkasında veya bir başlık çubuğunda | Bedrock'un pocket ekranları. `ui.pocket-container-layout: java` bırakın; Bedrock oyuncuları yeni paketi bir sonraki girişlerinde yükler |
 | Proxy'li ağda sohbetteki veya menülerdeki görseller Unicode karakteri olarak görünüyor | twilight-proxy'yi proxy'ye kurun ve `bedrock.text-layout: true` bırakın: Geyser proxy'deyken yazı çalışma zamanı orada çalışır |
 | "glyph pages of 8192x8192 pixels ..." bildirimi | Glifler 512 piksellik hücre gerektiriyor. Yazı yerleşimiyle kendi sayfalarını paylaşırlar; böyle yalnızca bir iki sayfa kalır. `ui.max-glyph-cell: 256` onları küçültür ama satırdan uzağa çizilen menü görsellerini kaydırır |
+| Bir Bedrock oyuncusu dönünce veya bir köşeyi dönünce varlıklar kayarak yerine geliyor veya geç görünüyor | `bedrock-network.behind-distance` veya `view-angle` değerini yükseltin, `wall-thickness` değerini artırın ya da `culling` / `wall-culling` kapatın; `/twilight network` oyuncunun gidiş-dönüş süresini ve zorlanmasını gösterir |
 | Düz bir menü başlığı telefonda kaymış veya görünmüyor | 1.0.0-beta.2'e güncelleyin: görsel, offset veya kaydırma içermeyen başlıklar değiştirilmeden gönderilir ve Java'nın konumunda kendi etiketinde gösterilir; yalnızca gereken başlıklar yerleştirilir |
 | Menü arka planları Bedrock'ta kaymış ve menü başlığında `:offset_-8:` gibi bir etiket görünüyor | Yazı yerleşimi açıkken yeniden derleyin ([kaydırma etiketleri](#kaydırma-etiketleri)). Java oyuncuları da etiketi görüyorsa onu değiştirmesi gereken eklentiyi güncelleyin |
 | Proxy'li ağda ModelEngine, BetterModel veya MythicMobs mobları ve NPC'leri görünmüyor | Arka uçlarda ve proxy'de aynı Twilight sürümü, proxy'de Geyser ve `bedrock.item-displays: true` gerekir; proxy'yi bir kez yeniden başlatın. Arka uç görüntü modellerini sonra kendiliğinden derler ([eşya görüntüleri](#eşya-görüntüleri)) |

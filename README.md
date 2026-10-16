@@ -18,7 +18,7 @@ Twilight is a server-side Java-to-Bedrock custom-content compiler for Geyser. It
 
 ## Beta status and compatibility
 
-**1.0.0-beta.1 is the first beta.** The features are complete for production servers and proxy networks,
+**1.0.0-beta.3 is the current beta.** The features are complete for production servers and proxy networks,
 and they run on real networks today. Behaviour can still change between betas. Read this section before
 installing, keep backups, and [report problems](https://github.com/siberanka/twilight/issues/new/choose)
 ([GitLab](https://gitlab.com/siberanka/twilight/-/issues)).
@@ -228,6 +228,17 @@ limited and blocked, and a failed download falls back to Geyser's own transfer, 
 depends on it. Every pack of the session is hosted (Twilight's, Geyser's and other plugins' files).
 Reverse proxies, HTTPS, NAT and DDoS fronts are covered in the [wiki](WIKI.md#pack-hosting).
 
+## Bedrock network
+
+Twilight lightens the traffic of every Bedrock player on the Geyser it runs on, on a backend or on the
+proxy. Movement and data of entities the player cannot see (behind them, or behind walls at least three
+blocks thick) are held back and sent as one up-to-date update when they come into view; distant entities
+get fewer movement updates; every connection has an update budget; and struggling connections get
+stronger compression. Every limit follows the player's ping and how well the client keeps up, and a
+revealed entity always shows the server's latest state. Nothing else is changed or reordered. It is on by
+default (`bedrock-network`); `/twilight network` shows the effect per player
+([wiki](WIKI.md#bedrock-network)).
+
 ## Updates
 
 Releases are published on [GitHub](https://github.com/siberanka/twilight/releases) and mirrored on
@@ -249,6 +260,7 @@ stages follow the order pre, beta, rc, release. Nothing about the server is sent
 | `/twilight rollback [index]` | Restore a retained Geyser deployment snapshot. |
 | `/twilight reload` | Reload and validate Twilight configuration. |
 | `/twilight menus [reset]` | Analyse the menus players opened: plain or laid-out titles, unreplaced offset tags, characters without an image, heads (`reports/menus.json`). |
+| `/twilight network` | Show the Bedrock network layer per player: ping, inputs, strain, hidden entities, updates merged away. |
 
 Each operation writes a dedicated UTF-8 log under `plugins/Twilight/logs`, for example `convert-log-20260921-153000-000-a1b2c3d4.txt`. Logs include phases, selected sources, counts, isolated conversion problems, the executing thread, and complete stack traces.
 
@@ -332,7 +344,7 @@ sunucunun paketini verir.
 
 #### Beta durumu ve uyumluluk
 
-**1.0.0-beta.1 ilk beta sürümüdür.** Özellikler üretim sunucuları ve proxy'li ağlar için tamamdır ve
+**1.0.0-beta.3 güncel beta sürümüdür.** Özellikler üretim sunucuları ve proxy'li ağlar için tamamdır ve
 bugün gerçek ağlarda çalışıyor. Davranış betalar arasında hâlâ değişebilir. Kurmadan önce bu bölümü okuyun,
 yedek alın ve [sorunları bildirin](https://github.com/siberanka/twilight/issues/new/choose)
 ([GitLab](https://gitlab.com/siberanka/twilight/-/issues)).
@@ -514,6 +526,17 @@ döner, yani katılmak asla buna bağlı değildir. Oturumun bütün paketleri s
 diğer eklentilerin dosyaları). Ters proxy'ler, HTTPS, NAT ve DDoS önyüzleri [wiki'de](WIKI.md#paket-sunucusu)
 anlatılır.
 
+#### Bedrock ağı
+
+Twilight, çalıştığı Geyser'daki (bir arka uçta veya proxy'de) her Bedrock oyuncusunun trafiğini hafifletir.
+Oyuncunun göremediği varlıkların (arkasındakilerin veya en az üç blok kalınlığındaki duvarların ardındakilerin)
+hareketi ve verileri bekletilir ve görüşe girdiklerinde tek bir güncel güncelleme olarak gönderilir; uzaktaki
+varlıklar daha az hareket güncellemesi alır; her bağlantının bir güncelleme bütçesi vardır ve zorlanan
+bağlantılar daha güçlü sıkıştırma alır. Her sınır oyuncunun ping'ini ve istemcinin ne kadar yetişebildiğini
+izler; görüşe giren bir varlık her zaman sunucunun en son durumunu gösterir. Başka hiçbir şey değiştirilmez
+veya yeniden sıralanmaz. Varsayılan olarak açıktır (`bedrock-network`); `/twilight network` etkisini oyuncu
+başına gösterir ([wiki](WIKI.md#bedrock-ağı)).
+
 #### Güncellemeler
 
 Sürümler [GitHub](https://github.com/siberanka/twilight/releases) üzerinde yayımlanır ve
@@ -535,6 +558,7 @@ ile kapatın ([wiki](WIKI.md#güncellemeler)).
 | `/twilight rollback [sıra]` | Saklanan bir Geyser dağıtım anlık görüntüsünü geri yükler. |
 | `/twilight reload` | Twilight yapılandırmasını yeniden yükler ve doğrular. |
 | `/twilight menus [reset]` | Oyuncuların açtığı menüleri analiz eder: düz veya yerleştirilmiş başlıklar, değiştirilmemiş offset etiketleri, görseli olmayan karakterler, kafalar (`reports/menus.json`). |
+| `/twilight network` | Bedrock ağ katmanını oyuncu başına gösterir: ping, girdiler, zorlanma, gizli varlıklar, birleştirilerek düşülen güncellemeler. |
 
 Her işlem `plugins/Twilight/logs` altına ayrı bir UTF-8 günlük yazar, örneğin
 `convert-log-20260921-153000-000-a1b2c3d4.txt`. Günlükler aşamaları, seçilen kaynakları, sayıları, yalıtılmış

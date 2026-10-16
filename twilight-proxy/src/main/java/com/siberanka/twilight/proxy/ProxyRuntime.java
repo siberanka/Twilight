@@ -43,6 +43,9 @@ final class ProxyRuntime implements AutoCloseable {
     private volatile GeyserRiderNames riderNames;
     private volatile SessionDisplays sessionDisplays;
     private final DisplaySightings sightings = new DisplaySightings();
+    private volatile com.siberanka.twilight.network.NetworkSettings networkSettings =
+            com.siberanka.twilight.network.NetworkSettings.DEFAULTS;
+    private volatile com.siberanka.twilight.network.BedrockNetwork network;
 
     private ProxyRuntime(GeyserTextLayoutBridge text, GeyserLanguageBridge language, LoadingGuard guard) {
         this.text = text;
@@ -86,6 +89,18 @@ final class ProxyRuntime implements AutoCloseable {
             platform.warn("Loading protection is unavailable for this Geyser build.", failure);
         }
         ProxyRuntime runtime = new ProxyRuntime(text, language, guard);
+        runtime.networkSettings = config.network();
+        if (config.network().enabled()) {
+            int threads = com.siberanka.twilight.network.Threads.network(config.network().threads(), 0);
+            try {
+                runtime.network = com.siberanka.twilight.network.BedrockNetwork.start(owner, () -> runtime.networkSettings,
+                        threads, platform::info, platform::warn);
+                platform.info("Bedrock network layer active: updates of entities a Bedrock player cannot see are held"
+                        + " back and limits follow each connection (" + threads + " line-of-sight thread(s)).");
+            } catch (RuntimeException | LinkageError failure) {
+                platform.warn("The Bedrock network layer is unavailable for this Geyser build; packets go unchanged.", failure);
+            }
+        }
         try {
             if (registered != null) runtime.blocks = registered;
             else if (config.customBlocks()) runtime.blocks = CustomBlocks.start(owner, packs, platform::info, platform::warn);
@@ -140,6 +155,18 @@ final class ProxyRuntime implements AutoCloseable {
         }
     }
 
+    /** New {@code bedrock-network} settings from a reload ({@code enabled} and {@code threads} need a restart). */
+    void networkSettings(com.siberanka.twilight.network.NetworkSettings settings) {
+        if (settings != null) networkSettings = settings;
+    }
+
+    /** {@code /twilightproxy network}. */
+    java.util.List<String> networkReport() {
+        var running = network;
+        return running == null ? java.util.List.of("The Bedrock network layer is not running (bedrock-network.enabled: false,"
+                + " or this Geyser build cannot take it).") : running.report();
+    }
+
     /** Whether Java item displays are shown: Geyser registered the display entity with this runtime. */
     boolean showsItemDisplays() {
         GeyserDisplayBridge bridge = displays;
@@ -186,7 +213,7 @@ final class ProxyRuntime implements AutoCloseable {
 
     @Override
     public void close() {
-        for (AutoCloseable part : new AutoCloseable[]{text, language, guard, blocks, skulls, displays, riderNames}) {
+        for (AutoCloseable part : new AutoCloseable[]{network, text, language, guard, blocks, skulls, displays, riderNames}) {
             if (part == null) continue;
             try {
                 part.close();

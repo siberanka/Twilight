@@ -23,7 +23,7 @@ record ProxyConfig(PackSource defaultSource, Map<String, PackSource> servers, bo
                    com.siberanka.twilight.host.HostSettings host, boolean updateCheck, boolean updateNotify,
                    LocalSettings local, boolean retireStaleFiles, boolean restartWhenEmpty,
                    boolean textLayout, boolean translations, int loadingProtectionSeconds, boolean customBlocks,
-                   boolean itemDisplays, boolean playerHeads) {
+                   boolean itemDisplays, boolean playerHeads, com.siberanka.twilight.network.NetworkSettings network) {
     /** {@code local-backends}: read the exports of backends on this machine from their folders. */
     record LocalSettings(boolean enabled, java.util.List<Path> search, Map<String, Path> servers) {
         static final LocalSettings OFF = new LocalSettings(false, java.util.List.of(), Map.of());
@@ -98,7 +98,15 @@ record ProxyConfig(PackSource defaultSource, Map<String, PackSource> servers, bo
                         .getOrDefault("loading-protection-seconds", "300"), "bedrock.loading-protection-seconds", 0, 1800),
                 bedrockSwitch(root.get("bedrock"), "custom-blocks"),
                 bedrockSwitch(root.get("bedrock"), "item-displays"),
-                bedrockSwitch(root.get("bedrock"), "player-heads"));
+                bedrockSwitch(root.get("bedrock"), "player-heads"),
+                networkSettings(root.get("bedrock-network")));
+    }
+
+    /** The {@code bedrock-network} section; missing keeps every default. */
+    private static com.siberanka.twilight.network.NetworkSettings networkSettings(Object section) {
+        if (section == null) return com.siberanka.twilight.network.NetworkSettings.DEFAULTS;
+        Map<String, Object> values = map(section, "bedrock-network");
+        return com.siberanka.twilight.network.NetworkSettings.parse(values::get);
     }
 
     /** A switch in the {@code bedrock} section; on when missing. */

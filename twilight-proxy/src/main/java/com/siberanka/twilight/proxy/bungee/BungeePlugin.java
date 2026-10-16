@@ -71,6 +71,7 @@ public final class BungeePlugin extends Plugin implements Listener {
             @Override public void execute(CommandSender sender, String[] args) {
                 String result = args.length > 0 && args[0].equalsIgnoreCase("reload")
                         ? (created.reload() ? "twilight-proxy reloaded." : "Reload failed; see the console.")
+                        : args.length > 0 && args[0].equalsIgnoreCase("network") ? created.networkText()
                         : created.statusText();
                 sender.sendMessage(new TextComponent(result));
             }

@@ -745,6 +745,8 @@ public final class ProxyCore implements TwilightProxyApi {
         try {
             ProxyConfig next = ProxyConfig.load(platform.dataDirectory().resolve("config.yml"));
             config = next;
+            ProxyRuntime bedrockRuntime = runtime;
+            if (bedrockRuntime != null) bedrockRuntime.networkSettings(next.network());
             store.reload(next, platform.serverNames());
             List<PackChannel.Key> keys = new ArrayList<>();
             for (String secret : ProxySecrets.discover(platform.proxyRoot(), platform.velocity(), next.secret())) {
@@ -1096,6 +1098,13 @@ public final class ProxyCore implements TwilightProxyApi {
     }
 
     private volatile long lastRefresh = System.currentTimeMillis();
+
+    /** {@code /twilightproxy network}: the Bedrock network layer per player. */
+    public String networkText() {
+        ProxyRuntime running = runtime;
+        if (running == null) return "Twilight's Bedrock runtime is not running on this proxy (no Geyser here).";
+        return String.join("\n", running.networkReport());
+    }
 
     public String statusText() {
         StringBuilder out = new StringBuilder("twilight-proxy: ")

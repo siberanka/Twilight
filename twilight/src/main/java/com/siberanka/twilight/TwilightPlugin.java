@@ -80,6 +80,9 @@ public final class TwilightPlugin extends JavaPlugin {
     private com.siberanka.twilight.integration.text.GeyserLanguageBridge languageBridge;
     private com.siberanka.twilight.integration.pack.GeyserPackHosting packHosting;
     private com.siberanka.twilight.geyser.LoadingGuard loadingGuard;
+    private com.siberanka.twilight.network.BedrockNetwork bedrockNetwork;
+    private volatile com.siberanka.twilight.network.NetworkSettings networkSettings =
+            com.siberanka.twilight.network.NetworkSettings.DEFAULTS;
     private com.siberanka.twilight.geyser.CustomBlocks customBlocks;
     private volatile com.siberanka.twilight.update.UpdateCheck updates;
     private volatile boolean notifyUpdatePlayers = true;
@@ -252,6 +255,7 @@ public final class TwilightPlugin extends JavaPlugin {
                 }
             }
             startPackHost();
+            startBedrockNetwork();
             try {
                 loadingGuard = com.siberanka.twilight.geyser.LoadingGuard.start(this,
                         getConfig().getInt("geyser.loading-protection-seconds", 300), getLogger()::info);
@@ -368,6 +372,7 @@ public final class TwilightPlugin extends JavaPlugin {
         if (menuAudit != null) menuAudit.close();
         if (customSkulls != null) customSkulls.close();
         if (loadingGuard != null) loadingGuard.close();
+        if (bedrockNetwork != null) bedrockNetwork.close();
         if (customBlocks != null) customBlocks.close();
         if (packHosting != null) packHosting.close();
         if (riderNames != null) {
@@ -839,12 +844,54 @@ public final class TwilightPlugin extends JavaPlugin {
         try (OperationLog log = OperationLog.create(getDataFolder().toPath(), "reload")) {
             loadServices();
             configureUpdates();
+            readNetworkSettings();
             log.info("configuration", "reloaded; vanilla-override=" + config.vanillaOverride());
             send(sender, "Twilight configuration reloaded. Vanilla overrides: " + config.vanillaOverride());
         } catch (Exception failure) {
             getLogger().log(Level.SEVERE, "Twilight configuration reload failed", failure);
             send(sender, "Configuration reload failed: " + rootMessage(failure));
         }
+    }
+
+    /**
+     * Twilight's network layer for Bedrock players on this server's Geyser: held-back updates of entities they
+     * cannot see, a budget per connection and adaptive compression ({@code bedrock-network}).
+     */
+    private void startBedrockNetwork() {
+        if (!readNetworkSettings()) return;
+        var settings = networkSettings;
+        if (!settings.enabled()) return;
+        // The server's own network threads (spigot.yml settings.netty-threads) size the workers.
+        int netty = com.siberanka.twilight.network.Threads.nettyThreads(serverRoot.resolve("spigot.yml"));
+        int threads = com.siberanka.twilight.network.Threads.network(settings.threads(), netty);
+        try {
+            bedrockNetwork = com.siberanka.twilight.network.BedrockNetwork.start(this, () -> networkSettings, threads,
+                    getLogger()::info, (message, failure) -> getLogger().log(Level.WARNING, message, failure));
+            getLogger().info("Bedrock network layer active: updates of entities a Bedrock player cannot see are held back"
+                    + " and limits follow each connection (" + threads + " line-of-sight thread(s)).");
+        } catch (RuntimeException | LinkageError failure) {
+            getLogger().log(Level.WARNING, "The Bedrock network layer is unavailable for this Geyser build; packets go unchanged.", failure);
+        }
+    }
+
+    /** Reads {@code bedrock-network}; an invalid section keeps the previous settings. */
+    private boolean readNetworkSettings() {
+        try {
+            networkSettings = com.siberanka.twilight.network.NetworkSettings.parse(key -> getConfig().get("bedrock-network." + key));
+            return true;
+        } catch (IllegalArgumentException invalid) {
+            getLogger().severe(invalid.getMessage() + "; the previous bedrock-network settings stay.");
+            return false;
+        }
+    }
+
+    void network(CommandSender sender) {
+        var network = bedrockNetwork;
+        if (network == null) {
+            send(sender, "The Bedrock network layer is not running on this server (no Geyser here, or bedrock-network.enabled: false).");
+            return;
+        }
+        network.report().forEach(line -> send(sender, line));
     }
 
     void sendStatus(CommandSender sender) {

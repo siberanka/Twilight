@@ -4,6 +4,19 @@
 
 All notable changes in Twilight are documented here.
 
+## 1.0.0-beta.3 - unreleased
+
+- Bedrock network layer on every Geyser Twilight runs on (backend or proxy): movement and data of entities a
+  Bedrock player cannot see, behind them or behind walls of at least three solid blocks, are held back and
+  merged, and sent as one up-to-date update when the entity comes into view or every few seconds. Distant
+  entities get fewer movement updates, every connection has an update budget, and struggling connections
+  get up to two zlib levels more. Every limit (view angle, distances, wall thickness, refresh, budget)
+  defaults to `auto` and follows the player's ping and input rate. Entities with a name tag and display
+  entities are never hidden by walls, nearby entities always get every update, and nothing but entity
+  movement and data is ever held. `bedrock-network` in both configurations; `/twilight network` and
+  `/twilightproxy network` show the effect per player. Line-of-sight workers default to half of
+  spigot.yml's `netty-threads` (a quarter of the processors on a proxy), 1-4.
+
 ## 1.0.0-beta.2 - 2026-10-16
 
 - Displays and holograms (FancyHolograms, DecentHolograms, furniture plugins, display builds), also when sent
@@ -67,6 +80,20 @@ First public beta of Twilight and twilight-proxy.
 ### Değişiklik günlüğü
 
 Twilight'taki tüm önemli değişiklikler burada belgelenir.
+
+#### 1.0.0-beta.3 - yayımlanmadı
+
+- Twilight'ın çalıştığı her Geyser'da (arka uç veya proxy) Bedrock ağ katmanı: bir Bedrock oyuncusunun
+  göremediği, arkasındaki veya en az üç katı bloktan oluşan duvarların ardındaki varlıkların hareketi ve
+  verileri bekletilir ve birleştirilir; varlık görüşe girdiğinde veya birkaç saniyede bir tek bir güncel
+  güncelleme olarak gönderilir. Uzaktaki varlıklar daha az hareket güncellemesi alır, her bağlantının bir
+  güncelleme bütçesi vardır ve zorlanan bağlantılar en fazla iki zlib seviyesi fazla alır. Her sınır (görüş
+  açısı, mesafeler, duvar kalınlığı, yenileme, bütçe) varsayılan olarak `auto` olur ve oyuncunun ping'ini
+  ve girdi hızını izler. Ad etiketi olan varlıklar ve görüntü varlıkları duvarlarla asla gizlenmez, yakındaki
+  varlıklar her zaman her güncellemeyi alır ve varlık hareketi ve verileri dışında hiçbir şey bekletilmez.
+  İki yapılandırmada da `bedrock-network`; `/twilight network` ve `/twilightproxy network` etkisini oyuncu
+  başına gösterir. Görüş çizgisi iş parçacıkları varsayılan olarak spigot.yml'deki `netty-threads`
+  değerinin yarısıdır (proxy'de işlemcilerin dörtte biri), 1-4.
 
 #### 1.0.0-beta.2 - 2026-10-16
 

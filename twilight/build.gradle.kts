@@ -23,6 +23,14 @@ dependencies {
     testImplementation("org.geysermc.mcprotocollib:protocol:26.2-20260824.124638-17") { isTransitive = false }
     testImplementation("io.netty:netty-buffer:4.2.7.Final")
     testImplementation("org.cloudburstmc:nbt:3.0.5.Final")
+    // The Bedrock network layer is tested in a real Netty pipeline with Geyser's Bedrock packets.
+    for (module in listOf("bedrock-connection", "bedrock-codec", "common")) {
+        testImplementation("org.cloudburstmc.protocol:$module:3.0.0.Beta13-20260917.001841-27") { isTransitive = false }
+    }
+    testImplementation("org.cloudburstmc.math:api:2.0") { isTransitive = false }
+    testImplementation("org.cloudburstmc.math:immutable:2.0") { isTransitive = false }
+    testImplementation("it.unimi.dsi:fastutil:8.5.15")
+    testImplementation("io.netty:netty-transport:4.2.7.Final")
 
     testImplementation(platform("org.junit:junit-bom:5.14.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
