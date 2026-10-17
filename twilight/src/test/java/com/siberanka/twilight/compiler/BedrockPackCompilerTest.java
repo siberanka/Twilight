@@ -625,9 +625,11 @@ class BedrockPackCompilerTest {
             assertEquals(0.5, scale.get(0).getAsDouble(), 1.0e-9);
             assertEquals(0.5, scale.get(1).getAsDouble(), 1.0e-9);
             assertEquals(0.5, scale.get(2).getAsDouble(), 1.0e-9);
-            assertEquals(-4.0, position.get(0).getAsDouble(), 1.0e-9);
-            assertEquals(10.5, position.get(1).getAsDouble(), 1.0e-9);
-            assertEquals(0.5, position.get(2).getAsDouble(), 1.0e-9);
+            // The authored translation as is (no fitting), only carried into the hand frame.
+            double[] offset = firstPersonViewInverse(new double[]{0.5 + 1.5, 4 - 1.5, -2 + 3});
+            assertEquals(offset[0], position.get(0).getAsDouble(), 1.0e-9);
+            assertEquals(12.5 + offset[1], position.get(1).getAsDouble(), 1.0e-9);
+            assertEquals(-offset[2], position.get(2).getAsDouble(), 1.0e-9);
         }
     }
 
@@ -676,7 +678,12 @@ class BedrockPackCompilerTest {
                     .getAsJsonObject("bones").getAsJsonObject("bone");
             JsonObject third = animations.getAsJsonObject("animation.twilight." + safe + ".third_person_right")
                     .getAsJsonObject("bones").getAsJsonObject("bone");
-            assertVector(first.getAsJsonArray("position"), -7.0, 12.492, 2.6);
+            // Java's translation is in its view frame; the hand bone sees that frame turned (firstPersonView).
+            double[] offset = firstPersonViewInverse(new double[]{2.6 + 1.5, 7 - 1.5, -0.008 + 3});
+            JsonArray position = first.getAsJsonArray("position");
+            assertEquals(offset[0], position.get(0).getAsDouble(), 1.0e-9);
+            assertEquals(12.5 + offset[1], position.get(1).getAsDouble(), 1.0e-9);
+            assertEquals(-offset[2], position.get(2).getAsDouble(), 1.0e-9);
             assertVector(first.getAsJsonArray("scale"), 1.6, 1.6, 1.6);
             assertVector(third.getAsJsonArray("position"), 0.0, 13.5, -7.0);
             assertVector(third.getAsJsonArray("scale"), 2.4, 2.4, 2.4);
@@ -770,24 +777,48 @@ class BedrockPackCompilerTest {
     }
 
     @Test
-    void preservesHandleDirectionAtBothEulerSingularities() throws Exception {
-        for (int pitch : new int[]{-90, 90}) {
-            JsonObject animations = compilePoseAnimations("singular_" + (pitch + 90), """
-                    {"firstperson_righthand":{"rotation":[%d,0,0]}}
-                    """.formatted(pitch));
-            JsonArray rotation = poseBone(animations, "first_person_right").getAsJsonArray("rotation");
-            double x = Math.toRadians(rotation.get(0).getAsDouble());
-            double y = Math.toRadians(rotation.get(1).getAsDouble());
-            double z = Math.toRadians(rotation.get(2).getAsDouble());
-            double heightX = Math.cos(z) * Math.sin(y) * Math.sin(x) - Math.sin(z) * Math.cos(x);
-            double heightY = Math.sin(z) * Math.sin(y) * Math.sin(x) + Math.cos(z) * Math.cos(x);
-            double heightZ = Math.cos(y) * Math.sin(x);
-            // A positive/negative quarter-turn sends model Y to -X/+X;
-            // the fixed hand X rotation cannot change that X direction.
-            assertEquals(-Math.signum(pitch), heightX, 1.0e-9, "pitch " + pitch);
-            assertEquals(0, heightY, 1.0e-9);
-            assertEquals(0, heightZ, 1.0e-9);
+    void firstPersonOrientationMatchesJavaIncludingEulerSingularities() throws Exception {
+        int[][] poses = {{0, 0, 0}, {30, 0, 0}, {0, 30, 0}, {0, 0, 30}, {0, -90, 25}, {-90, 0, 0}, {90, 0, 0},
+                {25, -50, 35}};
+        for (int i = 0; i < poses.length; i++) {
+            int[] pose = poses[i];
+            JsonObject animations = compilePoseAnimations("first_basis_" + i, """
+                    {"firstperson_righthand":{"rotation":[%d,%d,%d]}}
+                    """.formatted(pose[0], pose[1], pose[2]));
+            JsonArray exported = poseBone(animations, "first_person_right").getAsJsonArray("rotation");
+            for (double[] axis : new double[][]{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}) {
+                // Java first person: the display rotation (intrinsic XYZ) straight in the view frame.
+                double[] expected = rotateAxis(axis, 2, pose[2]);
+                expected = rotateAxis(expected, 1, pose[1]);
+                expected = rotateAxis(expected, 0, pose[0]);
+                // Bedrock: the bone turns the model with X mirrored (measured), then the hand shows the bone
+                // turned by the first person view.
+                double[] actual = {-axis[0], axis[1], axis[2]};
+                actual = rotateAxis(actual, 0, exported.get(0).getAsDouble());
+                actual = rotateAxis(actual, 1, exported.get(1).getAsDouble());
+                actual = rotateAxis(actual, 2, exported.get(2).getAsDouble());
+                actual[0] = -actual[0];
+                actual = firstPersonView(actual);
+                assertArrayEquals(expected, actual, 1.0e-9, "pose " + i);
+            }
         }
+    }
+
+    /** Bedrock's first person hand frame in Java's view frame, as measured (BedrockPackCompiler.FIRST_PERSON_VIEW). */
+    private static double[] firstPersonView(double[] v) {
+        double[] result = rotateAxis(v, 0, 90);
+        result = rotateAxis(result, 2, -135);
+        result = rotateAxis(result, 1, -25);
+        result = rotateAxis(result, 0, 20);
+        return rotateAxis(result, 2, 15);
+    }
+
+    private static double[] firstPersonViewInverse(double[] v) {
+        double[] result = rotateAxis(v, 2, -15);
+        result = rotateAxis(result, 0, -20);
+        result = rotateAxis(result, 1, 25);
+        result = rotateAxis(result, 2, 135);
+        return rotateAxis(result, 0, -90);
     }
 
     @Test

@@ -364,7 +364,7 @@ final class DisplayEntityResources {
                                 uv.set(1, new JsonPrimitive(uv.get(1).getAsDouble() + offset[1]));
                             }
                         }
-                        cubes.add(mirrored(cube));
+                        cubes.add(cube);
                     }
                     out.add("cubes", cubes);
                     bones.add(out);
@@ -388,25 +388,6 @@ final class DisplayEntityResources {
             root.add("minecraft:geometry", list);
             return root;
         }
-    }
-
-    /**
-     * The item geometry's cube with its east and west faces exchanged. Inside the display entity's bone chain the
-     * boxes sit where Java draws them, but a box's east texture appeared on its west side and the reverse (a
-     * crafting table's front showed on the wrong side, a furnace facing east looked west; measured 15 October 2026
-     * against Java), so the display mesh gives each side the other's texture.
-     */
-    static JsonObject mirrored(JsonObject cube) {
-        JsonObject result = cube.deepCopy();
-        if (result.has("uv") && result.get("uv").isJsonObject()) {
-            JsonObject faces = result.getAsJsonObject("uv"), swapped = new JsonObject();
-            for (Map.Entry<String, JsonElement> face : faces.entrySet()) {
-                String name = switch (face.getKey()) { case "east" -> "west"; case "west" -> "east"; default -> face.getKey(); };
-                swapped.add(name, face.getValue());
-            }
-            result.add("uv", swapped);
-        }
-        return result;
     }
 
     private static boolean sharedTransformDiffers(List<JsonObject> displays) {

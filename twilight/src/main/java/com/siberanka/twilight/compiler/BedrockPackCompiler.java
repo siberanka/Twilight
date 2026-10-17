@@ -1080,10 +1080,25 @@ public final class BedrockPackCompiler {
         JsonObject animation = new JsonObject(); animation.addProperty("loop", true); animation.add("bones", bones); return animation;
     }
 
+    /**
+     * Where Bedrock's first person hand bone shows a model, in Java's first person view frame (x right, y up, z
+     * towards the eye): measured with a model whose faces differ, then levelled against Java 1.21.4 captures.
+     */
+    private static final Quaternion FIRST_PERSON_VIEW = Quaternion.axis(15, 0, 0, 1).mul(Quaternion.axis(20, 1, 0, 0))
+            .mul(Quaternion.axis(-25, 0, 1, 0)).mul(Quaternion.axis(-135, 0, 0, 1)).mul(Quaternion.axis(90, 1, 0, 0));
+    /** Java holds first person items lower, further right and nearer than Bedrock's hand (view pixels). */
+    private static final double[] FIRST_PERSON_OFFSET = {1.5, -1.5, 3};
+
     private static MappedTransform mapFirst(JsonObject transform) {
         double[] t = vector(transform.getAsJsonArray("translation"), 0, 0, 0), r = vector(transform.getAsJsonArray("rotation"), 0, 0, 0), s = vector(transform.getAsJsonArray("scale"), 1, 1, 1);
-        Quaternion q = Quaternion.axis(-90, 1, 0, 0).mul(Quaternion.axis(r[0], 0, 0, 1)).mul(Quaternion.axis(r[1], 1, 0, 0)).mul(Quaternion.axis(-r[2], 0, 1, 0));
-        return new MappedTransform(new double[]{-t[1], 12.5 + t[2], t[0]}, q.eulerXYZ(), s);
+        // Java applies translation, then rotation in its view frame. The bone frame is that frame turned by
+        // FIRST_PERSON_VIEW with x mirrored, so the rotation is conjugated by the mirror (y and z signs flip).
+        Quaternion view = FIRST_PERSON_VIEW;
+        Quaternion q = view.mirrorX().inverse().mul(Quaternion.axis(r[0], 1, 0, 0)).mul(Quaternion.axis(-r[1], 0, 1, 0))
+                .mul(Quaternion.axis(-r[2], 0, 0, 1));
+        double[] offset = view.inverse().rotate(new double[]{t[0] + FIRST_PERSON_OFFSET[0], t[1] + FIRST_PERSON_OFFSET[1],
+                t[2] + FIRST_PERSON_OFFSET[2]});
+        return new MappedTransform(new double[]{offset[0], 12.5 + offset[1], -offset[2]}, q.eulerXYZ(), s);
     }
 
     private static MappedTransform mapThird(JsonObject transform) {
@@ -1101,7 +1116,13 @@ public final class BedrockPackCompiler {
 
     private static MappedTransform mapHead(JsonObject transform) {
         double[] t = vector(transform.getAsJsonArray("translation"), 0, 0, 0), r = vector(transform.getAsJsonArray("rotation"), 0, 0, 0), s = vector(transform.getAsJsonArray("scale"), 1, 1, 1);
-        return new MappedTransform(new double[]{-t[0] * .655, 20 + t[1] * .655, t[2] * .655}, new double[]{-r[0], -r[1], r[2]}, scale(s, .655));
+        // Java's CustomHeadLayer turns a worn item so its north face looks forward (a carved pumpkin's face); the
+        // head bone here starts half a turn from that (measured against Java with a model whose faces differ).
+        Quaternion q = Quaternion.axis(180, 0, 1, 0)
+                .mul(Quaternion.axis(-r[0], 1, 0, 0))
+                .mul(Quaternion.axis(-r[1], 0, 1, 0))
+                .mul(Quaternion.axis(r[2], 0, 0, 1));
+        return new MappedTransform(new double[]{t[0] * .655, 20 + t[1] * .655, -t[2] * .655}, q.eulerXYZ(), scale(s, .655));
     }
 
     private static JsonObject transform(JsonObject display, String name, JsonObject fallback) {
@@ -1328,7 +1349,20 @@ public final class BedrockPackCompiler {
         catch (NoSuchAlgorithmException impossible) { throw new IllegalStateException(impossible); }
     }
 
-    private static String mapFace(String face) { return switch (face) { case "north" -> "south"; case "south" -> "north"; default -> face; }; }
+    /**
+     * The Bedrock name of a Java face of the same box. Bedrock's entity geometry names the faces of each axis the
+     * other way round: a box's east texture showed on its west side (a furnace front faced the wrong way, the
+     * west face of a thin plane on a box's west side ended up inside the box; measured against Java).
+     */
+    private static String mapFace(String face) {
+        return switch (face) {
+            case "north" -> "south";
+            case "south" -> "north";
+            case "east" -> "west";
+            case "west" -> "east";
+            default -> face;
+        };
+    }
     private static JsonObject condition(String animation, String expression) { JsonObject value = new JsonObject(); value.addProperty(animation, expression); return value; }
     private static double[] scale(double[] value, double factor) { return new double[]{value[0] * factor, value[1] * factor, value[2] * factor}; }
     private static double[] vector(JsonArray value, double x, double y, double z) { if (value == null || value.size() < 3) return new double[]{x,y,z}; return new double[]{value.get(0).getAsDouble(),value.get(1).getAsDouble(),value.get(2).getAsDouble()}; }
@@ -1402,6 +1436,13 @@ public final class BedrockPackCompiler {
     private record Quaternion(double x,double y,double z,double w) {
         static Quaternion axis(double degrees,double ax,double ay,double az){double h=Math.toRadians(degrees)/2,s=Math.sin(h);return new Quaternion(ax*s,ay*s,az*s,Math.cos(h));}
         Quaternion mul(Quaternion b){return new Quaternion(w*b.x+x*b.w+y*b.z-z*b.y,w*b.y-x*b.z+y*b.w+z*b.x,w*b.z+x*b.y-y*b.x+z*b.w,w*b.w-x*b.x-y*b.y-z*b.z);}
+        Quaternion inverse() { return new Quaternion(-x, -y, -z, w); }
+        /** The same turn seen in a frame whose x axis is mirrored. */
+        Quaternion mirrorX() { return new Quaternion(x, -y, -z, w); }
+        double[] rotate(double[] v) {
+            Quaternion p = mul(new Quaternion(v[0], v[1], v[2], 0)).mul(inverse());
+            return new double[]{p.x, p.y, p.z};
+        }
         double[] eulerXYZ() {
             double xx = x * x, yy = y * y, zz = z * z;
             double m00 = 1 - 2 * (yy + zz), m01 = 2 * (x * y - z * w);
