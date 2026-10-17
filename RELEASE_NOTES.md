@@ -1,6 +1,35 @@
-# Twilight 1.0.0-beta.4
+# Twilight 1.0.0-beta.5
 
 > Türkçe: [aşağıda](#türkçe)
+
+**Geyser 2.12 and CraftEngine.** Twilight now runs on Geyser 2.12 as well as 2.11: item and block displays,
+dropped 3D items and the network layer work on both. CraftEngine's content converts like ItemsAdder's: bows,
+crossbows, fishing rods and spears whose definitions use properties Geyser cannot read now show their model
+instead of the base item, custom block items whose models are named without a namespace show their block, and
+trimmed custom armour gets its trim colours. Tested live on Paper 26.3 with Geyser 2.12, Floodgate and
+CraftEngine 26.9.2: items, tools, custom blocks and ores, furniture and dropped items, in first and third person.
+
+**Fewer restarts and no overflow.** The same content always builds the same pack, so servers whose provider
+lists its items in another order on every start (CraftEngine) are no longer asked to restart again and again.
+After a Geyser reload, Twilight's packet translators no longer call each other in a loop.
+
+**TCPShield.** When TCPShield would refuse Geyser's own connection, Twilight says so at start: set
+`enable-geyser-support: true` in TCPShield's configuration, otherwise Bedrock players see "Connection failed.
+Please try again or contact an administrator". Geyser 2.12.0 builds before b1262 did not show custom items:
+update Geyser as well.
+
+Update both JARs and restart the server and the proxy once.
+
+The [JARs and SHA-256 files](artifacts/) were built locally under siberanka using Java 25; 352 tests
+across 61 suites passed. No hosted CI was run.
+
+Runtime requirements: Java 21+, Paper/Folia/Spigot 1.21.4+, Geyser with custom content enabled;
+for twilight-proxy, Velocity or BungeeCord with Geyser on the proxy. The runtime bridges target
+Geyser 2.11.3 and 2.12.0; other Geyser core versions require validation.
+
+The notes below describe the previous beta.
+
+## Twilight 1.0.0-beta.4
 
 **Configuration that keeps itself current.** At every start and reload, `config.yml` of Twilight and of
 twilight-proxy gets the settings of the new version, with their defaults and explanations, where the
@@ -25,7 +54,7 @@ Geyser 2.11.3; other Geyser core versions require validation.
 
 The notes below describe the previous beta.
 
-## Twilight 1.0.0-beta.3
+### Twilight 1.0.0-beta.3
 
 **Lighter traffic for Bedrock players.** A new network layer runs in every Bedrock connection of the Geyser
 Twilight runs on, on a backend or on the proxy. Movement and data of entities a player cannot see (behind
@@ -127,7 +156,38 @@ Geyser 2.11.3; other Geyser core versions require validation.
 
 ## Türkçe
 
-### Twilight 1.0.0-beta.4
+### Twilight 1.0.0-beta.5
+
+**Geyser 2.12 ve CraftEngine.** Twilight artık 2.11'in yanında Geyser 2.12'de de çalışır: eşya ve blok
+görüntüleri, düşen 3B eşyalar ve ağ katmanı ikisinde de çalışır. CraftEngine'in içeriği ItemsAdder'ınki gibi
+dönüştürülür: tanımları Geyser'ın okuyamadığı özellikler kullanan yaylar, arbaletler, oltalar ve mızraklar artık
+temel eşya yerine modelleriyle görünür, modelleri ad alanı olmadan adlandırılan özel blok eşyaları bloklarını
+gösterir ve süslenmiş özel zırhlar süs renklerini alır. Paper 26.3 üzerinde Geyser 2.12, Floodgate ve CraftEngine
+26.9.2 ile canlı test edildi: eşyalar, aletler, özel bloklar ve madenler, mobilyalar ve düşen eşyalar, birinci ve
+üçüncü şahısta.
+
+**Daha az yeniden başlatma, taşma yok.** Aynı içerik her zaman aynı paketi derler; böylece sağlayıcısı
+eşyalarını her açılışta başka sırayla listeleyen sunuculardan (CraftEngine) artık tekrar tekrar yeniden
+başlatma istenmez. Geyser yeniden yüklendikten sonra Twilight'ın paket çeviricileri artık birbirini döngüyle
+çağırmaz.
+
+**TCPShield.** TCPShield Geyser'ın kendi bağlantısını reddedecekse Twilight bunu açılışta söyler: TCPShield'in
+yapılandırmasında `enable-geyser-support: true` yapın; aksi halde Bedrock oyuncuları "Connection failed. Please
+try again or contact an administrator" görür. b1262'den önceki Geyser 2.12.0 derlemeleri özel eşyaları
+göstermiyordu: Geyser'ı da güncelleyin.
+
+İki JAR'ı da güncelleyin ve sunucuyu ve proxy'yi bir kez yeniden başlatın.
+
+[JAR'lar ve SHA-256 dosyaları](artifacts/) siberanka adına Java 25 ile yerelde derlendi; 61 paketteki 352
+test geçti. Barındırılan CI çalıştırılmadı.
+
+Çalışma zamanı gereksinimleri: Java 21+, Paper/Folia/Spigot 1.21.4+, özel içeriği açık Geyser; twilight-proxy
+için proxy'de Geyser bulunan Velocity veya BungeeCord. Çalışma zamanı köprüleri Geyser 2.11.3 ve 2.12.0'ı
+hedefler; diğer Geyser çekirdek sürümleri doğrulama gerektirir.
+
+Aşağıdaki notlar önceki betayı anlatır.
+
+#### Twilight 1.0.0-beta.4
 
 **Kendini güncel tutan yapılandırma.** Her açılışta ve yeniden yüklemede Twilight'ın ve twilight-proxy'nin
 `config.yml` dosyası yeni sürümün ayarlarını, varsayılanları ve açıklamalarıyla, varsayılan dosyadaki

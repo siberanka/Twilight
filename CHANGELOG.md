@@ -4,7 +4,7 @@
 
 All notable changes in Twilight are documented here.
 
-## 1.0.0-beta.5 - unreleased
+## 1.0.0-beta.5 - 2026-10-17
 
 - Geyser 2.12 support, keeping Geyser 2.11: item and block displays, dropped 3D items, point-cloud adaptation and
   the network layer work on both (Geyser 2.12 dropped two registries and changed a packet field Twilight used).
@@ -111,7 +111,7 @@ First public beta of Twilight and twilight-proxy.
 
 Twilight'taki tüm önemli değişiklikler burada belgelenir.
 
-#### 1.0.0-beta.5 - yayımlanmadı
+#### 1.0.0-beta.5 - 2026-10-17
 
 - Geyser 2.11'i koruyarak Geyser 2.12 desteği: eşya ve blok görüntüleri, düşen 3B eşyalar, nokta bulutu uyarlaması
   ve ağ katmanı ikisinde de çalışır (Geyser 2.12, Twilight'ın kullandığı iki kaydı kaldırdı ve bir paket alanını
