@@ -4,7 +4,7 @@
 
 All notable changes in Twilight are documented here.
 
-## 1.0.0-beta.4 - unreleased
+## 1.0.0-beta.4 - 2026-10-17
 
 - `config.yml` of Twilight and of twilight-proxy is kept current at every start and reload: settings of a
   newer version are added with their defaults and explanations where the default file has them, invalid
@@ -93,7 +93,7 @@ First public beta of Twilight and twilight-proxy.
 
 Twilight'taki tüm önemli değişiklikler burada belgelenir.
 
-#### 1.0.0-beta.4 - yayımlanmadı
+#### 1.0.0-beta.4 - 2026-10-17
 
 - Twilight'ın ve twilight-proxy'nin `config.yml` dosyası her açılışta ve yeniden yüklemede güncel tutulur:
   daha yeni bir sürümün ayarları varsayılanları ve açıklamalarıyla varsayılan dosyadaki yerlerine eklenir,

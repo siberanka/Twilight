@@ -1,6 +1,31 @@
-# Twilight 1.0.0-beta.3
+# Twilight 1.0.0-beta.4
 
 > Türkçe: [aşağıda](#türkçe)
+
+**Configuration that keeps itself current.** At every start and reload, `config.yml` of Twilight and of
+twilight-proxy gets the settings of the new version, with their defaults and explanations, where the
+default file has them. Invalid values (a word where a number belongs, a number out of range, an unknown
+option) are set back to their defaults one by one with a warning, and a file that is not readable YAML is
+restored from the last version that worked. Values that are fine, comments, order, quoting and your own
+lists are never changed.
+
+Every change is made safely: a verified copy of the old file goes to `config-backups/` first, the new file
+is written atomically and only when it passes every check and stays the same in a second run, and a file
+Twilight wrote is not changed again by it, so repairs cannot loop. Links, files that are not UTF-8, larger
+than 1 MiB or use YAML anchors are only read.
+
+Update both JARs and restart the server and the proxy once.
+
+The [JARs and SHA-256 files](artifacts/) were built locally under siberanka using Java 25; 342 tests
+across 58 suites passed. No hosted CI was run.
+
+Runtime requirements: Java 21+, Paper/Folia/Spigot 1.21.4+, Geyser with custom content enabled;
+for twilight-proxy, Velocity or BungeeCord with Geyser on the proxy. The runtime bridges target
+Geyser 2.11.3; other Geyser core versions require validation.
+
+The notes below describe the previous beta.
+
+## Twilight 1.0.0-beta.3
 
 **Lighter traffic for Bedrock players.** A new network layer runs in every Bedrock connection of the Geyser
 Twilight runs on, on a backend or on the proxy. Movement and data of entities a player cannot see (behind
@@ -27,7 +52,7 @@ Geyser 2.11.3; other Geyser core versions require validation.
 
 The notes below describe the previous beta.
 
-## Twilight 1.0.0-beta.2
+### Twilight 1.0.0-beta.2
 
 **Holograms, displays and dropped items like Java.** FancyHolograms, DecentHolograms, furniture plugins and
 display builds show on Bedrock as on Java, also when plugins send them only as packets: block displays with the
@@ -102,7 +127,31 @@ Geyser 2.11.3; other Geyser core versions require validation.
 
 ## Türkçe
 
-### Twilight 1.0.0-beta.3
+### Twilight 1.0.0-beta.4
+
+**Kendini güncel tutan yapılandırma.** Her açılışta ve yeniden yüklemede Twilight'ın ve twilight-proxy'nin
+`config.yml` dosyası yeni sürümün ayarlarını, varsayılanları ve açıklamalarıyla, varsayılan dosyadaki
+yerlerinde alır. Geçersiz değerler (sayı olması gereken yerde bir kelime, aralık dışı bir sayı, bilinmeyen
+bir seçenek) bir uyarıyla tek tek varsayılanlarına döndürülür ve okunabilir YAML olmayan bir dosya çalışan son
+sürümünden geri yüklenir. Geçerli değerler, yorumlar, sıra, tırnaklar ve kendi listeleriniz asla değiştirilmez.
+
+Her değişiklik güvenle yapılır: önce eski dosyanın doğrulanmış bir kopyası `config-backups/` içine alınır, yeni
+dosya atomik olarak ve yalnızca her denetimi geçip ikinci bir çalıştırmada aynı kaldığında yazılır ve
+Twilight'ın yazdığı bir dosya onun tarafından bir daha değiştirilmez; bu yüzden onarımlar döngüye giremez.
+Bağlantılar, UTF-8 olmayan, 1 MiB'tan büyük veya YAML çapaları kullanan dosyalar yalnızca okunur.
+
+İki JAR'ı da güncelleyin ve sunucuyu ve proxy'yi bir kez yeniden başlatın.
+
+[JAR'lar ve SHA-256 dosyaları](artifacts/) siberanka adına Java 25 ile yerelde derlendi; 58 paketteki 342
+test geçti. Barındırılan CI çalıştırılmadı.
+
+Çalışma zamanı gereksinimleri: Java 21+, Paper/Folia/Spigot 1.21.4+, özel içeriği açık Geyser; twilight-proxy
+için proxy'de Geyser bulunan Velocity veya BungeeCord. Çalışma zamanı köprüleri Geyser 2.11.3'ü hedefler;
+diğer Geyser çekirdek sürümleri doğrulama gerektirir.
+
+Aşağıdaki notlar önceki betayı anlatır.
+
+#### Twilight 1.0.0-beta.3
 
 **Bedrock oyuncuları için daha hafif trafik.** Yeni bir ağ katmanı, Twilight'ın çalıştığı Geyser'ın (bir arka
 uçta veya proxy'de) her Bedrock bağlantısında çalışır. Bir oyuncunun göremediği varlıkların (arkasındakilerin
