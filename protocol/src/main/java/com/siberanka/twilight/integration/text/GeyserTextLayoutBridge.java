@@ -169,7 +169,8 @@ public final class GeyserTextLayoutBridge implements AutoCloseable {
                 missing.add(surface.type.getSimpleName());
                 continue;
             }
-            if (current != surface) {
+            // Already in the chain (another Twilight part wrapped it since): stays where it is.
+            if (!com.siberanka.twilight.geyser.TranslatorChain.installed(current, surface)) {
                 surface.original = current;
                 translators.put(surface.type, surface);
             }
@@ -384,7 +385,7 @@ public final class GeyserTextLayoutBridge implements AutoCloseable {
         P apply(GeyserSession session, P packet, TextLayoutTable table) throws ReflectiveOperationException;
     }
 
-    private final class Surface<P extends Packet> extends PacketTranslator<P> {
+    private final class Surface<P extends Packet> extends PacketTranslator<P> implements com.siberanka.twilight.geyser.TranslatorChain.Link {
         private final Class<P> type;
         private final Rewrite<P> rewrite;
         private volatile PacketTranslator<? extends Packet> original;
@@ -423,6 +424,10 @@ public final class GeyserTextLayoutBridge implements AutoCloseable {
 
         @Override public boolean shouldExecuteInEventLoop() {
             return original.shouldExecuteInEventLoop();
+        }
+
+        @Override public Object next() {
+            return original;
         }
     }
 }

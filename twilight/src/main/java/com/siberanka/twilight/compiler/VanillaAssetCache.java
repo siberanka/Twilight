@@ -101,6 +101,15 @@ final class VanillaAssetCache implements AutoCloseable {
         return readEntry(logicalPath, MAXIMUM_MODEL_BYTES);
     }
 
+    /** A vanilla texture atlas definition ({@code assets/minecraft/atlases/*.json}). */
+    Optional<byte[]> readAtlas(String logicalPath) throws IOException {
+        String normalized = logicalPath.replace('\\', '/');
+        if (!normalized.startsWith("assets/minecraft/atlases/") || !normalized.endsWith(".json") || normalized.contains("..")) {
+            throw new IOException("Vanilla atlas path is outside the atlases: " + logicalPath);
+        }
+        return readEntry(normalized, MAXIMUM_MODEL_BYTES);
+    }
+
     /** A vanilla item definition ({@code assets/minecraft/items/}) or block state file ({@code assets/minecraft/blockstates/}). */
     Optional<byte[]> readDefinition(String logicalPath) throws IOException {
         String normalized = logicalPath.replace('\\', '/');

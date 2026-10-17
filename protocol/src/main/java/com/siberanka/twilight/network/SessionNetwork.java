@@ -289,13 +289,13 @@ public final class SessionNetwork extends ChannelDuplexHandler {
         }
         long interval = holdInterval(entity, now);
         if (interval > 0 && now - entity.lastSent < interval || interval == 0 && !take()) {
-            entity.holdMove(packet, wrapper.getSenderSubClientId(), wrapper.getTargetSubClientId(), now);
+            entity.holdMove(packet, 0, 0, now);
             stats.held++;
             return true;
         }
         if (entity.holding()) {
             // Older held updates must not arrive after this newer one: merge and send them together.
-            entity.holdMove(packet, wrapper.getSenderSubClientId(), wrapper.getTargetSubClientId(), now);
+            entity.holdMove(packet, 0, 0, now);
             send(ctx, entity, now);
             stats.held++;
             return true;
@@ -316,12 +316,12 @@ public final class SessionNetwork extends ChannelDuplexHandler {
         // Data is held only while the entity is hidden: visible entities show every change (names, poses, effects).
         boolean hidden = classify(entity) == Visibility.HIDDEN;
         if (hidden && now - entity.lastSent < hiddenInterval(entity)) {
-            entity.holdData(packet, wrapper.getSenderSubClientId(), wrapper.getTargetSubClientId(), now);
+            entity.holdData(packet, 0, 0, now);
             stats.held++;
             return true;
         }
         if (entity.holding()) {
-            entity.holdData(packet, wrapper.getSenderSubClientId(), wrapper.getTargetSubClientId(), now);
+            entity.holdData(packet, 0, 0, now);
             send(ctx, entity, now);
             stats.held++;
             return true;

@@ -4,6 +4,24 @@
 
 All notable changes in Twilight are documented here.
 
+## 1.0.0-beta.5 - unreleased
+
+- Geyser 2.12 support, keeping Geyser 2.11: item and block displays, dropped 3D items, point-cloud adaptation and
+  the network layer work on both (Geyser 2.12 dropped two registries and changed a packet field Twilight used).
+- Item definitions of CraftEngine and other 1.21.4+ packs: properties Geyser's item mappings cannot read
+  (`using_item`, `display_context`, pulling and use duration) become the state players see most instead of making
+  Geyser refuse the item (topaz bows, crossbows, fishing rods and spears showed as their base item), and
+  `fishing_rod/cast` and `bundle/fullness` get Geyser's names. A model named without a namespace is
+  `minecraft:` as on Java (CraftEngine's custom block items showed as their base item).
+- Armour trims on custom armour items (`trims/items/helmet_trim_gold` and the like) are recoloured like Java's
+  atlas does instead of showing the missing texture.
+- The same content always builds the same pack: providers that list their items in another order on every start
+  (CraftEngine) no longer make every start ask for another restart.
+- No stack overflow on entity data after a Geyser reload: Twilight's translator wrappers no longer wrap each other
+  in a loop.
+- A warning at start when TCPShield would refuse Geyser's connection (`enable-geyser-support: false`), with the
+  setting that fixes it.
+
 ## 1.0.0-beta.4 - 2026-10-17
 
 - `config.yml` of Twilight and of twilight-proxy is kept current at every start and reload: settings of a
@@ -92,6 +110,25 @@ First public beta of Twilight and twilight-proxy.
 ### Değişiklik günlüğü
 
 Twilight'taki tüm önemli değişiklikler burada belgelenir.
+
+#### 1.0.0-beta.5 - yayımlanmadı
+
+- Geyser 2.11'i koruyarak Geyser 2.12 desteği: eşya ve blok görüntüleri, düşen 3B eşyalar, nokta bulutu uyarlaması
+  ve ağ katmanı ikisinde de çalışır (Geyser 2.12, Twilight'ın kullandığı iki kaydı kaldırdı ve bir paket alanını
+  değiştirdi).
+- CraftEngine'in ve diğer 1.21.4+ paketlerin eşya tanımları: Geyser'ın eşya eşlemelerinin okuyamadığı özellikler
+  (`using_item`, `display_context`, çekme ve kullanım süresi) Geyser'ın eşyayı reddetmesine yol açmak yerine
+  oyuncuların en çok gördüğü durum olur (topaz yaylar, arbaletler, oltalar ve mızraklar temel eşya olarak
+  görünüyordu); `fishing_rod/cast` ve `bundle/fullness` Geyser'ın adlarını alır. Ad alanı olmadan adı verilen bir
+  model Java'daki gibi `minecraft:` olur (CraftEngine'in özel blok eşyaları temel eşya olarak görünüyordu).
+- Özel zırh eşyalarındaki zırh süslemeleri (`trims/items/helmet_trim_gold` ve benzerleri) eksik doku göstermek
+  yerine Java'nın atlasının yaptığı gibi yeniden renklendirilir.
+- Aynı içerik her zaman aynı paketi derler: eşyalarını her açılışta başka sırayla listeleyen sağlayıcılar
+  (CraftEngine) artık her açılışta yeni bir yeniden başlatma istetmez.
+- Geyser yeniden yüklendikten sonra varlık verilerinde yığın taşması yok: Twilight'ın çevirici sarmalayıcıları
+  artık birbirini döngüye sokacak şekilde sarmaz.
+- TCPShield Geyser'ın bağlantısını reddedecekse (`enable-geyser-support: false`) açılışta, düzelten ayarla
+  birlikte bir uyarı.
 
 #### 1.0.0-beta.4 - 2026-10-17
 

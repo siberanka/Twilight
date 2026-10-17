@@ -77,7 +77,7 @@ public final class LoadingGuard implements AutoCloseable {
     private static <P extends Packet> void install(Map<Class<? extends Packet>, PacketTranslator<? extends Packet>> translators,
                                                    Class<P> type, Wrapper<P> wrapper) {
         PacketTranslator<? extends Packet> current = translators.get(type);
-        if (current == null || current == wrapper) return;
+        if (current == null || TranslatorChain.installed(current, wrapper)) return;
         wrapper.original = (PacketTranslator<P>) current;
         translators.put(type, wrapper);
     }
@@ -156,7 +156,7 @@ public final class LoadingGuard implements AutoCloseable {
         if (ping.original != null) translators.replace(ClientboundPingPacket.class, ping, ping.original);
     }
 
-    private final class Wrapper<P extends Packet> extends PacketTranslator<P> {
+    private final class Wrapper<P extends Packet> extends PacketTranslator<P> implements TranslatorChain.Link {
         private final java.util.function.BiConsumer<GeyserSession, P> answer;
         private volatile PacketTranslator<P> original;
 
@@ -176,6 +176,11 @@ public final class LoadingGuard implements AutoCloseable {
         @Override
         public boolean shouldExecuteInEventLoop() {
             return original == null || original.shouldExecuteInEventLoop();
+        }
+
+        @Override
+        public Object next() {
+            return original;
         }
     }
 }

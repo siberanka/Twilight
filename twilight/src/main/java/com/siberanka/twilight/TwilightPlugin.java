@@ -257,6 +257,7 @@ public final class TwilightPlugin extends JavaPlugin {
             }
             startPackHost();
             startBedrockNetwork();
+            warnConnectionGuards();
             try {
                 loadingGuard = com.siberanka.twilight.geyser.LoadingGuard.start(this,
                         getConfig().getInt("geyser.loading-protection-seconds", 300), getLogger()::info);
@@ -859,6 +860,28 @@ public final class TwilightPlugin extends JavaPlugin {
      * Twilight's network layer for Bedrock players on this server's Geyser: held-back updates of entities they
      * cannot see, a budget per connection and adaptive compression ({@code bedrock-network}).
      */
+    /**
+     * Plugins that refuse connections which did not come through their proxy also refuse Geyser's own connection
+     * on this server, unless they are told about Geyser: Bedrock players then see "Connection failed. Please try
+     * again or contact an administrator." Said once at start, with the setting that fixes it.
+     */
+    private void warnConnectionGuards() {
+        if (getServer().getPluginManager().getPlugin("TCPShield") == null) return;
+        java.nio.file.Path file = getDataFolder().toPath().getParent().resolve("TCPShield").resolve("config.yml");
+        try {
+            if (!java.nio.file.Files.isRegularFile(file) || java.nio.file.Files.size(file) > 65_536) return;
+            var tcpShield = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(file.toFile());
+            if (tcpShield.getBoolean("only-allow-proxy-connections", true) && !tcpShield.getBoolean("enable-geyser-support", false)) {
+                getLogger().warning("TCPShield refuses connections that did not come through TCPShield, and Geyser's own"
+                        + " connection on this server is one of them: Bedrock players get \"Connection failed. Please try"
+                        + " again or contact an administrator.\" Set enable-geyser-support: true in plugins/TCPShield/config.yml"
+                        + " (Floodgate is required) and restart.");
+            }
+        } catch (java.io.IOException | RuntimeException unreadable) {
+            // Only a hint.
+        }
+    }
+
     private void startBedrockNetwork() {
         if (!readNetworkSettings()) return;
         var settings = networkSettings;

@@ -24,6 +24,7 @@ Java 21 is the minimum bytecode level. Local builds use Java 25.
 | Platform | Status |
 |---|---|
 | Velocity 4.2.0 with Geyser 2.11.3 | Tested live: `auto`, file and switching packs, modern forwarding secret |
+| Paper 26.3 with Geyser-Spigot 2.12.0, Floodgate and CraftEngine 26.9.2 | Tested live: items, tools, bows, crossbows, rods, spears, custom blocks and ores, block items, furniture, dropped items, first and third person (Geyser 2.12.0 builds before b1262 did not show custom items) |
 | BungeeCord 26.1 with Geyser 2.11.3 | Tested live: `auto`, file and switching packs, explicit secret |
 | Waterfall 1.21 (build 615) with Floodgate loaded first | Tested live: Geyser attach, item mappings, stale-file retirement, and the start of the proxy's text runtime |
 | FlameCord | Reported from a production network (Geyser attach and item mappings); not tested locally |
@@ -182,6 +183,7 @@ En düşük bytecode düzeyi Java 21'dir. Yerel derlemeler Java 25 kullanır.
 | Platform | Durum |
 |---|---|
 | Geyser 2.11.3 ile Velocity 4.2.0 | Canlı test edildi: `auto`, dosya ve paket geçişi, modern yönlendirme gizli anahtarı |
+| Geyser-Spigot 2.12.0, Floodgate ve CraftEngine 26.9.2 ile Paper 26.3 | Canlı test edildi: eşyalar, aletler, yaylar, arbaletler, oltalar, mızraklar, özel bloklar ve madenler, blok eşyaları, mobilyalar, düşen eşyalar, birinci ve üçüncü şahıs (b1262'den önceki Geyser 2.12.0 derlemeleri özel eşyaları göstermiyordu) |
 | Geyser 2.11.3 ile BungeeCord 26.1 | Canlı test edildi: `auto`, dosya ve paket geçişi, açık gizli anahtar |
 | Önce Floodgate'i yükleyen Waterfall 1.21 (derleme 615) | Canlı test edildi: Geyser'a bağlanma, eşya eşlemeleri, eski dosyaların taşınması ve proxy'deki yazı çalışma zamanının başlaması |
 | FlameCord | Bir üretim ağından bildirildi (Geyser'a bağlanma ve eşya eşlemeleri); yerelde test edilmedi |

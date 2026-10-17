@@ -73,7 +73,7 @@ public final class GeyserRiderNames implements AutoCloseable {
         var translators = Registries.JAVA_PACKET_TRANSLATORS.get();
         for (Hook<?> hook : hooks) {
             PacketTranslator<? extends Packet> current = translators.get(hook.type);
-            if (current == null || current == hook) continue;
+            if (current == null || com.siberanka.twilight.geyser.TranslatorChain.installed(current, hook)) continue;
             hook.original = current;
             translators.put(hook.type, hook);
         }
@@ -122,7 +122,7 @@ public final class GeyserRiderNames implements AutoCloseable {
         void run(GeyserSession session, P packet);
     }
 
-    private final class Hook<P extends Packet> extends PacketTranslator<P> {
+    private final class Hook<P extends Packet> extends PacketTranslator<P> implements com.siberanka.twilight.geyser.TranslatorChain.Link {
         private final Class<P> type;
         private final After<P> after;
         private volatile PacketTranslator<? extends Packet> original;
@@ -147,6 +147,10 @@ public final class GeyserRiderNames implements AutoCloseable {
 
         @Override public boolean shouldExecuteInEventLoop() {
             return original.shouldExecuteInEventLoop();
+        }
+
+        @Override public Object next() {
+            return original;
         }
     }
 }

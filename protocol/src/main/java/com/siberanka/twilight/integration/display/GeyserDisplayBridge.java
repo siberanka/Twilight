@@ -149,14 +149,14 @@ public final class GeyserDisplayBridge implements AutoCloseable {
         var original = VanillaEntities.ITEM;
         var type = GeyserEntityType.ofVanilla(EntityType.ITEM);
         if (Registries.JAVA_ENTITY_TYPES.get(type) != original
-                || Registries.JAVA_ENTITY_IDENTIFIERS.get("minecraft:item") != original) {
+                || GeyserRegistries.entity("minecraft:item", original) != original) {
             logger.warning("Dropped items keep another translator: something else already owns minecraft:item.");
             return;
         }
         var replacement = VanillaEntityType.<TwilightDroppedItem>inherited(spawn -> new TwilightDroppedItem(spawn, this), original)
                 .type(EntityType.ITEM).bedrockDefinition(custom).build(false);
         if (!Registries.JAVA_ENTITY_TYPES.get().replace(type, original, replacement)) return;
-        if (!Registries.JAVA_ENTITY_IDENTIFIERS.get().replace("minecraft:item", original, replacement)) {
+        if (!GeyserRegistries.replaceEntity("minecraft:item", original, replacement)) {
             Registries.JAVA_ENTITY_TYPES.get().replace(type, replacement, original);
             return;
         }
@@ -168,14 +168,14 @@ public final class GeyserDisplayBridge implements AutoCloseable {
         var type = GeyserEntityType.ofVanilla(EntityType.AREA_EFFECT_CLOUD);
         // Adapt only Geyser's own translator; never replace another plugin's.
         if (Registries.JAVA_ENTITY_TYPES.get(type) != original
-                || Registries.JAVA_ENTITY_IDENTIFIERS.get("minecraft:area_effect_cloud") != original) {
+                || GeyserRegistries.entity("minecraft:area_effect_cloud", original) != original) {
             logger.warning("Point-cloud adaptation skipped: another translator owns area_effect_cloud.");
             return;
         }
         var replacement = VanillaEntityType.<TwilightAreaEffectCloud>inherited(TwilightAreaEffectCloud::new, original)
                 .type(EntityType.AREA_EFFECT_CLOUD).bedrockDefinition(original.defaultBedrockDefinition()).build(false);
         if (!Registries.JAVA_ENTITY_TYPES.get().replace(type, original, replacement)) return;
-        if (!Registries.JAVA_ENTITY_IDENTIFIERS.get().replace("minecraft:area_effect_cloud", original, replacement)) {
+        if (!GeyserRegistries.replaceEntity("minecraft:area_effect_cloud", original, replacement)) {
             Registries.JAVA_ENTITY_TYPES.get().replace(type, replacement, original);
             return;
         }
@@ -219,19 +219,19 @@ public final class GeyserDisplayBridge implements AutoCloseable {
         GeyserApi.api().eventBus().unregisterAll(registrar);
         if (cloudDefinition != null) {
             Registries.JAVA_ENTITY_TYPES.get().replace(cloudDefinition.type(), cloudDefinition, VanillaEntities.AREA_EFFECT_CLOUD);
-            Registries.JAVA_ENTITY_IDENTIFIERS.get().replace("minecraft:area_effect_cloud", cloudDefinition, VanillaEntities.AREA_EFFECT_CLOUD);
+            GeyserRegistries.replaceEntity("minecraft:area_effect_cloud", cloudDefinition, VanillaEntities.AREA_EFFECT_CLOUD);
         }
         if (definition != null) {
             Registries.JAVA_ENTITY_TYPES.get().remove(definition.type(), definition);
-            Registries.JAVA_ENTITY_IDENTIFIERS.get().remove("minecraft:item_display", definition);
+            GeyserRegistries.removeEntity("minecraft:item_display", definition);
         }
         if (blockDefinition != null) {
             Registries.JAVA_ENTITY_TYPES.get().remove(blockDefinition.type(), blockDefinition);
-            Registries.JAVA_ENTITY_IDENTIFIERS.get().remove("minecraft:block_display", blockDefinition);
+            GeyserRegistries.removeEntity("minecraft:block_display", blockDefinition);
         }
         if (droppedDefinition != null) {
             Registries.JAVA_ENTITY_TYPES.get().replace(droppedDefinition.type(), droppedDefinition, VanillaEntities.ITEM);
-            Registries.JAVA_ENTITY_IDENTIFIERS.get().replace("minecraft:item", droppedDefinition, VanillaEntities.ITEM);
+            GeyserRegistries.replaceEntity("minecraft:item", droppedDefinition, VanillaEntities.ITEM);
         }
     }
 }

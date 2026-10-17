@@ -26,7 +26,15 @@ final class ItemCandidateCollector {
         Map<String, ItemCandidate> candidates = new LinkedHashMap<>();
         collectLegacy(candidates);
         JavaItemDefinitionResolver definitions = new JavaItemDefinitionResolver(resources);
-        for (CustomItemDescriptor item : liveItems) {
+        // Providers list their items in no fixed order (CraftEngine's registry differs between starts). The same
+        // content must build the same pack and mappings, or every start would ask for another restart.
+        List<CustomItemDescriptor> ordered = new java.util.ArrayList<>(liveItems);
+        ordered.sort(java.util.Comparator.comparing(CustomItemDescriptor::baseItem)
+                .thenComparing(item -> item.itemModel().orElse(""))
+                .thenComparingInt(item -> item.customModelData().isPresent() ? item.customModelData().getAsInt() : Integer.MIN_VALUE)
+                .thenComparing(CustomItemDescriptor::provider)
+                .thenComparing(item -> item.displayName() == null ? "" : item.displayName()));
+        for (CustomItemDescriptor item : ordered) {
             if (item.itemModel().isEmpty()) continue;
             String mappingModel = JavaModelResolver.qualified(item.itemModel().get(), "minecraft");
             for (JavaItemDefinitionResolver.Variant variant : definitions.resolve(mappingModel)) {

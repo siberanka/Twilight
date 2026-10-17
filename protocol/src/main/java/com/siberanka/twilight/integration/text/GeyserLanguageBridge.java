@@ -98,7 +98,7 @@ public final class GeyserLanguageBridge implements AutoCloseable {
             logger.warning("Geyser has no login translator; resource-pack translations are not applied.");
             return;
         }
-        if (current != wrapper) {
+        if (!com.siberanka.twilight.geyser.TranslatorChain.installed(current, wrapper)) {
             original = current;
             translators.put(ClientboundLoginPacket.class, wrapper);
         }
@@ -150,7 +150,7 @@ public final class GeyserLanguageBridge implements AutoCloseable {
         if (original != null) Registries.JAVA_PACKET_TRANSLATORS.get().replace(ClientboundLoginPacket.class, wrapper, original);
     }
 
-    private final class Wrapper extends PacketTranslator<ClientboundLoginPacket> {
+    private final class Wrapper extends PacketTranslator<ClientboundLoginPacket> implements com.siberanka.twilight.geyser.TranslatorChain.Link {
         @SuppressWarnings("unchecked")
         @Override public void translate(GeyserSession session, ClientboundLoginPacket packet) {
             Map<String, Map<String, String>> current = overlays;
@@ -171,6 +171,10 @@ public final class GeyserLanguageBridge implements AutoCloseable {
 
         @Override public boolean shouldExecuteInEventLoop() {
             return original.shouldExecuteInEventLoop();
+        }
+
+        @Override public Object next() {
+            return original;
         }
     }
 }

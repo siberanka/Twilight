@@ -90,12 +90,7 @@ final class DisplayItems {
     }
 
     static String baseItem(int javaId) {
-        try {
-            var item = org.geysermc.geyser.registry.Registries.JAVA_ITEMS.get(javaId);
-            return item == null ? null : item.javaIdentifier();
-        } catch (RuntimeException | LinkageError unknown) {
-            return null;
-        }
+        return GeyserRegistries.itemIdentifier(javaId);
     }
 
     private static DataComponentType<?> itemModelType() {

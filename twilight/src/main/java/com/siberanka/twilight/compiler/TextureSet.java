@@ -139,6 +139,9 @@ final class TextureSet {
                 && vanillaAssets.readTexture(path).isPresent()) {
             bytes = vanillaAssets.readTexture(path).orElseThrow();
         } else {
+            // Recoloured sprites Java's atlases generate (armour trims) have no file of their own.
+            var generated = PalettedSprites.sprite(resources, vanillaAssets, identifier);
+            if (generated.isPresent()) return generated.get();
             MISSING_FILES.get().add(identifier);
             return missingTexture();
         }

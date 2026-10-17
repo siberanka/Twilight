@@ -43,7 +43,7 @@ are in the [reports](docs/); limits per feature are in [docs/COMPATIBILITY.md](d
 |---|---|
 | Java | 21 or newer (Twilight is built with Java 25, release 21) |
 | Backend server | Paper, Folia or Spigot 1.21.4 or newer; newest versions first (tested on Paper 26.2) |
-| Geyser | 2.x with custom content enabled; the runtime bridges are validated against Geyser 2.11.3 |
+| Geyser | 2.x with custom content enabled; the runtime bridges are validated against Geyser 2.11.3 and 2.12.0 |
 | Bedrock clients | The current release (tested with 1.26.5203); older ones as far as Geyser supports them |
 | Proxy (optional) | Velocity 3.x/4.x or BungeeCord/Waterfall with Geyser on the proxy (tested on Velocity 4.2.0 and BungeeCord 26.1) |
 
@@ -1052,6 +1052,8 @@ the receiver's clock; messages larger than 30128 bytes are dropped unread.
 | Entities slide into place or show late when a Bedrock player turns or steps around a corner | Raise `bedrock-network.behind-distance` or `view-angle`, set `wall-thickness` higher, or turn `culling` / `wall-culling` off; `/twilight network` shows the player's round trip and strain |
 | "config.yml: ... is not accepted ...; set back to ..." | A value was invalid and is now its default; the old file is in `config-backups/`. Set a valid value ([reference](#configuration-reference-twilight)) |
 | "config.yml was not updated: ..." | The file is only read (a link, not UTF-8, larger than 1 MiB, YAML anchors): add new settings by hand, or save it as UTF-8 without anchors |
+| Bedrock players cannot join: "Connection failed. Please try again or contact an administrator." | A plugin that only lets connections in through its proxy refuses Geyser's own connection. With TCPShield, set `enable-geyser-support: true` in `plugins/TCPShield/config.yml` (Floodgate is required) and restart; Twilight warns about it at start |
+| Custom items are invisible on Bedrock after updating Geyser to 2.12 | Geyser 2.12.0 builds before b1262 did not show custom items; update Geyser |
 | A plain menu title is shifted or missing on a phone | Update to 1.0.0-beta.2: titles without images, offsets or shifts are sent unchanged and shown at Java's position by a label of their own; only titles that need it are laid out |
 | Menu backgrounds are shifted on Bedrock and the menu title shows a tag such as `:offset_-8:` | Rebuild with the text layout on ([offset tags](#offset-tags)). If Java players see the tag too, update the plugin that should replace it |
 | ModelEngine, BetterModel or MythicMobs mobs and NPCs are invisible on a proxy network | Needs the same Twilight version on the backends and on the proxy, Geyser on the proxy and `bedrock.item-displays: true`; restart the proxy once. The backend then builds the display models by itself ([item displays](#item-displays)) |
@@ -1120,7 +1122,7 @@ Bu sayfa yöneticiler ve eklenti geliştiricileri için başvuru kaynağıdır. 
 |---|---|
 | Java | 21 veya üstü (Twilight Java 25 ile, release 21 olarak derlenir) |
 | Arka uç sunucu | Paper, Folia veya Spigot 1.21.4 veya üstü; önce en yeni sürümler (Paper 26.2 üzerinde test edildi) |
-| Geyser | Özel içeriği açık 2.x; çalışma zamanı köprüleri Geyser 2.11.3'e karşı doğrulandı |
+| Geyser | Özel içeriği açık 2.x; çalışma zamanı köprüleri Geyser 2.11.3 ve 2.12.0'a karşı doğrulandı |
 | Bedrock istemcileri | Güncel sürüm (1.26.5203 ile test edildi); eskileri Geyser'ın desteklediği kadar |
 | Proxy (isteğe bağlı) | Proxy'de Geyser bulunan Velocity 3.x/4.x veya BungeeCord/Waterfall (Velocity 4.2.0 ve BungeeCord 26.1 üzerinde test edildi) |
 
@@ -2143,6 +2145,8 @@ içinde olmalıdır; 30128 bayttan büyük mesajlar okunmadan atılır.
 | Bir Bedrock oyuncusu dönünce veya bir köşeyi dönünce varlıklar kayarak yerine geliyor veya geç görünüyor | `bedrock-network.behind-distance` veya `view-angle` değerini yükseltin, `wall-thickness` değerini artırın ya da `culling` / `wall-culling` kapatın; `/twilight network` oyuncunun gidiş-dönüş süresini ve zorlanmasını gösterir |
 | "config.yml: ... is not accepted ...; set back to ..." | Bir değer geçersizdi ve artık varsayılanı; eski dosya `config-backups/` içinde. Geçerli bir değer girin ([başvuru](#yapılandırma-başvurusu-twilight)) |
 | "config.yml was not updated: ..." | Dosya yalnızca okunuyor (bağlantı, UTF-8 değil, 1 MiB'tan büyük, YAML çapaları): yeni ayarları elle ekleyin veya dosyayı çapasız UTF-8 olarak kaydedin |
+| Bedrock oyuncuları katılamıyor: "Connection failed. Please try again or contact an administrator." | Bağlantıları yalnızca kendi proxy'si üzerinden kabul eden bir eklenti Geyser'ın kendi bağlantısını reddediyor. TCPShield'da `plugins/TCPShield/config.yml` içinde `enable-geyser-support: true` yapın (Floodgate gerekir) ve yeniden başlatın; Twilight açılışta bunu uyarır |
+| Geyser 2.12'ye güncelledikten sonra özel eşyalar Bedrock'ta görünmüyor | b1262'den önceki Geyser 2.12.0 derlemeleri özel eşyaları göstermiyordu; Geyser'ı güncelleyin |
 | Düz bir menü başlığı telefonda kaymış veya görünmüyor | 1.0.0-beta.2'e güncelleyin: görsel, offset veya kaydırma içermeyen başlıklar değiştirilmeden gönderilir ve Java'nın konumunda kendi etiketinde gösterilir; yalnızca gereken başlıklar yerleştirilir |
 | Menü arka planları Bedrock'ta kaymış ve menü başlığında `:offset_-8:` gibi bir etiket görünüyor | Yazı yerleşimi açıkken yeniden derleyin ([kaydırma etiketleri](#kaydırma-etiketleri)). Java oyuncuları da etiketi görüyorsa onu değiştirmesi gereken eklentiyi güncelleyin |
 | Proxy'li ağda ModelEngine, BetterModel veya MythicMobs mobları ve NPC'leri görünmüyor | Arka uçlarda ve proxy'de aynı Twilight sürümü, proxy'de Geyser ve `bedrock.item-displays: true` gerekir; proxy'yi bir kez yeniden başlatın. Arka uç görüntü modellerini sonra kendiliğinden derler ([eşya görüntüleri](#eşya-görüntüleri)) |

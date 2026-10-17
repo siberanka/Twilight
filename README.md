@@ -18,7 +18,7 @@ Twilight is a server-side Java-to-Bedrock custom-content compiler for Geyser. It
 
 ## Beta status and compatibility
 
-**1.0.0-beta.4 is the current beta.** The features are complete for production servers and proxy networks,
+**1.0.0-beta.5 is the current beta.** The features are complete for production servers and proxy networks,
 and they run on real networks today. Behaviour can still change between betas. Read this section before
 installing, keep backups, and [report problems](https://github.com/siberanka/twilight/issues/new/choose)
 ([GitLab](https://gitlab.com/siberanka/twilight/-/issues)).
@@ -26,8 +26,8 @@ installing, keep backups, and [report problems](https://github.com/siberanka/twi
 | Component | Supported | Notes |
 |---|---|---|
 | Java | 21 or newer | Built with Java 25 for release 21 |
-| Server | Paper, Folia, Spigot 1.21.4 or newer, and their forks | Tested on Paper 26.2 and Leaf 1.21.8 |
-| Geyser | 2.x with `enable-custom-content: true` (Geyser's default) | The runtime layers (text layout, translations, biomes, item displays, loading protection) are validated against Geyser 2.11.3. On another Geyser build, a layer that cannot attach turns itself off with a warning; packs and item mappings still work |
+| Server | Paper, Folia, Spigot 1.21.4 or newer, and their forks | Tested on Paper 26.2 and 26.3 and Leaf 1.21.8 |
+| Geyser | 2.x with `enable-custom-content: true` (Geyser's default) | The runtime layers (text layout, translations, biomes, item displays, loading protection) are validated against Geyser 2.11.3 and 2.12.0. On another Geyser build, a layer that cannot attach turns itself off with a warning; packs and item mappings still work |
 | Bedrock clients | The current release | Tested with 1.26.5203 on Windows. Phones and consoles are not tested live; large packs load slowly on phones |
 | Java clients | What the server supports | Tested with 26.2 |
 | Proxy (optional) | Velocity; BungeeCord, Waterfall and FlameCord, with Geyser on the proxy and `TwilightProxy.jar` | Floodgate on the proxy and on the backends is supported; tested on Velocity 4.2.0, BungeeCord 26.1 and Waterfall 1.21 |
@@ -349,7 +349,7 @@ sunucunun paketini verir.
 
 #### Beta durumu ve uyumluluk
 
-**1.0.0-beta.4 güncel beta sürümüdür.** Özellikler üretim sunucuları ve proxy'li ağlar için tamamdır ve
+**1.0.0-beta.5 güncel beta sürümüdür.** Özellikler üretim sunucuları ve proxy'li ağlar için tamamdır ve
 bugün gerçek ağlarda çalışıyor. Davranış betalar arasında hâlâ değişebilir. Kurmadan önce bu bölümü okuyun,
 yedek alın ve [sorunları bildirin](https://github.com/siberanka/twilight/issues/new/choose)
 ([GitLab](https://gitlab.com/siberanka/twilight/-/issues)).
@@ -357,8 +357,8 @@ yedek alın ve [sorunları bildirin](https://github.com/siberanka/twilight/issue
 | Bileşen | Desteklenen | Notlar |
 |---|---|---|
 | Java | 21 veya daha yeni | Java 25 ile release 21 için derlenir |
-| Sunucu | Paper, Folia, Spigot 1.21.4 veya daha yeni ve bunların türevleri | Paper 26.2 ve Leaf 1.21.8 üzerinde test edildi |
-| Geyser | `enable-custom-content: true` ile 2.x (Geyser'ın varsayılanı) | Çalışma zamanı katmanları (yazı yerleşimi, çeviriler, biyomlar, eşya görüntüleri, yükleme koruması) Geyser 2.11.3'e göre doğrulandı. Başka bir Geyser derlemesinde bağlanamayan bir katman uyarıyla kendini kapatır; paketler ve eşya eşlemeleri yine çalışır |
+| Sunucu | Paper, Folia, Spigot 1.21.4 veya daha yeni ve bunların türevleri | Paper 26.2, 26.3 ve Leaf 1.21.8 üzerinde test edildi |
+| Geyser | `enable-custom-content: true` ile 2.x (Geyser'ın varsayılanı) | Çalışma zamanı katmanları (yazı yerleşimi, çeviriler, biyomlar, eşya görüntüleri, yükleme koruması) Geyser 2.11.3 ve 2.12.0'a göre doğrulandı. Başka bir Geyser derlemesinde bağlanamayan bir katman uyarıyla kendini kapatır; paketler ve eşya eşlemeleri yine çalışır |
 | Bedrock istemcileri | Güncel sürüm | Windows'ta 1.26.5203 ile test edildi. Telefonlar ve konsollar canlı test edilmedi; büyük paketler telefonlarda yavaş yüklenir |
 | Java istemcileri | Sunucunun desteklediği sürümler | 26.2 ile test edildi |
 | Proxy (isteğe bağlı) | Velocity; BungeeCord, Waterfall ve FlameCord; proxy'de Geyser ve `TwilightProxy.jar` ile | Proxy'de ve arka uçlarda Floodgate desteklenir; Velocity 4.2.0, BungeeCord 26.1 ve Waterfall 1.21 üzerinde test edildi |

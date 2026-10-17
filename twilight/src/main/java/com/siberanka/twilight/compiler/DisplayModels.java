@@ -85,7 +85,7 @@ final class DisplayModels {
         switch (type) {
             case "minecraft:model" -> {
                 if (!node.has("model")) return false;
-                models.add(JavaModelResolver.qualified(node.get("model").getAsString(), namespace));
+                models.add(JavaModelResolver.itemModel(node.get("model").getAsString(), namespace, resources));
                 if (node.has("tints") && tints.isEmpty()) {
                     JsonArray list = node.getAsJsonArray("tints");
                     for (int i = 0; i < list.size(); i++) tints.put(i, itemTint(list.get(i).getAsJsonObject()));
