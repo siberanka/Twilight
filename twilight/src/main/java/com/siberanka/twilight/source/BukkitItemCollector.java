@@ -191,9 +191,58 @@ public final class BukkitItemCollector {
                 String id = String.valueOf(text == null ? asset : text);
                 if (id.matches("[a-z0-9_.-]+:[a-z0-9_./-]+") && id.length() <= 256) assetId = Optional.of(id);
             }
-            return Optional.of(new CustomItemDescriptor.Equipment(name, assetId));
+            return Optional.of(new CustomItemDescriptor.Equipment(name, assetId, dye(stack, meta)));
         } catch (ReflectiveOperationException | RuntimeException | LinkageError unavailable) {
             return Optional.empty();
+        }
+    }
+
+    /** The dye colour of a dyed item (leather): Paper's dyed_color component, or Spigot's leather meta. */
+    private static OptionalInt dye(ItemStack stack, ItemMeta meta) {
+        try {
+            Object dyed = paperData(stack, "DYED_COLOR");
+            Object colour = dyed == null ? null : firstResult(dyed, "color");
+            if (colour instanceof org.bukkit.Color value) return OptionalInt.of(value.asRGB());
+            if (meta instanceof org.bukkit.inventory.meta.LeatherArmorMeta leather
+                    && !Boolean.FALSE.equals(firstResult(leather, "isDyed"))) {
+                int rgb = leather.getColor().asRGB();
+                // Spigot reports undyed leather as this default colour.
+                if (rgb != 0xA06540) return OptionalInt.of(rgb);
+            }
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError unavailable) {
+            // No dye information on this server version: the layers keep their undyed colour.
+        }
+        return OptionalInt.empty();
+    }
+
+    private static final Map<String, Object> PAPER_TYPES = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** A Paper data component of the stack (its own or its item's default), or null without Paper's API. */
+    private static Object paperData(ItemStack stack, String component) throws ReflectiveOperationException {
+        if (paperEquippable(stack) == null && getData == null) return null;
+        Object type = PAPER_TYPES.computeIfAbsent(component, name -> {
+            try {
+                Class<?> types = Class.forName("io.papermc.paper.datacomponent.DataComponentTypes", false,
+                        stack.getClass().getClassLoader());
+                return types.getField(name).get(null);
+            } catch (ReflectiveOperationException | LinkageError missing) {
+                return Boolean.FALSE;
+            }
+        });
+        if (type == Boolean.FALSE || !getData.getParameterTypes()[0].isInstance(type)) return null;
+        return getData.invoke(stack, type);
+    }
+
+    /** ItemsAdder's own statement that its items are loaded; versions without it count as loaded. */
+    static boolean itemsAdderLoaded(Plugin provider) {
+        try {
+            Class<?> api = Class.forName("dev.lone.itemsadder.api.ItemsAdder", false, provider.getClass().getClassLoader());
+            return !Boolean.FALSE.equals(api.getMethod("areItemsLoaded").invoke(null));
+        } catch (java.lang.reflect.InvocationTargetException | RuntimeException failing) {
+            // ItemsAdder throws from its API while it is still starting.
+            return false;
+        } catch (ReflectiveOperationException | LinkageError unavailable) {
+            return true;
         }
     }
 
@@ -306,6 +355,11 @@ public final class BukkitItemCollector {
             Plugin provider = Bukkit.getPluginManager().getPlugin(name);
             if (provider == null || !provider.isEnabled()) return;
             try {
+                if (name.equals("ItemsAdder") && !itemsAdderLoaded(provider)) {
+                    // Its registry is empty or failing until then; a build now would drop every item's details.
+                    issue(issues, "ItemsAdder has not loaded its items yet");
+                    return;
+                }
                 Class<?> api = Class.forName(className, false, provider.getClass().getClassLoader());
                 Method registry = findStaticMethod(api, registryMethods);
                 if (registry == null) {

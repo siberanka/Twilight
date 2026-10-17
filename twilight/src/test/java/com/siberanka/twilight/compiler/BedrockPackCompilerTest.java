@@ -1519,6 +1519,74 @@ class BedrockPackCompilerTest {
         }
     }
 
+    /** ItemsAdder's armour is dyed leather a Java shader draws by colour; Bedrock gets the colour's own layers. */
+    @Test
+    void itemsAdderArmourIsFoundByItsLeatherColour() throws Exception {
+        Path pack = root.resolve("ia-pack"), contents = root.resolve("ia-contents");
+        write(pack, "assets/minecraft/models/item/leather_helmet.json", """
+                {"parent":"minecraft:item/generated","textures":{"layer0":"minecraft:item/leather_helmet"},"overrides":[
+                  {"predicate":{"custom_model_data":33001},"model":"frost:item/helmet"},
+                  {"predicate":{"custom_model_data":33002},"model":"frost:item/plain"}]}
+                """);
+        write(pack, "assets/frost/models/item/helmet.json", "{\"parent\":\"minecraft:item/generated\",\"textures\":{\"layer0\":\"frost:item/helmet\"}}");
+        write(pack, "assets/frost/models/item/plain.json", "{\"parent\":\"minecraft:item/generated\",\"textures\":{\"layer0\":\"frost:item/helmet\"}}");
+        png(pack.resolve("assets/frost/textures/item/helmet.png"), Color.CYAN);
+        png(pack.resolve("assets/minecraft/textures/item/leather_helmet.png"), Color.GRAY);
+        write(pack, "assets/minecraft/equipment/leather.json", """
+                {"layers":{"humanoid":[{"texture":"minecraft:leather","dyeable":{"color_when_undyed":10511680}}]}}
+                """);
+        // The shader sheet ItemsAdder puts in place of the leather layer: no armour layout.
+        Files.createDirectories(pack.resolve("assets/minecraft/textures/entity/equipment/humanoid"));
+        ImageIO.write(new BufferedImage(2048, 64, BufferedImage.TYPE_INT_ARGB), "PNG",
+                pack.resolve("assets/minecraft/textures/entity/equipment/humanoid/leather.png").toFile());
+        png(pack.resolve("assets/frost/textures/armor/frost_layer_1.png"), Color.BLUE);
+        png(pack.resolve("assets/frost/textures/armor/frost_layer_2.png"), Color.GREEN);
+        write(contents, "frost/configs/armor.yml", """
+                info:
+                  namespace: frost
+                armors_rendering:
+                  frostarmor:
+                    color: '#1cb9e9'
+                    layer_1: armor/frost_layer_1
+                    layer_2: armor/frost_layer_2
+                    use_color: false
+                """);
+        // Tags never construct objects: a file trying it is ignored, as ItemsAdder ignores a file it cannot read.
+        write(contents, "evil/configs/armor.yml", """
+                armors_rendering:
+                  evil: !!javax.script.ScriptEngineManager [!!java.net.URLClassLoader [[!!java.net.URL ["http://127.0.0.1/"]]]]
+                """);
+        List<CustomItemDescriptor> live = List.of(
+                new CustomItemDescriptor("ItemsAdder", "minecraft:leather_helmet", Optional.empty(), OptionalInt.of(33001), "Frost",
+                        Optional.of(new CustomItemDescriptor.Equipment("head", Optional.of("minecraft:leather"), OptionalInt.of(0x1cb9e9)))),
+                new CustomItemDescriptor("ItemsAdder", "minecraft:leather_helmet", Optional.empty(), OptionalInt.of(33002), "Plain",
+                        Optional.of(new CustomItemDescriptor.Equipment("head", Optional.of("minecraft:leather"), OptionalInt.of(0x123456)))));
+        BuildResult result = new BedrockPackCompiler(root.resolve("data"), config()).build(List.of(
+                new ContentSource("itemsadder", ContentSource.Kind.RESOURCE_PACK, pack, 1),
+                new ContentSource("itemsadder", ContentSource.Kind.PROVIDER_DATA, contents, 2)), live);
+        JsonObject items = JsonParser.parseString(Files.readString(result.outputDirectory()
+                .resolve("custom_mappings/geyser_item_mappings.json"))).getAsJsonObject().getAsJsonObject("items");
+        Map<Integer, String> identifiers = new LinkedHashMap<>();
+        for (JsonElement mapping : items.getAsJsonArray("minecraft:leather_helmet")) {
+            identifiers.put(mapping.getAsJsonObject().get("custom_model_data").getAsInt(),
+                    mapping.getAsJsonObject().get("bedrock_identifier").getAsString());
+        }
+        try (ZipFile zip = new ZipFile(result.outputDirectory().resolve("pack.zip").toFile())) {
+            for (var entry : identifiers.entrySet()) {
+                String id = entry.getValue(), name = "attachables/" + id.substring(id.indexOf(':') + 1) + ".worn.json";
+                if (entry.getKey() != 33001) {
+                    // Without the vanilla client there is no leather layer to fall back to: never the shader sheet.
+                    assertNull(zip.getEntry(name));
+                    continue;
+                }
+                JsonObject worn = read(zip, name).getAsJsonObject("minecraft:attachable").getAsJsonObject("description");
+                BufferedImage image = ImageIO.read(zip.getInputStream(zip.getEntry(
+                        worn.getAsJsonObject("textures").get("default").getAsString() + ".png")));
+                assertEquals(Color.BLUE.getRGB(), image.getRGB(0, 0), "the colour's own armour");
+            }
+        }
+    }
+
     private static String cube(String texture) {
         return """
                 {"textures":{"all":"%s"},"display":{"firstperson_righthand":{"rotation":[0,45,0]}},

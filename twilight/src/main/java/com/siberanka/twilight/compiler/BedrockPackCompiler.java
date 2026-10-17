@@ -1272,13 +1272,26 @@ public final class BedrockPackCompiler {
             Optional<EquipmentModels.Look> look = EquipmentModels.look(equipment.slot(), layers.get());
             if (look.isEmpty()) return;
             List<String> missing = new ArrayList<>();
-            Optional<java.awt.image.BufferedImage> texture = EquipmentModels.texture(resources, vanillaAssets,
-                    layers.get(), look.get().layer(), missing);
+            Optional<java.awt.image.BufferedImage> texture = Optional.empty();
+            String variant = asset + '|' + look.get().layer();
+            // ItemsAdder's armour is dyed leather a shader draws by colour (see ItemsAdderArmours).
+            Optional<ItemsAdderArmours.Rendering> custom = equipment.dye().isPresent() && !look.get().wings()
+                    ? ItemsAdderArmours.forColour(resources, equipment.dye().getAsInt()) : Optional.empty();
+            if (custom.isPresent()) {
+                String sprite = custom.get().layer(look.get().layer());
+                texture = EquipmentModels.layer(resources, vanillaAssets, sprite, custom.get().tint());
+                if (texture.isEmpty()) missing.add(sprite);
+                variant = sprite + '|' + custom.get().tint();
+            }
+            if (texture.isEmpty()) {
+                texture = EquipmentModels.texture(resources, vanillaAssets, layers.get(), look.get().layer(), equipment.dye(), missing);
+                if (equipment.dye().isPresent()) variant += "|dye=" + equipment.dye().getAsInt();
+            }
             if (!missing.isEmpty()) notices.add(label + ": equipment textures that exist in no pack are left out: " + missing);
             if (texture.isEmpty()) return;
             String raw = asset.replaceAll("[^a-z0-9_]", "_");
             if (raw.length() > 40) raw = raw.substring(raw.length() - 40);
-            String texturePath = "textures/twilight/equipment/" + raw + '_' + shortHash(asset + '|' + look.get().layer());
+            String texturePath = "textures/twilight/equipment/" + raw + '_' + shortHash(variant);
             packFiles.putIfAbsent(texturePath + ".png", TextureSet.png(texture.get()));
             packFiles.put("attachables/" + safe + ".worn.json",
                     jsonBytes(EquipmentModels.attachable(identifier, equipment, look.get(), texturePath)));

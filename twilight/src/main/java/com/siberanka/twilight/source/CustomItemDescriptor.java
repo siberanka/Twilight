@@ -29,13 +29,19 @@ public record CustomItemDescriptor(
      * @param slot    head, chest, legs, feet or body
      * @param assetId the equipment asset ({@code assets/<ns>/equipment/<path>.json}); empty draws nothing on the
      *                body (Java then shows the item's own model on the head for the head slot)
+     * @param dye     the item's dye colour (RGB), which tints dyeable layers (leather)
      */
-    public record Equipment(String slot, Optional<String> assetId) {
+    public record Equipment(String slot, Optional<String> assetId, OptionalInt dye) {
         public static final Set<String> SLOTS = Set.of("head", "chest", "legs", "feet", "body");
 
         public Equipment {
             if (slot == null || !SLOTS.contains(slot)) throw new IllegalArgumentException("unknown equipment slot " + slot);
             assetId = assetId == null ? Optional.empty() : assetId;
+            dye = dye == null ? OptionalInt.empty() : dye;
+        }
+
+        public Equipment(String slot, Optional<String> assetId) {
+            this(slot, assetId, OptionalInt.empty());
         }
     }
 }

@@ -78,12 +78,14 @@ final class EquipmentModels {
     }
 
     /**
-     * The layers of one layer type drawn over each other as Java draws them undyed: a dyeable layer takes its
-     * {@code color_when_undyed} and is left out without one; layers drawing the player's own texture (capes on
-     * elytras) are left out. Empty when no layer could be drawn.
+     * The layers of one layer type drawn over each other as Java draws them: a dyeable layer takes the item's dye,
+     * else its {@code color_when_undyed}, and is left out without either; layers drawing the player's own texture
+     * (capes on elytras) are left out. Empty when no layer could be drawn.
+     *
+     * @param dye the item's dye colour (RGB), or empty
      */
     static Optional<BufferedImage> texture(ResourceIndex resources, VanillaAssetCache vanilla, JsonObject layers,
-                                           String layerType, List<String> missing) throws IOException {
+                                           String layerType, java.util.OptionalInt dye, List<String> missing) throws IOException {
         if (!(layers.get(layerType) instanceof JsonArray list)) return Optional.empty();
         List<BufferedImage> images = new ArrayList<>();
         for (JsonElement element : list) {
@@ -93,26 +95,57 @@ final class EquipmentModels {
             if (!IDENTIFIER.matcher(JavaModelResolver.qualified(texture, "minecraft")).matches()) continue;
             int tint = -1;
             if (layer.get("dyeable") instanceof JsonObject dyeable) {
-                if (!dyeable.has("color_when_undyed")) continue;
-                tint = 0xFF000000 | dyeable.get("color_when_undyed").getAsInt();
+                if (dye.isPresent()) tint = 0xFF000000 | dye.getAsInt();
+                else if (dyeable.has("color_when_undyed")) tint = 0xFF000000 | dyeable.get("color_when_undyed").getAsInt();
+                else continue;
             }
             String qualified = JavaModelResolver.qualified(texture, "minecraft");
             int colon = qualified.indexOf(':');
             String sprite = qualified.substring(0, colon) + ":entity/equipment/" + layerType + '/' + qualified.substring(colon + 1);
-            String file = JavaModelResolver.texturePath(sprite);
-            boolean exists = resources.find(file).isPresent() || vanilla != null
-                    && file.startsWith("assets/minecraft/textures/") && vanilla.readTexture(file).isPresent();
-            if (!exists) {
-                // Java draws its missing texture on the body; a 16x16 checker would not fit the armour layout.
-                missing.add(sprite);
-                continue;
-            }
-            BufferedImage image = TextureSet.frame(resources, TextureSet.tinted(tint, sprite), vanilla);
-            if (image.getWidth() > MAX_SIZE || image.getHeight() > MAX_SIZE) {
-                throw new IOException("equipment texture " + sprite + " is larger than " + MAX_SIZE + " pixels");
-            }
-            images.add(image);
+            Optional<BufferedImage> image = layer(resources, vanilla, sprite, tint);
+            // Java draws its missing texture on the body; a 16x16 checker would not fit the armour layout.
+            if (image.isEmpty()) missing.add(sprite);
+            else images.add(image.get());
         }
+        return over(images);
+    }
+
+    /**
+     * One armour layer texture with a tint. A pack may replace a vanilla layer with a sheet a core shader picks from
+     * (ItemsAdder's leather): such a sheet is no armour layout, and the vanilla texture is what Java's shader shows
+     * for colours it does not know.
+     */
+    static Optional<BufferedImage> layer(ResourceIndex resources, VanillaAssetCache vanilla, String sprite, int tint)
+            throws IOException {
+        String file = JavaModelResolver.texturePath(sprite);
+        boolean vanillaFile = vanilla != null && file.startsWith("assets/minecraft/textures/");
+        boolean packFile = resources.find(file).isPresent();
+        if (!packFile && !(vanillaFile && vanilla.readTexture(file).isPresent())) return Optional.empty();
+        BufferedImage image = TextureSet.frame(resources, TextureSet.tinted(tint, sprite), vanilla);
+        boolean layout = image.getWidth() == image.getHeight() * 2 && image.getWidth() <= MAX_SIZE;
+        if (!layout && packFile && vanillaFile && vanilla.readTexture(file).isPresent()) {
+            BufferedImage original = PngImages.read(vanilla.readTexture(file).get());
+            if (original != null) image = tint == -1 ? original : tint(original, tint);
+        }
+        if (image.getWidth() > MAX_SIZE || image.getHeight() > MAX_SIZE) {
+            throw new IOException("equipment texture " + sprite + " is larger than " + MAX_SIZE + " pixels");
+        }
+        return Optional.of(image);
+    }
+
+    private static BufferedImage tint(BufferedImage base, int argb) {
+        BufferedImage tinted = new BufferedImage(base.getWidth(), base.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        int ta = argb >>> 24, tr = argb >> 16 & 255, tg = argb >> 8 & 255, tb = argb & 255;
+        for (int y = 0; y < base.getHeight(); y++) for (int x = 0; x < base.getWidth(); x++) {
+            int pixel = base.getRGB(x, y);
+            tinted.setRGB(x, y, ((pixel >>> 24) * ta / 255) << 24 | ((pixel >> 16 & 255) * tr / 255) << 16
+                    | ((pixel >> 8 & 255) * tg / 255) << 8 | (pixel & 255) * tb / 255);
+        }
+        return tinted;
+    }
+
+    /** Images drawn over each other at the largest size among them. */
+    static Optional<BufferedImage> over(List<BufferedImage> images) {
         if (images.isEmpty()) return Optional.empty();
         int width = images.stream().mapToInt(BufferedImage::getWidth).max().orElseThrow();
         int height = images.stream().mapToInt(BufferedImage::getHeight).max().orElseThrow();
