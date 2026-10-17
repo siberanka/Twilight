@@ -96,6 +96,7 @@ public final class TwilightPlugin extends JavaPlugin {
     public void onLoad() {
         try {
             saveDefaultConfig();
+            maintainConfig();
             reloadConfig();
             startCustomBlocks();
             startPlayerHeads();
@@ -842,6 +843,7 @@ public final class TwilightPlugin extends JavaPlugin {
             return;
         }
         try (OperationLog log = OperationLog.create(getDataFolder().toPath(), "reload")) {
+            maintainConfig();
             loadServices();
             configureUpdates();
             readNetworkSettings();
@@ -871,6 +873,31 @@ public final class TwilightPlugin extends JavaPlugin {
                     + " and limits follow each connection (" + threads + " line-of-sight thread(s)).");
         } catch (RuntimeException | LinkageError failure) {
             getLogger().log(Level.WARNING, "The Bedrock network layer is unavailable for this Geyser build; packets go unchanged.", failure);
+        }
+    }
+
+    /**
+     * Brings {@code config.yml} up to date before it is read: settings of a newer version are added with their
+     * defaults and explanations, invalid values are set back to their defaults one by one, and a file that is not
+     * readable YAML is restored from the last version that worked. A copy of the old file is kept in
+     * {@code config-backups/} first; values that are fine are never changed.
+     */
+    private void maintainConfig() {
+        java.nio.file.Path file = getDataFolder().toPath().resolve("config.yml");
+        try (var defaults = getResource("config.yml")) {
+            if (defaults == null) return;
+            String text = new String(defaults.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            java.nio.file.Path root = getServer().getWorldContainer().toPath().toAbsolutePath().normalize();
+            var report = com.siberanka.twilight.settings.ConfigMaintenance.run(file, text,
+                    new com.siberanka.twilight.config.BackendConfigCheck(root),
+                    com.siberanka.twilight.config.BackendConfigCheck.FREE_FORM, getLogger()::info, getLogger()::warning,
+                    java.time.LocalDateTime.now());
+            if (report.skipped() != null && !report.skipped().equals("missing")) {
+                getLogger().warning("config.yml was not updated: " + report.skipped() + ".");
+            }
+            com.siberanka.twilight.settings.ConfigMaintenance.warnUnknown("config.yml", report, getLogger()::warning);
+        } catch (java.io.IOException | RuntimeException failure) {
+            getLogger().log(Level.WARNING, "config.yml could not be checked for new or invalid settings; it is read as it is.", failure);
         }
     }
 

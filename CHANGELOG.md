@@ -4,6 +4,18 @@
 
 All notable changes in Twilight are documented here.
 
+## 1.0.0-beta.4 - unreleased
+
+- `config.yml` of Twilight and of twilight-proxy is kept current at every start and reload: settings of a
+  newer version are added with their defaults and explanations where the default file has them, invalid
+  values (wrong type, out of range, unknown option) are set back to their defaults one by one with a
+  warning, and a file that is not readable YAML is restored from the last version that worked (or the
+  defaults). A copy of the old file is kept in `config-backups/` first (the newest ten); the new file is
+  written atomically and only when it passes every check and stays the same in a second run, and a file
+  Twilight wrote is never changed again by it, so repairs cannot loop. Comments, order, quoting, line
+  endings, unknown keys (reported) and the administrator's own lists stay as they are; links, files that
+  are not UTF-8, larger than 1 MiB or use YAML anchors are only read.
+
 ## 1.0.0-beta.3 - 2026-10-16
 
 - Bedrock network layer on every Geyser Twilight runs on (backend or proxy): movement and data of entities a
@@ -80,6 +92,18 @@ First public beta of Twilight and twilight-proxy.
 ### Değişiklik günlüğü
 
 Twilight'taki tüm önemli değişiklikler burada belgelenir.
+
+#### 1.0.0-beta.4 - yayımlanmadı
+
+- Twilight'ın ve twilight-proxy'nin `config.yml` dosyası her açılışta ve yeniden yüklemede güncel tutulur:
+  daha yeni bir sürümün ayarları varsayılanları ve açıklamalarıyla varsayılan dosyadaki yerlerine eklenir,
+  geçersiz değerler (yanlış tür, aralık dışı, bilinmeyen seçenek) bir uyarıyla tek tek varsayılanlarına
+  döndürülür ve okunabilir YAML olmayan bir dosya çalışan son sürümünden (veya varsayılanlardan) geri yüklenir.
+  Önce eski dosyanın bir kopyası `config-backups/` içine alınır (en yeni on tane); yeni dosya atomik olarak ve
+  yalnızca her denetimi geçip ikinci bir çalıştırmada aynı kaldığında yazılır ve Twilight'ın yazdığı bir dosya
+  onun tarafından bir daha değiştirilmez; bu yüzden onarımlar döngüye giremez. Yorumlar, sıra, tırnaklar,
+  satır sonları, bilinmeyen anahtarlar (bildirilir) ve yöneticinin kendi listeleri olduğu gibi kalır;
+  bağlantılar, UTF-8 olmayan, 1 MiB'tan büyük veya YAML çapaları kullanan dosyalar yalnızca okunur.
 
 #### 1.0.0-beta.3 - 2026-10-16
 

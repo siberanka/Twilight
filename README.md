@@ -18,7 +18,7 @@ Twilight is a server-side Java-to-Bedrock custom-content compiler for Geyser. It
 
 ## Beta status and compatibility
 
-**1.0.0-beta.3 is the current beta.** The features are complete for production servers and proxy networks,
+**1.0.0-beta.4 is the current beta.** The features are complete for production servers and proxy networks,
 and they run on real networks today. Behaviour can still change between betas. Read this section before
 installing, keep backups, and [report problems](https://github.com/siberanka/twilight/issues/new/choose)
 ([GitLab](https://gitlab.com/siberanka/twilight/-/issues)).
@@ -249,6 +249,11 @@ cannot be reached) and tell the console and players with `twilight.update` (oper
 stages follow the order pre, beta, rc, release. Nothing about the server is sent and nothing is downloaded; turn it off with
 `update-check.enabled: false` ([wiki](WIKI.md#updates)).
 
+After an update, new settings are added to `config.yml` with their defaults and explanations, invalid
+values are set back to their defaults one by one and an unreadable file is restored from the last version
+that worked; a copy of the old file is kept in `config-backups/` first, and values that are fine are never
+changed ([wiki](WIKI.md#updates-and-repairs-of-the-file)).
+
 ## Commands
 
 | Command | Purpose |
@@ -344,7 +349,7 @@ sunucunun paketini verir.
 
 #### Beta durumu ve uyumluluk
 
-**1.0.0-beta.3 güncel beta sürümüdür.** Özellikler üretim sunucuları ve proxy'li ağlar için tamamdır ve
+**1.0.0-beta.4 güncel beta sürümüdür.** Özellikler üretim sunucuları ve proxy'li ağlar için tamamdır ve
 bugün gerçek ağlarda çalışıyor. Davranış betalar arasında hâlâ değişebilir. Kurmadan önce bu bölümü okuyun,
 yedek alın ve [sorunları bildirin](https://github.com/siberanka/twilight/issues/new/choose)
 ([GitLab](https://gitlab.com/siberanka/twilight/-/issues)).
@@ -546,6 +551,11 @@ ulaşılamadığında GitLab) ve konsola ve `twilight.update` (operatörler) vey
 oyunculara bildirir. Beta veya başka bir ön sürüm çalıştıran sunucular daha yeni ön sürümleri de duyar; aşamalar
 pre, beta, rc, kararlı sürüm sırasını izler. Sunucu hakkında hiçbir şey gönderilmez ve hiçbir şey indirilmez; `update-check.enabled: false`
 ile kapatın ([wiki](WIKI.md#güncellemeler)).
+
+Bir güncellemeden sonra yeni ayarlar varsayılanları ve açıklamalarıyla `config.yml` dosyasına eklenir, geçersiz
+değerler tek tek varsayılanlarına döndürülür ve okunamayan bir dosya çalışan son sürümünden geri yüklenir; önce
+eski dosyanın bir kopyası `config-backups/` içine alınır ve geçerli değerler asla değiştirilmez
+([wiki](WIKI.md#dosyanın-güncellenmesi-ve-onarılması)).
 
 #### Komutlar
 

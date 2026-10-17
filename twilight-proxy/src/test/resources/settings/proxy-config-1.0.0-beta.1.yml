@@ -1,0 +1,125 @@
+# twilight-proxy: every backend server's Bedrock pack, sent by Geyser on this proxy.
+#
+# Bedrock loads resource packs once, when it connects. A Bedrock player gets the pack of
+# the server it joins; moving to a server with another pack reconnects the client to
+# Geyser (a Bedrock transfer) so it can load that pack, then sends it to that server.
+
+packs:
+  # Pack of servers that are not listed below.
+  default: auto
+  # Per server (the names in the proxy's server list):
+  #   auto        - the pack Twilight on that backend builds, sent over plugin messages
+  #   none        - no per-server pack
+  #   file.zip    - a .zip or .mcpack in plugins/twilight-proxy/packs/
+  #   https://... - a direct download link to a .zip or .mcpack (cached, refreshed)
+  server:
+    lobby: auto
+#   smp: https://example.com/packs/smp.mcpack
+#   survival: survival.zip
+
+# Reconnect Bedrock players when the next server needs another pack.
+transfer-on-switch: true
+# Address and port Bedrock players reconnect to; empty/0 = the ones they joined with.
+transfer-address: ""
+transfer-port: 0
+# Server whose pack a new Bedrock player loads; empty = the proxy's first server.
+initial-server: ""
+# How long a reconnect may take, from the transfer until the player reaches the server
+# (pack download and login included): auto = three minutes plus the pack at 128 KiB/s
+# (a 150 MiB pack: 23 minutes), at most an hour; or a number of seconds (60-7200).
+transfer-timeout-seconds: auto
+# Servers players pass through before playing (login, captcha, limbo), e.g. [auth, limbo].
+# Bedrock players are never reconnected for these, and a reconnect in progress continues
+# when the player moves on. Login plugins that pick such a server are also detected
+# without this list.
+login-servers: []
+
+# Secret shared with Twilight on the backends (16+ characters, the same as proxy.secret
+# there). Empty = Velocity's forwarding secret (modern or BungeeGuard forwarding) or
+# BungeeGuard's token, which the backends already know. Without one, 'auto' is off.
+secret: ""
+
+# Limits for every pack, download and transfer.
+max-pack-size-mb: 256
+download-timeout-seconds: 60
+# Re-check download links for a new version (ETag); 0 = only at start and reload.
+url-refresh-minutes: 60
+
+# Serve the packs to Bedrock players from this proxy over HTTP (like ItemsAdder's
+# self-host). Bedrock downloads them much faster than Geyser's chunked transfer.
+# Open the TCP port in the firewall. Each link is made for one connecting Bedrock
+# player: random, valid for a few minutes and a few downloads, and (by default) only
+# from that player's IP address; anything else gets an empty 404 and repeated guessing
+# blocks the address. If a download fails, Geyser sends the pack itself. Restart to apply.
+pack-host:
+  enabled: false
+  port: 8163
+  # Empty = all interfaces; otherwise an IP address of this machine.
+  bind-address: ""
+  # auto = the address each player typed to join, with the port below; or a host
+  # name / IP, or http(s)://host[:port] when a reverse proxy forwards to this port.
+  public-address: auto
+  # Port written into links when the outside port differs (NAT); 0 = port.
+  public-port: 0
+  require-player-address: true
+  link-minutes: 10
+  downloads-per-link: 3
+  max-connections: 64
+  max-connections-per-address: 4
+  # Reverse proxies whose X-Forwarded-For header is trusted, e.g. [127.0.0.1]
+  trusted-proxies: []
+
+# Backends on this machine: read each one's Twilight build straight from
+# <server>/plugins/Twilight/export/Twilight.mcpack, without waiting for a player to join it. The proxy's
+# Geyser then gets every server's current items when it starts, and a new build within seconds.
+local-backends:
+  # auto - find the folders of proxy servers with a local address (127.0.0.1, localhost or this machine)
+  #        next to the proxy's folder, by the port in their server.properties; off - plugin messages only.
+  mode: auto
+  # More folders that hold server folders, e.g. [/srv/minecraft]
+  search: []
+  # The folder of a server when discovery cannot tell (paths relative to the proxy folder or absolute):
+# server:
+#   survival: ../survival
+
+# Twilight's runtime for Bedrock players on this proxy's Geyser (what a backend's own Geyser would run).
+bedrock:
+  # Lay out Java text with the server's fonts: custom glyphs (chat prefixes, menu titles, HUD images),
+  # glyphs Twilight moved to other characters, named fonts and spacing. Without it such text shows the
+  # plain characters.
+  text-layout: true
+  # Show the server packs' translations (item and menu names from datapacks and plugins).
+  translations: true
+  # Keep a Bedrock player connected while its client is still loading the resource packs after joining
+  # (large packs take minutes on phones). With Geyser's forward-player-ping, Java keep-alives and pings wait
+  # for the client; they are answered for it meanwhile. Without it Geyser answers them already and this
+  # only logs loading times. Seconds, 0-1800; 0 only logs.
+  loading-protection-seconds: 300
+  # Custom blocks from the servers' packs (content plugins' ores and blocks on note blocks, mushroom blocks
+  # and tripwire), registered with the proxy's Geyser when it starts; their items show the block in 3D.
+  custom-blocks: true
+  # Java item displays with the servers' models: furniture, ModelEngine and BetterModel models and the NPCs
+  # and mobs built from them. Twilight on each backend learns that this proxy shows them and builds its
+  # pack with their models. Also applies Java's rule that a ridden mob shows no name. Takes effect on restart.
+  item-displays: true
+
+# Geyser item mappings of every server, written to the proxy's Geyser (custom_mappings/twilight-proxy_item_mappings.json).
+item-mappings:
+  # Move other Twilight item mappings and Twilight packs out of the proxy's Geyser (copied by hand, written by an
+  # older sync tool or an older Twilight) to plugins/twilight-proxy/retired/ before Geyser loads them.
+  retire-stale-files: true
+  # Geyser registers custom items only when it starts. When they change while the proxy runs:
+  #   notify     - tell the console and players with twilight.proxy.admin to restart the proxy
+  #   when-empty - also stop the proxy once nobody is online; only for hosts that start it again by
+  #                themselves (panel auto-restart, a start script loop, systemd Restart=always)
+  restart: notify
+
+# Look for a newer twilight-proxy release on GitHub (on the GitLab mirror when GitHub
+# cannot be reached) shortly after start and every six hours. A newer version is written
+# to the console and shown to players with twilight.proxy.update or twilight.proxy.admin.
+# Only the public release list is read over HTTPS: nothing about this proxy is sent and
+# nothing is downloaded or installed. Applied on /twilightproxy reload.
+update-check:
+  enabled: true
+  # Tell those players when they join and when a version is found.
+  notify-players: true

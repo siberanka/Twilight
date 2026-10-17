@@ -16,7 +16,10 @@ dependencies {
     // Item-display translation is not exposed by Geyser's public API yet.
     // Pin the adapter to a reviewed core build; never bundle Geyser classes.
     compileOnly("org.geysermc.geyser:core:2.11.3-20260925.135253-13")
-    testCompileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
+    // Bukkit's YAML for the configuration checks.
+    testImplementation("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT") { isTransitive = false }
+    testImplementation("org.yaml:snakeyaml:2.2")
+    testImplementation("com.google.guava:guava:33.3.1-jre") { isTransitive = false }
     // Title layout tests drive the reflective Adventure bridge with unrelocated components.
     testImplementation("net.kyori:adventure-api:4.17.0")
     // Text surface tests rewrite real protocol packets.

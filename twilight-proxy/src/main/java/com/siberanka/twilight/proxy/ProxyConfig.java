@@ -51,6 +51,41 @@ record ProxyConfig(PackSource defaultSource, Map<String, PackSource> servers, bo
         record Url(URI uri) implements PackSource {}
     }
 
+    /** Sections whose keys are the administrator's own: never added, checked or reported. */
+    static final java.util.Set<String> FREE_FORM = java.util.Set.of("packs.server", "local-backends.server");
+
+    /**
+     * Loads the file after bringing it up to date: new settings are added with their defaults and explanations,
+     * invalid values set back to their defaults one by one, and a file that is not readable is restored from the
+     * last version that worked; the old file is kept in {@code config-backups/} first.
+     */
+    static ProxyConfig loadMaintained(Path file, java.util.function.Consumer<String> info,
+                                      java.util.function.Consumer<String> warn) throws IOException {
+        if (Files.isRegularFile(file)) {
+            try (InputStream defaults = ProxyConfig.class.getResourceAsStream("/proxy-config.yml")) {
+                if (defaults != null) {
+                    String text = new String(defaults.readAllBytes(), StandardCharsets.UTF_8);
+                    var report = com.siberanka.twilight.settings.ConfigMaintenance.run(file, text, new com.siberanka.twilight.settings.ConfigMaintenance.Validator() {
+                        @Override public void syntax(String yaml) {
+                            SimpleYaml.parse(yaml);
+                        }
+
+                        @Override public void validate(String yaml) {
+                            parse(yaml);
+                        }
+                    }, FREE_FORM, info, warn, java.time.LocalDateTime.now());
+                    if (report.skipped() != null && !report.skipped().equals("missing")) {
+                        warn.accept("config.yml was not updated: " + report.skipped() + ".");
+                    }
+                    com.siberanka.twilight.settings.ConfigMaintenance.warnUnknown("config.yml", report, warn);
+                }
+            } catch (RuntimeException failure) {
+                warn.accept("config.yml could not be checked for new or invalid settings (" + failure + "); it is read as it is.");
+            }
+        }
+        return load(file);
+    }
+
     static ProxyConfig load(Path file) throws IOException {
         if (!Files.isRegularFile(file)) {
             Files.createDirectories(file.getParent());

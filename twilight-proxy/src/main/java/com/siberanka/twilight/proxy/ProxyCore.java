@@ -743,7 +743,8 @@ public final class ProxyCore implements TwilightProxyApi {
 
     @Override public synchronized boolean reload() {
         try {
-            ProxyConfig next = ProxyConfig.load(platform.dataDirectory().resolve("config.yml"));
+            ProxyConfig next = ProxyConfig.loadMaintained(platform.dataDirectory().resolve("config.yml"),
+                    platform::info, message -> platform.warn(message, null));
             config = next;
             ProxyRuntime bedrockRuntime = runtime;
             if (bedrockRuntime != null) bedrockRuntime.networkSettings(next.network());

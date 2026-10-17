@@ -138,6 +138,28 @@ permission plugin (LuckPerms) or, on BungeeCord, in the `permissions` section of
 `plugins/Twilight/config.yml`. Every key has a working default; the file only needs editing to
 change behaviour.
 
+### Updates and repairs of the file
+
+Twilight keeps `config.yml` current at every start and `/twilight reload` (twilight-proxy does the same
+with its `config.yml`), without touching what an administrator chose:
+
+- **New settings** of a newer version are added with their default value and their explanation, at the
+  place they have in the default file and indented like the file around them.
+- **Invalid values** (a word where a number belongs, a number out of range, an unknown option) are set
+  back to their default one by one, with a warning naming the old value. Values are only tried one by one
+  when the file as a whole is refused, so a value that is fine together with the others is never changed.
+- **A file that is not readable YAML** is replaced by the last version that worked (or the defaults when
+  there is none), with the new settings added.
+
+Before anything is written, a copy of the old file goes to `config-backups/` (the newest ten are kept);
+the new file is written to a temporary file and moved into place. The result must be readable, pass every
+check and stay the same in a second run, or nothing is written. A file Twilight wrote is never changed
+again by it unless someone edits it or a newer version brings new settings, so repairs cannot loop.
+Comments, order, quoting, line endings, unknown keys (reported as possible typos) and the lists that are
+yours (`sources.providers`, the proxy's `packs.server` and `local-backends.server`) stay as they are.
+Files that are symbolic links, not saved as UTF-8, larger than 1 MiB or written with YAML anchors or
+flow mappings are only read and checked, never changed.
+
 ### Top level
 
 | Key | Default | Meaning |
@@ -834,6 +856,7 @@ by hand once. `/twilight status` and `/twilightproxy` show the result of the las
 | Path | Content |
 |---|---|
 | `config.yml` | Settings ([reference](#configuration-reference-twilight)) |
+| `config-backups/` | Copies of `config.yml` from before Twilight updated or repaired it (newest ten), the last version that worked and the record that prevents repair loops ([updates and repairs](#updates-and-repairs-of-the-file)) |
 | `build/current/pack.zip` | The last built Bedrock pack |
 | `build/current/custom_mappings/` | Geyser item and block mappings of that build |
 | `build/current/build-report.json` | Counts, problems and notices of the build |
@@ -875,6 +898,7 @@ In Geyser's folder Twilight owns `packs/twilight.zip`, `custom_mappings/twilight
 | Path | Content |
 |---|---|
 | `config.yml` | Settings ([reference](#twilight-proxy-1)) |
+| `config-backups/` | Copies of `config.yml` from before twilight-proxy updated or repaired it, as on a backend |
 | `packs/` | Pack files named in `config.yml` |
 | `cache/<server>.mcpack` | Packs received from Twilight on the backends |
 | `cache/link-<hash>.mcpack` (+ `.etag`) | Downloaded packs |
@@ -1026,6 +1050,8 @@ the receiver's clock; messages larger than 30128 bytes are dropped unread.
 | Images in chat or menus show as Unicode characters on a proxy network | Install twilight-proxy on the proxy and keep `bedrock.text-layout: true`: with Geyser on the proxy, the text runtime runs there |
 | "glyph pages of 8192x8192 pixels ..." notice | Glyphs need 512-pixel cells. With the text layout they share pages of their own, so only one or two such pages remain; `ui.max-glyph-cell: 256` makes them smaller but moves menu art drawn far from the line |
 | Entities slide into place or show late when a Bedrock player turns or steps around a corner | Raise `bedrock-network.behind-distance` or `view-angle`, set `wall-thickness` higher, or turn `culling` / `wall-culling` off; `/twilight network` shows the player's round trip and strain |
+| "config.yml: ... is not accepted ...; set back to ..." | A value was invalid and is now its default; the old file is in `config-backups/`. Set a valid value ([reference](#configuration-reference-twilight)) |
+| "config.yml was not updated: ..." | The file is only read (a link, not UTF-8, larger than 1 MiB, YAML anchors): add new settings by hand, or save it as UTF-8 without anchors |
 | A plain menu title is shifted or missing on a phone | Update to 1.0.0-beta.2: titles without images, offsets or shifts are sent unchanged and shown at Java's position by a label of their own; only titles that need it are laid out |
 | Menu backgrounds are shifted on Bedrock and the menu title shows a tag such as `:offset_-8:` | Rebuild with the text layout on ([offset tags](#offset-tags)). If Java players see the tag too, update the plugin that should replace it |
 | ModelEngine, BetterModel or MythicMobs mobs and NPCs are invisible on a proxy network | Needs the same Twilight version on the backends and on the proxy, Geyser on the proxy and `bedrock.item-displays: true`; restart the proxy once. The backend then builds the display models by itself ([item displays](#item-displays)) |
@@ -1190,6 +1216,30 @@ eklentisiyle (LuckPerms) veya BungeeCord'da `config.yml` içindeki `permissions`
 
 `plugins/Twilight/config.yml`. Her anahtarın çalışan bir varsayılanı vardır; dosyanın yalnızca davranışı
 değiştirmek için düzenlenmesi gerekir.
+
+##### Dosyanın güncellenmesi ve onarılması
+
+Twilight `config.yml` dosyasını her açılışta ve `/twilight reload` ile, bir yöneticinin seçtiklerine
+dokunmadan güncel tutar (twilight-proxy kendi `config.yml` dosyası için aynısını yapar):
+
+- Daha yeni bir sürümün **yeni ayarları** varsayılan değerleri ve açıklamalarıyla, varsayılan dosyadaki
+  yerlerine ve çevrelerindeki dosya gibi girintilenerek eklenir.
+- **Geçersiz değerler** (sayı olması gereken yerde bir kelime, aralık dışı bir sayı, bilinmeyen bir seçenek)
+  tek tek varsayılanlarına döndürülür ve eski değeri belirten bir uyarı yazılır. Değerler yalnızca dosya bir
+  bütün olarak reddedildiğinde tek tek denenir; böylece diğerleriyle birlikte geçerli olan bir değer asla
+  değiştirilmez.
+- **Okunabilir YAML olmayan bir dosya**, çalışan son sürümüyle (yoksa varsayılanlarla) değiştirilir ve yeni
+  ayarlar eklenir.
+
+Bir şey yazılmadan önce eski dosyanın bir kopyası `config-backups/` içine alınır (en yeni on tanesi
+tutulur); yeni dosya geçici bir dosyaya yazılıp yerine taşınır. Sonuç okunabilir olmalı, her denetimi
+geçmeli ve ikinci bir çalıştırmada aynı kalmalıdır; aksi halde hiçbir şey yazılmaz. Twilight'ın yazdığı bir
+dosya, biri onu düzenlemedikçe veya daha yeni bir sürüm yeni ayarlar getirmedikçe Twilight tarafından bir
+daha değiştirilmez; bu yüzden onarımlar döngüye giremez. Yorumlar, sıra, tırnaklar, satır sonları,
+bilinmeyen anahtarlar (olası yazım hatası olarak bildirilir) ve size ait listeler (`sources.providers`,
+proxy'nin `packs.server` ve `local-backends.server` bölümleri) olduğu gibi kalır. Sembolik bağlantı olan,
+UTF-8 olarak kaydedilmemiş, 1 MiB'tan büyük veya YAML çapaları ya da akış eşlemeleriyle yazılmış dosyalar
+yalnızca okunur ve denetlenir, asla değiştirilmez.
 
 ##### Üst düzey
 
@@ -1897,6 +1947,7 @@ izler. Önceki geliştirme derlemeleri 1.0.0-beta.1'i duyurmaz: onları bir kez 
 | Yol | İçerik |
 |---|---|
 | `config.yml` | Ayarlar ([başvuru](#yapılandırma-başvurusu-twilight)) |
+| `config-backups/` | Twilight'ın güncellemeden veya onarmadan önceki `config.yml` kopyaları (en yeni on tane), çalışan son sürüm ve onarım döngülerini önleyen kayıt ([güncellenmesi ve onarılması](#dosyanın-güncellenmesi-ve-onarılması)) |
 | `build/current/pack.zip` | Son derlenen Bedrock paketi |
 | `build/current/custom_mappings/` | O derlemenin Geyser eşya ve blok eşlemeleri |
 | `build/current/build-report.json` | Derlemenin sayıları, sorunları ve bildirimleri |
@@ -1938,6 +1989,7 @@ Geyser klasöründe Twilight yalnızca `packs/twilight.zip`, `custom_mappings/tw
 | Yol | İçerik |
 |---|---|
 | `config.yml` | Ayarlar ([başvuru](#twilight-proxy-4)) |
+| `config-backups/` | twilight-proxy'nin güncellemeden veya onarmadan önceki `config.yml` kopyaları, arka uçtaki gibi |
 | `packs/` | `config.yml` içinde adı geçen paket dosyaları |
 | `cache/<sunucu>.mcpack` | Arka uçlardaki Twilight'tan alınan paketler |
 | `cache/link-<karma>.mcpack` (+ `.etag`) | İndirilen paketler |
@@ -2089,6 +2141,8 @@ içinde olmalıdır; 30128 bayttan büyük mesajlar okunmadan atılır.
 | Proxy'li ağda sohbetteki veya menülerdeki görseller Unicode karakteri olarak görünüyor | twilight-proxy'yi proxy'ye kurun ve `bedrock.text-layout: true` bırakın: Geyser proxy'deyken yazı çalışma zamanı orada çalışır |
 | "glyph pages of 8192x8192 pixels ..." bildirimi | Glifler 512 piksellik hücre gerektiriyor. Yazı yerleşimiyle kendi sayfalarını paylaşırlar; böyle yalnızca bir iki sayfa kalır. `ui.max-glyph-cell: 256` onları küçültür ama satırdan uzağa çizilen menü görsellerini kaydırır |
 | Bir Bedrock oyuncusu dönünce veya bir köşeyi dönünce varlıklar kayarak yerine geliyor veya geç görünüyor | `bedrock-network.behind-distance` veya `view-angle` değerini yükseltin, `wall-thickness` değerini artırın ya da `culling` / `wall-culling` kapatın; `/twilight network` oyuncunun gidiş-dönüş süresini ve zorlanmasını gösterir |
+| "config.yml: ... is not accepted ...; set back to ..." | Bir değer geçersizdi ve artık varsayılanı; eski dosya `config-backups/` içinde. Geçerli bir değer girin ([başvuru](#yapılandırma-başvurusu-twilight)) |
+| "config.yml was not updated: ..." | Dosya yalnızca okunuyor (bağlantı, UTF-8 değil, 1 MiB'tan büyük, YAML çapaları): yeni ayarları elle ekleyin veya dosyayı çapasız UTF-8 olarak kaydedin |
 | Düz bir menü başlığı telefonda kaymış veya görünmüyor | 1.0.0-beta.2'e güncelleyin: görsel, offset veya kaydırma içermeyen başlıklar değiştirilmeden gönderilir ve Java'nın konumunda kendi etiketinde gösterilir; yalnızca gereken başlıklar yerleştirilir |
 | Menü arka planları Bedrock'ta kaymış ve menü başlığında `:offset_-8:` gibi bir etiket görünüyor | Yazı yerleşimi açıkken yeniden derleyin ([kaydırma etiketleri](#kaydırma-etiketleri)). Java oyuncuları da etiketi görüyorsa onu değiştirmesi gereken eklentiyi güncelleyin |
 | Proxy'li ağda ModelEngine, BetterModel veya MythicMobs mobları ve NPC'leri görünmüyor | Arka uçlarda ve proxy'de aynı Twilight sürümü, proxy'de Geyser ve `bedrock.item-displays: true` gerekir; proxy'yi bir kez yeniden başlatın. Arka uç görüntü modellerini sonra kendiliğinden derler ([eşya görüntüleri](#eşya-görüntüleri)) |

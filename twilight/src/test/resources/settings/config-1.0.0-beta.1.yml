@@ -1,0 +1,192 @@
+# Twilight never replaces vanilla Bedrock assets unless this is explicitly enabled.
+vanilla-override: false
+
+generation:
+  strict: true
+  # Startup and supported provider reload events trigger a debounced conversion.
+  auto-build-on-startup: true
+  sync-provider-changes: true
+  startup-delay-ticks: 40
+  # Wait for provider reload/pack commands to finish writing their outputs.
+  provider-command-delay-ticks: 100
+  maximum-source-bytes: 1073741824
+  maximum-archive-entries: 100000
+  # Hash-verified Mojang client/asset caches resolve explicit vanilla dependencies.
+  download-vanilla-assets: true
+
+sources:
+  # Find the content Java players receive without any setup: every installed
+  # provider below is read from its own folders, and its own settings decide
+  # which pack it sends (for example ItemsAdder's hosting or Nexo's dispatch).
+  auto-discover: true
+  # Per provider: true or auto (the generated pack Java players receive, with
+  # the provider's working folders filling gaps), generated (only the generated
+  # pack), contents (only the working folders, e.g. ItemsAdder's contents) or
+  # false/off (not read). Providers that are not listed are read automatically.
+  providers:
+    itemsadder: auto
+    nexo: auto
+    craftengine: auto
+    oraxen: auto
+    bettermodel: auto
+    modelengine: auto
+    customnameplates: auto
+    betterhud: auto
+    realisticseasons: auto
+  # Datapacks of the server's worlds (custom biomes, item models and fonts).
+  datapacks: true
+  # More resource packs or datapacks (folders or ZIPs), relative to the server.
+  additional: []
+
+geyser:
+  directory: auto
+  deploy-after-build: true
+  reload-after-deploy: true
+  backups-to-keep: 3
+  # Let Geyser send the pack to Bedrock players. Every build is also written to
+  # plugins/Twilight/export (Twilight.mcpack and Geyser item mappings); turn this
+  # off when another plugin or a proxy sends that pack instead. Item mappings
+  # are still deployed to a local Geyser.
+  send-pack-to-bedrock: true
+  # Move Twilight files this server does not own out of the local Geyser (item mappings and packs left by an
+  # older version, copied by hand or written by a sync tool) to plugins/Twilight/retired/, at start before
+  # Geyser loads them and after every deployment. They would register items twice or send a second pack.
+  retire-stale-files: true
+  # Geyser registers custom items only when the server starts. When a build changes them:
+  #   notify     - tell the console and players with twilight.admin to restart
+  #   when-empty - also restart once nobody is online (spigot.yml settings.restart-script; without
+  #                one the server stops, so use it only where the host starts it again)
+  restart-for-item-changes: notify
+  # Keep a Bedrock player connected while its client is still loading the resource packs after joining
+  # (large packs take minutes on phones). With Geyser's forward-player-ping, Java keep-alives and pings wait
+  # for the client; they are answered for it meanwhile. Without it Geyser answers them already and this
+  # only logs loading times. Seconds, 0-1800; 0 only logs. Takes effect on restart.
+  loading-protection-seconds: 300
+  # Bedrock models for custom items shown in Java item displays (furniture, ModelEngine and BetterModel
+  # bones, NPCs built from them), merged into a few geometries so that clients still load quickly.
+  # auto: when Geyser runs on this server, or when the twilight-proxy in front of it says that it shows
+  # item displays (remembered in proxy-features.properties); on; off.
+  # The pack is rebuilt by itself when that changes.
+  item-display-models: auto
+  # Which items get those models. seen: the items this server has shown in item displays (learned as
+  # chunks load, kept in displayed-items.txt; a newly seen item is added by the next build) and every
+  # ModelEngine and BetterModel bone; all: every custom item. A client builds every model while loading.
+  item-display-variants: seen
+  # Custom blocks of content plugins (ItemsAdder's and CraftEngine's ores and blocks on note blocks, mushroom
+  # blocks and tripwire): Bedrock shows them with their own look instead of the vanilla block, and the items
+  # that place them show the block in 3D (inventory and dropped), as on Java. Geyser registers blocks when
+  # it starts, so a build that changes them needs a restart, like item changes.
+  custom-blocks: true
+
+ui:
+  # Desktop chest screens use Java's container layout: the title is unwrapped,
+  # Java-aligned, uses Java's 0x404040 text colour and is drawn above slot
+  # frames but below items; the player inventory keeps Java's distance from the
+  # chest grid. Font-image menus therefore line up with their slots. This is
+  # merged into Bedrock's chest UI instead of replacing it.
+  java-container-layout: true
+  # Text is laid out for Bedrock players with Java font metrics: space and
+  # negative-space characters, bitmap glyph bearings, named fonts and font
+  # characters that Java remaps are reproduced with invisible spacer glyphs and
+  # private-use aliases, so menu images land on Java's exact pixels. Requires
+  # Geyser. Changing it requires a rebuild.
+  java-text-layout: true
+  # Apply the layout beyond container titles: chat, action bar, titles, boss
+  # bars, scoreboards, entity names and text displays (holograms). Text without
+  # custom font characters passes through unchanged. Takes effect on restart.
+  java-text-surfaces: true
+  # Java multiplies bitmap glyph images by the text colour, so a menu title
+  # without a colour code (drawn at 0x404040) shows its images darkened. Bedrock
+  # never tints resource-pack glyphs: the pack gets darkened copies of the
+  # laid-out glyphs on free private-use pages, used by such titles. Titles that
+  # set a colour (usually white) are unaffected. Changing it requires a rebuild.
+  java-glyph-tint: true
+  # Java draws text that moves back over earlier text or images (a banner over a
+  # header, a name over its nameplate background) on top of it. Bedrock labels
+  # only move forward: chest titles, the action bar and boss bars get up to four
+  # stacked labels, filled per player, so such lines overlap exactly as on Java,
+  # including vertical font shifts and text drawn without a shadow. Boss bars
+  # whose sprites the Java pack makes transparent stay hidden. Requires Geyser.
+  # Changing it requires a rebuild.
+  java-text-layers: true
+  # Bedrock draws a dark box behind every name tag. Java text displays choose
+  # their own background, and nameplate plugins make it transparent and draw
+  # images instead. auto: hide the box when CustomNameplates' name tags are on;
+  # hidden: always hide it; bedrock: keep it. Changing it requires a rebuild.
+  nametag-background: auto
+  # Render Java text for Bedrock players with the resource packs' translations:
+  # names of datapack and plugin content, and overrides such as a hidden
+  # inventory label or an image as the ender chest title. Requires Geyser.
+  java-translations: true
+  # The largest glyph cell in pixels (512, 256, 128 or 64). A glyph page is 16 cells wide, so a glyph
+  # that needs 512 makes its page 8192x8192 (256 MiB in the client), which phones load slowly or not
+  # at all; the build lists such pages. With the text layout, glyphs of 256 and more share pages of
+  # their own, so few such pages remain. With 256, glyphs Java draws far above or below the line are
+  # moved vertically to fit instead, and menu art no longer lines up with the slots. Changing it
+  # requires a rebuild.
+  max-glyph-cell: 512
+  # Chest screens on Bedrock's pocket UI profile (the default on phones and tablets). Bedrock shows them
+  # as two scrolling columns with the title in a header bar, where a Java menu image ends up behind the
+  # slots. java: the same Java layout as on desktop, so menu art fits its slots on phones too;
+  # bedrock: Bedrock's own pocket screens. Needs ui.java-container-layout; changing it needs a rebuild.
+  pocket-container-layout: java
+
+world:
+  # Geyser shows biomes it does not know (datapack biomes such as Terralith or
+  # Incendium, and plugin biomes such as RealisticSeasons' seasonal ones) as the
+  # dimension's fallback biome. The pack redefines Bedrock biomes that only old
+  # worlds use with the exact grass, foliage, water, fog and sky colours and the
+  # climate of the server's custom biomes (25 looks; with more, the looks the
+  # vanilla biomes approximate worst). Every other custom biome shows as the
+  # closest vanilla biome or redefined look. Other plugins' packets are never
+  # changed. Requires Geyser and the vanilla client cache
+  # (generation.download-vanilla-assets); changes need a rebuild.
+  bedrock-biome-matching: true
+
+proxy:
+  # Offer this server's Bedrock pack to twilight-proxy on a Velocity or BungeeCord
+  # proxy over signed plugin messages. Only active with a secret shared with the
+  # proxy; nothing is announced or answered without one.
+  share-pack: true
+  # 16+ characters, the same as 'secret' in twilight-proxy. Empty = Paper's
+  # Velocity forwarding secret or BungeeGuard's tokens, which the proxy already
+  # shares with this server. Takes effect on restart.
+  secret: ""
+
+pack-host:
+  # Serve Geyser's packs to Bedrock players from this server over HTTP, like
+  # ItemsAdder's self-host: Bedrock downloads them much faster than Geyser's
+  # chunked transfer. Open the TCP port in the firewall. Every link is made for
+  # one connecting Bedrock player: random, valid for a few minutes and a few
+  # downloads, and (by default) only from that player's own IP address. Other
+  # requests get an empty 404 and repeated guessing blocks the address. If a
+  # download fails, Geyser sends the pack itself. Takes effect on restart.
+  enabled: false
+  port: 8163
+  # Empty = all interfaces; otherwise an IP address of this machine.
+  bind-address: ""
+  # auto = the address each player typed to join (play.example.com), with the
+  # port below. Or a host name / IP, or http(s)://host[:port] when a reverse
+  # proxy or TLS terminator forwards to this port.
+  public-address: auto
+  # Port written into links when the outside port differs (NAT); 0 = port.
+  public-port: 0
+  # Links work only from the IP address the player connects to Geyser from.
+  require-player-address: true
+  link-minutes: 10
+  downloads-per-link: 3
+  max-connections: 64
+  max-connections-per-address: 4
+  # Reverse proxies whose X-Forwarded-For header is trusted (IP addresses).
+  trusted-proxies: []
+
+update-check:
+  # Look for a newer Twilight release on GitHub (on the GitLab mirror when GitHub
+  # cannot be reached) shortly after start and every six hours. A newer version is
+  # written to the console and shown to players with twilight.update (operators by
+  # default). Only the public release list is read over HTTPS: nothing about this
+  # server is sent and nothing is downloaded or installed. A server running a
+  # prerelease also hears about prereleases. Applied on /twilight reload.
+  enabled: true
+  # Tell players with twilight.update when they join and when a version is found.
+  notify-players: true
