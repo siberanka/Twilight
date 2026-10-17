@@ -1448,6 +1448,77 @@ class BedrockPackCompilerTest {
         }
     }
 
+    /** Worn custom armour shows its equipment asset on Bedrock instead of nothing; a held one keeps its icon. */
+    @Test
+    void wornArmourGetsItsEquipmentAsset() throws Exception {
+        Path source = root.resolve("armour");
+        for (String piece : List.of("helmet", "leggings", "ghost")) {
+            write(source, "assets/demo/items/topaz_" + piece + ".json",
+                    "{\"model\":{\"type\":\"minecraft:model\",\"model\":\"demo:item/topaz_" + piece + "\"}}");
+            write(source, "assets/demo/models/item/topaz_" + piece + ".json",
+                    "{\"parent\":\"minecraft:item/generated\",\"textures\":{\"layer0\":\"demo:item/topaz_" + piece + "\"}}");
+            png(source.resolve("assets/demo/textures/item/topaz_" + piece + ".png"), Color.ORANGE);
+        }
+        write(source, "assets/demo/equipment/topaz.json", """
+                {"layers":{"humanoid":[{"texture":"demo:topaz"},
+                  {"texture":"demo:topaz_overlay","dyeable":{"color_when_undyed":65280}},
+                  {"texture":"demo:topaz_dye_only","dyeable":{}}],
+                 "humanoid_leggings":[{"texture":"demo:topaz"}]}}
+                """);
+        png(source.resolve("assets/demo/textures/entity/equipment/humanoid/topaz.png"), Color.RED);
+        png(source.resolve("assets/demo/textures/entity/equipment/humanoid/topaz_overlay.png"), new Color(255, 255, 255, 128));
+        png(source.resolve("assets/demo/textures/entity/equipment/humanoid/topaz_dye_only.png"), Color.BLUE);
+        png(source.resolve("assets/demo/textures/entity/equipment/humanoid_leggings/topaz.png"), Color.YELLOW);
+        ContentSource pack = new ContentSource("test", ContentSource.Kind.RESOURCE_PACK, source, 1);
+        List<CustomItemDescriptor> live = List.of(
+                new CustomItemDescriptor("test", "minecraft:chainmail_helmet", Optional.of("demo:topaz_helmet"), OptionalInt.empty(),
+                        "Helmet", Optional.of(new CustomItemDescriptor.Equipment("head", Optional.of("demo:topaz")))),
+                new CustomItemDescriptor("test", "minecraft:paper", Optional.of("demo:topaz_leggings"), OptionalInt.empty(),
+                        "Leggings", Optional.of(new CustomItemDescriptor.Equipment("legs", Optional.of("demo:topaz")))),
+                new CustomItemDescriptor("test", "minecraft:paper", Optional.of("demo:topaz_ghost"), OptionalInt.empty(),
+                        "Ghost", Optional.of(new CustomItemDescriptor.Equipment("chest", Optional.of("demo:missing")))));
+        BuildResult result = new BedrockPackCompiler(root.resolve("data"), config()).build(List.of(pack), live);
+        assertTrue(result.problems().isEmpty(), result.problems().toString());
+        String notices = JsonParser.parseString(Files.readString(result.outputDirectory().resolve("build-report.json")))
+                .getAsJsonObject().get("notices").toString();
+        assertTrue(notices.contains("demo:missing"), notices);
+        JsonObject items = JsonParser.parseString(Files.readString(result.outputDirectory()
+                .resolve("custom_mappings/geyser_item_mappings.json"))).getAsJsonObject().getAsJsonObject("items");
+        JsonObject helmet = items.getAsJsonArray("minecraft:chainmail_helmet").get(0).getAsJsonObject();
+        assertEquals("head", helmet.getAsJsonObject("components").getAsJsonObject("minecraft:equippable").get("slot").getAsString());
+        String helmetId = helmet.get("bedrock_identifier").getAsString();
+        String leggingsId = null;
+        for (JsonElement mapping : items.getAsJsonArray("minecraft:paper")) {
+            if (mapping.getAsJsonObject().get("model").getAsString().equals("demo:topaz_leggings")) {
+                leggingsId = mapping.getAsJsonObject().get("bedrock_identifier").getAsString();
+                assertEquals("legs", mapping.getAsJsonObject().getAsJsonObject("components")
+                        .getAsJsonObject("minecraft:equippable").get("slot").getAsString(), "a provider may make paper wearable");
+            }
+        }
+        assertNotNull(leggingsId);
+        try (ZipFile zip = new ZipFile(result.outputDirectory().resolve("pack.zip").toFile())) {
+            JsonObject worn = read(zip, "attachables/" + helmetId.substring(helmetId.indexOf(':') + 1) + ".worn.json")
+                    .getAsJsonObject("minecraft:attachable").getAsJsonObject("description");
+            assertEquals(helmetId + ".worn", worn.get("identifier").getAsString());
+            assertEquals("geometry.humanoid.armor.helmet", worn.getAsJsonObject("geometry").get("default").getAsString());
+            assertTrue(worn.getAsJsonObject("item").get(helmetId).getAsString().contains("slot.armor.head"),
+                    "only worn in its own slot; held, the item keeps its icon");
+            String texture = worn.getAsJsonObject("textures").get("default").getAsString();
+            BufferedImage image = ImageIO.read(zip.getInputStream(zip.getEntry(texture + ".png")));
+            // Red base, the overlay tinted with its undyed green at half alpha; the dye-only layer is left out.
+            Color drawn = new Color(image.getRGB(3, 3), true);
+            assertTrue(Math.abs(drawn.getRed() - 127) <= 3 && Math.abs(drawn.getGreen() - 128) <= 3 && drawn.getBlue() == 0
+                    && drawn.getAlpha() == 255, drawn.toString());
+            JsonObject legs = read(zip, "attachables/" + leggingsId.substring(leggingsId.indexOf(':') + 1) + ".worn.json")
+                    .getAsJsonObject("minecraft:attachable").getAsJsonObject("description");
+            assertEquals("geometry.humanoid.armor.leggings", legs.getAsJsonObject("geometry").get("default").getAsString());
+            BufferedImage leggings = ImageIO.read(zip.getInputStream(zip.getEntry(
+                    legs.getAsJsonObject("textures").get("default").getAsString() + ".png")));
+            assertEquals(Color.YELLOW.getRGB(), leggings.getRGB(0, 0), "leggings draw the humanoid_leggings layer");
+            assertEquals(2, zip.stream().filter(entry -> entry.getName().endsWith(".worn.json")).count());
+        }
+    }
+
     private static String cube(String texture) {
         return """
                 {"textures":{"all":"%s"},"display":{"firstperson_righthand":{"rotation":[0,45,0]}},

@@ -425,6 +425,18 @@ public final class TwilightPlugin extends JavaPlugin {
         Set<Path> runtimeWorlds = Bukkit.getWorlds().stream().map(World::getWorldFolder).map(java.io.File::toPath)
                 .collect(Collectors.toUnmodifiableSet());
         BukkitItemCollector.CollectionResult runtimeCollection = collectRuntimeItems();
+        if (skipUnchanged && buildRequested && config.strict() && !runtimeCollection.issues().isEmpty()
+                && java.nio.file.Files.isRegularFile(servedPack())) {
+            // An automatic build can come before a provider has loaded its items (ItemsAdder answers with errors
+            // until then). Strict builds keep the served pack either way; the provider's load event starts the next
+            // build, and /twilight convert still reports the failure in full.
+            for (String issue : runtimeCollection.issues()) operationLog.warn("provider-api", issue);
+            operationLog.info("operation-complete", "deferred until the provider reports its items");
+            operationRunning.set(false);
+            getLogger().info("Automatic build waits for a content plugin to finish loading: "
+                    + runtimeCollection.issues().getFirst());
+            return;
+        }
         // Decided once per build: the proxy's statement can change while the build runs.
         boolean displays = itemDisplayModels();
         java.util.Set<String> shownItems = !displays || !displayVariantsSeen() ? null
@@ -1066,15 +1078,30 @@ public final class TwilightPlugin extends JavaPlugin {
     private void scheduleProviderBuild(String reason, long delayTicks) {
         if (!config.syncProviderChanges()) return;
         scheduleBuild(reason, delayTicks);
+        // Providers can still be writing their pack when they announce it (ItemsAdder 5 replaces generated.zip
+        // after its compressed event). One later look sees the finished files; unchanged inputs skip the build.
+        long settle = providerSettle.incrementAndGet();
+        scheduler.delayed(() -> {
+            if (settle == providerSettle.get()) scheduleBuild(reason + ", settled", delayTicks, true);
+        }, PROVIDER_SETTLE_TICKS);
     }
 
+    /** Ticks after a provider's last event at which its files are looked at again. */
+    private static final long PROVIDER_SETTLE_TICKS = 900L;
+    private final java.util.concurrent.atomic.AtomicLong providerSettle = new java.util.concurrent.atomic.AtomicLong();
+
     private void scheduleBuild(String reason, long delayTicks) {
+        scheduleBuild(reason, delayTicks, false);
+    }
+
+    private void scheduleBuild(String reason, long delayTicks, boolean deferred) {
         if (!automaticBuildPending.compareAndSet(false, true)) return;
-        getLogger().info("Scheduled automatic Twilight conversion after " + reason);
+        // A build that waits for the running one is announced once, not on every retry.
+        if (!deferred) getLogger().info("Scheduled automatic Twilight conversion after " + reason);
         scheduler.delayed(() -> {
             if (operationRunning.get()) {
                 automaticBuildPending.set(false);
-                scheduleBuild(reason + " (deferred)", config.startupDelayTicks());
+                scheduleBuild(reason, config.startupDelayTicks(), true);
                 return;
             }
             automaticBuildPending.set(false);

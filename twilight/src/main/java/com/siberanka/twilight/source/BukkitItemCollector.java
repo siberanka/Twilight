@@ -157,7 +157,85 @@ public final class BukkitItemCollector {
         String base = stack.getType().getKey().toString();
         String display = legacyDisplayName(meta, base);
         String key = base + '|' + model.orElse("") + '|' + (customModelData.isPresent() ? customModelData.getAsInt() : "");
-        output.putIfAbsent(key, new CustomItemDescriptor(provider, base, model, customModelData, display));
+        output.putIfAbsent(key, new CustomItemDescriptor(provider, base, model, customModelData, display,
+                equipment(stack, meta)));
+    }
+
+    /**
+     * Where the item is worn and the equipment asset drawn there. Paper's data components include the base item's
+     * own (a custom chainmail helmet keeps chainmail's asset unless the provider replaces it); Spigot's item meta only
+     * knows a provider's own {@code equippable}. Servers before 1.21.2 have neither: their items stay without one.
+     */
+    static Optional<CustomItemDescriptor.Equipment> equipment(ItemStack stack, ItemMeta meta) {
+        try {
+            Object equippable = paperEquippable(stack);
+            if (equippable == null && meta != null && Boolean.TRUE.equals(call(meta, "hasEquippable"))) {
+                equippable = call(meta, "getEquippable");
+            }
+            if (equippable == null) return Optional.empty();
+            Object slot = firstResult(equippable, "slot", "getSlot");
+            if (!(slot instanceof Enum<?> value)) return Optional.empty();
+            String name = switch (value.name()) {
+                case "HEAD" -> "head";
+                case "CHEST" -> "chest";
+                case "LEGS" -> "legs";
+                case "FEET" -> "feet";
+                case "BODY" -> "body";
+                default -> null;
+            };
+            if (name == null) return Optional.empty();
+            Object asset = firstResult(equippable, "assetId", "getAssetId", "getModel");
+            Optional<String> assetId = Optional.empty();
+            if (asset != null) {
+                Object text = asset instanceof NamespacedKey key ? key.toString() : firstResult(asset, "asString");
+                String id = String.valueOf(text == null ? asset : text);
+                if (id.matches("[a-z0-9_.-]+:[a-z0-9_./-]+") && id.length() <= 256) assetId = Optional.of(id);
+            }
+            return Optional.of(new CustomItemDescriptor.Equipment(name, assetId));
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError unavailable) {
+            return Optional.empty();
+        }
+    }
+
+    private static volatile Object equippableType;
+    private static volatile Method getData;
+
+    private static Object paperEquippable(ItemStack stack) throws ReflectiveOperationException {
+        if (equippableType == null) {
+            Class<?> types;
+            try {
+                types = Class.forName("io.papermc.paper.datacomponent.DataComponentTypes", false, stack.getClass().getClassLoader());
+            } catch (ClassNotFoundException notPaper) {
+                return null;
+            }
+            Object type = types.getField("EQUIPPABLE").get(null);
+            Method method = null;
+            for (Method candidate : ItemStack.class.getMethods()) {
+                if (candidate.getName().equals("getData") && candidate.getParameterCount() == 1
+                        && candidate.getParameterTypes()[0].isInstance(type)) method = candidate;
+            }
+            if (method == null) return null;
+            getData = method;
+            equippableType = type;
+        }
+        return getData.invoke(stack, equippableType);
+    }
+
+    private static Object call(Object target, String name) throws ReflectiveOperationException {
+        Method method = target.getClass().getMethod(name);
+        method.setAccessible(true);
+        return method.invoke(target);
+    }
+
+    private static Object firstResult(Object target, String... names) throws ReflectiveOperationException {
+        for (String name : names) {
+            try {
+                return call(target, name);
+            } catch (NoSuchMethodException next) {
+                // The API names this differently on this server version.
+            }
+        }
+        return null;
     }
 
     private static Optional<String> itemModel(ItemMeta meta) {

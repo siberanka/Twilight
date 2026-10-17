@@ -34,6 +34,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
@@ -192,6 +193,7 @@ public final class BedrockPackCompiler {
         // Java item model -> Bedrock item: an item drawn with a custom block's model places that block.
         Map<String, String> itemModels = new LinkedHashMap<>();
 
+        Map<String, CustomItemDescriptor.Equipment> worn = equipmentBySelector(liveItems);
         Set<String> emitted = new HashSet<>();
         for (ItemCandidate candidate : candidates) {
             TextureSet.MISSING_FILES.get().clear();
@@ -220,7 +222,7 @@ public final class BedrockPackCompiler {
                     // item, attachable and icon each, a model-heavy pack loads faster and Geyser registers fewer items.
                     TextureSet atlas = TextureSet.atlas(resources, List.copyOf(usedTextures(model)), vanillaAssets);
                     displays.addModel(candidate.mappingModel(), geometry(safe, model, atlas, geometryBounds(model)), atlas.png(),
-                            model.renderParts().stream().map(ResolvedJavaModel::display).toList());
+                            model.renderParts().stream().map(ResolvedJavaModel::display).toList(), oneSided(model));
                     converted++;
                     threeDimensional++;
                     displayOnly++;
@@ -276,10 +278,10 @@ public final class BedrockPackCompiler {
                     packFiles.put("animations/" + safe + ".animation.json",
                             jsonBytes(animations(safe, model)));
                     packFiles.put("attachables/" + safe + ".json",
-                            jsonBytes(attachable(identifier, safe, texturePath)));
+                            jsonBytes(attachable(identifier, safe, texturePath, oneSided(model))));
                     if (itemDisplays && model.isThreeDimensional() && displayed(candidate, displayedItems)) {
                         displays.add(identifier, geometry(safe, model, atlas, bounds), packFiles.get(texturePath + ".png"),
-                                model.renderParts().stream().map(ResolvedJavaModel::display).toList());
+                                model.renderParts().stream().map(ResolvedJavaModel::display).toList(), oneSided(model));
                     } else if (itemDisplays && displayedFlat(candidate, displayedItems)) {
                         flatDisplay(displayModels, identifier, model, displays, candidate, notices);
                     }
@@ -306,7 +308,11 @@ public final class BedrockPackCompiler {
                 iconEntry.addProperty("textures", model.isThreeDimensional() || customFlat || dynamicWeapon != null
                         ? "textures/twilight/" + safe + "_icon" : texturePath);
                 textureData.add(iconKey, iconEntry);
-                addMapping(mappedItems, candidate, identifier, iconKey, model.handheld());
+                CustomItemDescriptor.Equipment equipment = worn.get(selectorKey(candidate));
+                addMapping(mappedItems, candidate, identifier, iconKey, model.handheld(), equipment);
+                if (equipment != null && equipment.assetId().isPresent()) {
+                    wear(resources, vanillaAssets, candidate, identifier, safe, equipment, packFiles, notices);
+                }
                 if (model.isThreeDimensional() && candidate.visualModels().size() == 1) {
                     itemModels.putIfAbsent(JavaModelResolver.qualified(candidate.visualModels().getFirst(), "minecraft"), identifier);
                     // Providers often give the item another model file than the block, with the same shape and art.
@@ -345,6 +351,7 @@ public final class BedrockPackCompiler {
             }
         }
         displays.finish(packFiles);
+        packFiles.put(SHULKER_CONTROLLER, jsonBytes(invisibleShulkers()));
         TextureSet.SKINS.remove();
         if (!headSkins.isEmpty() || !headNames.isEmpty()) {
             JsonObject heads = new JsonObject();
@@ -775,8 +782,14 @@ public final class BedrockPackCompiler {
             return result;
         }
         JsonArray cubes = new JsonArray();
+        List<JsonObject> elements = new ArrayList<>();
         for (JsonElement elementValue : geometryElements(model)) {
-            JsonObject element = elementValue.getAsJsonObject();
+            // Inverted elements show only their inside on Java: their faces become one-sided planes (see oneSided).
+            JsonObject source = elementValue.getAsJsonObject();
+            if (InvertedElements.inverted(source)) elements.addAll(InvertedElements.faces(source));
+            else elements.add(source);
+        }
+        for (JsonObject element : elements) {
             double[] from = vector(element.getAsJsonArray("from"), 0, 0, 0);
             double[] to = vector(element.getAsJsonArray("to"), 16, 16, 16);
             JsonObject cube = new JsonObject();
@@ -838,6 +851,22 @@ public final class BedrockPackCompiler {
         return root;
     }
 
+    /**
+     * Whether a model needs Java's one-sided faces: inverted elements show their inside only because Java draws
+     * one side of each face. Such models use a one-sided material; others keep the two-sided one they always had.
+     */
+    static boolean oneSided(ResolvedJavaModel model) throws IOException {
+        if (!model.parts().isEmpty()) {
+            for (ResolvedJavaModel part : model.parts()) if (oneSided(part)) return true;
+            return false;
+        }
+        if (model.elements() == null) return false;
+        for (JsonElement element : model.elements()) {
+            if (element.isJsonObject() && InvertedElements.inverted(element.getAsJsonObject())) return true;
+        }
+        return false;
+    }
+
     /** The geometry of a model for its display variant (see {@link DisplayEntityResources}). */
     static JsonObject displayGeometry(String safe, ResolvedJavaModel model, TextureSet atlas) throws IOException {
         return geometry(safe, model, atlas, geometryBounds(model));
@@ -860,9 +889,9 @@ public final class BedrockPackCompiler {
         };
     }
 
-    private static JsonObject attachable(String identifier, String safe, String texturePath) {
+    private static JsonObject attachable(String identifier, String safe, String texturePath, boolean oneSided) {
         JsonObject description = new JsonObject(); description.addProperty("identifier", identifier);
-        JsonObject materials = new JsonObject(); materials.addProperty("default", "entity_alphatest"); materials.addProperty("enchanted", "entity_alphatest_glint"); description.add("materials", materials);
+        JsonObject materials = new JsonObject(); materials.addProperty("default", oneSided ? ONE_SIDED : "entity_alphatest"); materials.addProperty("enchanted", "entity_alphatest_glint"); description.add("materials", materials);
         JsonObject textures = new JsonObject(); textures.addProperty("default", texturePath); textures.addProperty("enchanted", "textures/misc/enchanted_item_glint"); description.add("textures", textures);
         JsonObject geometries = new JsonObject(); geometries.addProperty("default", "geometry.twilight." + safe); description.add("geometry", geometries);
         JsonObject animationNames = new JsonObject();
@@ -1135,7 +1164,7 @@ public final class BedrockPackCompiler {
     }
 
     private static void addMapping(JsonObject mappedItems, ItemCandidate candidate, String identifier, String iconKey,
-                                   boolean displayHandheld) {
+                                   boolean displayHandheld, CustomItemDescriptor.Equipment equipment) {
         JsonArray definitions = mappedItems.has(candidate.baseItem()) ? mappedItems.getAsJsonArray(candidate.baseItem()) : new JsonArray();
         JsonObject mapping = new JsonObject();
         if (candidate.customModelData().isPresent()) { mapping.addProperty("type", "legacy"); mapping.addProperty("custom_model_data", candidate.customModelData().getAsInt()); }
@@ -1151,7 +1180,111 @@ public final class BedrockPackCompiler {
         options.addProperty("icon", iconKey);
         if (displayHandheld) options.addProperty("display_handheld", true);
         mapping.add("bedrock_options", options);
+        if (equipment != null && !equipment.slot().equals("body")) {
+            // The provider may make any item wearable: Geyser then lets Bedrock players wear it in that slot too.
+            JsonObject equippable = new JsonObject();
+            equippable.addProperty("slot", equipment.slot());
+            JsonObject components = new JsonObject();
+            components.add("minecraft:equippable", equippable);
+            mapping.add("components", components);
+        }
         definitions.add(mapping); mappedItems.add(candidate.baseItem(), definitions);
+    }
+
+    /** Bedrock's entity material that draws one side of each face with alpha testing, as Java draws item models. */
+    static final String ONE_SIDED = "entity_alphatest_one_sided";
+    static final String SHULKER_CONTROLLER = "render_controllers/twilight_shulker.render_controllers.json";
+
+    /**
+     * Invisible shulkers. Furniture plugins (CraftEngine) block building with invisible shulkers; Java draws nothing,
+     * but Bedrock draws invisible shulkers, so a shell stood over every such piece of furniture. Geyser marks the
+     * shulkers it sends (the bribed flag) for a pack to hide; Bedrock's own shulker controller, with its parts
+     * hidden while such a shulker is invisible.
+     */
+    static JsonObject invisibleShulkers() {
+        JsonArray variants = new JsonArray();
+        for (String colour : List.of("black", "red", "green", "brown", "blue", "purple", "cyan", "silver", "gray", "pink",
+                "lime", "yellow", "light_blue", "magenta", "orange", "white", "undyed")) variants.add("Texture." + colour);
+        JsonObject textureArrays = new JsonObject();
+        textureArrays.add("Array.variants", variants);
+        JsonObject arrays = new JsonObject();
+        arrays.add("textures", textureArrays);
+        JsonObject controller = new JsonObject();
+        controller.add("arrays", arrays);
+        controller.addProperty("geometry", "Geometry.default");
+        JsonArray materials = new JsonArray();
+        JsonObject material = new JsonObject();
+        material.addProperty("*", "Material.default");
+        materials.add(material);
+        controller.add("materials", materials);
+        JsonArray textures = new JsonArray();
+        textures.add("Array.variants[query.variant]");
+        controller.add("textures", textures);
+        JsonArray visibility = new JsonArray();
+        JsonObject all = new JsonObject();
+        all.addProperty("*", "!(query.is_invisible && query.is_bribed)");
+        visibility.add(all);
+        controller.add("part_visibility", visibility);
+        JsonObject controllers = new JsonObject();
+        controllers.add("controller.render.shulker", controller);
+        JsonObject root = new JsonObject();
+        root.addProperty("format_version", "1.8.0");
+        root.add("render_controllers", controllers);
+        return root;
+    }
+
+    /** The equipment of the live items by the selector Geyser matches them with (the first in a stable order). */
+    static Map<String, CustomItemDescriptor.Equipment> equipmentBySelector(List<CustomItemDescriptor> liveItems) {
+        Map<String, CustomItemDescriptor.Equipment> result = new java.util.TreeMap<>();
+        List<CustomItemDescriptor> ordered = new ArrayList<>(liveItems == null ? List.of() : liveItems);
+        ordered.sort(java.util.Comparator.comparing(CustomItemDescriptor::provider).thenComparing(CustomItemDescriptor::baseItem)
+                .thenComparing(item -> item.itemModel().orElse(""))
+                .thenComparingInt(item -> item.customModelData().orElse(Integer.MIN_VALUE)));
+        for (CustomItemDescriptor item : ordered) {
+            if (item.equipment().isEmpty()) continue;
+            item.itemModel().ifPresent(model -> result.putIfAbsent(item.baseItem() + "|definition|"
+                    + JavaModelResolver.qualified(model, "minecraft"), item.equipment().get()));
+            if (item.customModelData().isPresent()) {
+                result.putIfAbsent(item.baseItem() + "|legacy|" + item.customModelData().getAsInt(), item.equipment().get());
+            }
+        }
+        return result;
+    }
+
+    static String selectorKey(ItemCandidate candidate) {
+        return candidate.customModelData().isPresent()
+                ? candidate.baseItem() + "|legacy|" + candidate.customModelData().getAsInt()
+                : candidate.baseItem() + "|definition|" + candidate.mappingModel();
+    }
+
+    /** Worn custom armour and elytras: the equipment asset Java draws on the body (see {@link EquipmentModels}). */
+    private static void wear(ResourceIndex resources, VanillaAssetCache vanillaAssets, ItemCandidate candidate,
+                             String identifier, String safe, CustomItemDescriptor.Equipment equipment,
+                             Map<String, byte[]> packFiles, List<String> notices) {
+        String asset = equipment.assetId().orElseThrow();
+        String label = candidate.baseItem() + " -> " + candidate.visualModels() + " worn as " + asset;
+        try {
+            Optional<JsonObject> layers = EquipmentModels.layers(resources, vanillaAssets, asset);
+            if (layers.isEmpty()) {
+                notices.add(label + ": the equipment asset exists in no pack; Java draws nothing on the body, nor does Bedrock");
+                return;
+            }
+            Optional<EquipmentModels.Look> look = EquipmentModels.look(equipment.slot(), layers.get());
+            if (look.isEmpty()) return;
+            List<String> missing = new ArrayList<>();
+            Optional<java.awt.image.BufferedImage> texture = EquipmentModels.texture(resources, vanillaAssets,
+                    layers.get(), look.get().layer(), missing);
+            if (!missing.isEmpty()) notices.add(label + ": equipment textures that exist in no pack are left out: " + missing);
+            if (texture.isEmpty()) return;
+            String raw = asset.replaceAll("[^a-z0-9_]", "_");
+            if (raw.length() > 40) raw = raw.substring(raw.length() - 40);
+            String texturePath = "textures/twilight/equipment/" + raw + '_' + shortHash(asset + '|' + look.get().layer());
+            packFiles.putIfAbsent(texturePath + ".png", TextureSet.png(texture.get()));
+            packFiles.put("attachables/" + safe + ".worn.json",
+                    jsonBytes(EquipmentModels.attachable(identifier, equipment, look.get(), texturePath)));
+        } catch (IOException | RuntimeException failure) {
+            notices.add(label + ": " + failure.getMessage() + "; worn, it shows nothing on Bedrock");
+        }
     }
 
     /**

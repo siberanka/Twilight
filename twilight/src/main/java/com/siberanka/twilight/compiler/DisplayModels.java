@@ -435,7 +435,8 @@ final class DisplayModels {
         if (x == 0 && y == 0) return elements.deepCopy();
         JsonArray result = new JsonArray();
         for (JsonElement value : elements) {
-            JsonObject element = value.getAsJsonObject();
+            // Java turns an inverted element's faces with it; ordering its corners first keeps them on their sides.
+            JsonObject element = InvertedElements.normalized(value.getAsJsonObject());
             double[] from = vector(element.getAsJsonArray("from")), to = vector(element.getAsJsonArray("to"));
             double[] min = {Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE}, max = {-Double.MAX_VALUE, -Double.MAX_VALUE, -Double.MAX_VALUE};
             for (int corner = 0; corner < 8; corner++) {
@@ -603,7 +604,7 @@ final class DisplayModels {
                      DisplayEntityResources.Section section, String key) throws IOException {
         TextureSet atlas = TextureSet.atlas(resources, List.copyOf(BedrockPackCompiler.modelTextures(model)), vanilla);
         displays.add(section, key, BedrockPackCompiler.displayGeometry(safe, model, atlas), atlas.png(),
-                model.renderParts().stream().map(ResolvedJavaModel::display).toList(), flat);
+                model.renderParts().stream().map(ResolvedJavaModel::display).toList(), flat, BedrockPackCompiler.oneSided(model));
     }
 
     /** Java's 3D model with its item tints baked into texture copies. */

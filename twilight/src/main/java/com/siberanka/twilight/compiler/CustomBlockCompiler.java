@@ -436,7 +436,7 @@ final class CustomBlockCompiler {
     static JsonObject geometry(ResolvedJavaModel model, TextureSet atlas, boolean[] clamped) throws IOException {
         JsonArray cubes = new JsonArray();
         for (JsonElement value : model.elements()) {
-            JsonObject element = value.getAsJsonObject();
+            JsonObject element = InvertedElements.normalized(value.getAsJsonObject());
             double[] from = vector(element.getAsJsonArray("from"));
             double[] to = vector(element.getAsJsonArray("to"));
             JsonObject cube = new JsonObject();

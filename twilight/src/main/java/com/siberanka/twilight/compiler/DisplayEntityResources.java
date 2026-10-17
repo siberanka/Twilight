@@ -64,7 +64,7 @@ final class DisplayEntityResources {
      * Java draws it flat (Bedrock then draws it as a dropped item itself).
      */
     private record Variant(String identifier, Section section, byte[] geometry, byte[] texture, List<JsonObject> displays,
-                           boolean flat) {}
+                           boolean flat, boolean oneSided) {}
 
     void add(String identifier, JsonObject itemGeometry, byte[] texturePng, JsonObject display) {
         add(identifier, itemGeometry, texturePng, Collections.singletonList(display));
@@ -72,7 +72,12 @@ final class DisplayEntityResources {
 
     /** An item Geyser maps to a Bedrock item: the server finds its variant by the Bedrock identifier. */
     void add(String identifier, JsonObject itemGeometry, byte[] texturePng, List<JsonObject> displays) {
-        add(Section.ITEM, identifier, itemGeometry, texturePng, displays, false);
+        add(identifier, itemGeometry, texturePng, displays, false);
+    }
+
+    /** @param oneSided Java's one-sided faces (models with inverted elements, see BedrockPackCompiler.oneSided) */
+    void add(String identifier, JsonObject itemGeometry, byte[] texturePng, List<JsonObject> displays, boolean oneSided) {
+        add(Section.ITEM, identifier, itemGeometry, texturePng, displays, false, oneSided);
     }
 
     /**
@@ -80,7 +85,11 @@ final class DisplayEntityResources {
      * server finds its variant by the stack's {@code item_model} component.
      */
     void addModel(String itemModel, JsonObject itemGeometry, byte[] texturePng, List<JsonObject> displays) {
-        add(Section.MODEL, itemModel, itemGeometry, texturePng, displays, false);
+        addModel(itemModel, itemGeometry, texturePng, displays, false);
+    }
+
+    void addModel(String itemModel, JsonObject itemGeometry, byte[] texturePng, List<JsonObject> displays, boolean oneSided) {
+        add(Section.MODEL, itemModel, itemGeometry, texturePng, displays, false, oneSided);
     }
 
     boolean contains(Section section, String key) {
@@ -88,13 +97,18 @@ final class DisplayEntityResources {
     }
 
     void add(Section section, String key, JsonObject itemGeometry, byte[] texturePng, List<JsonObject> displays, boolean flat) {
+        add(section, key, itemGeometry, texturePng, displays, flat, false);
+    }
+
+    void add(Section section, String key, JsonObject itemGeometry, byte[] texturePng, List<JsonObject> displays, boolean flat,
+             boolean oneSided) {
         if (!keys.computeIfAbsent(section, ignored -> new HashSet<>()).add(key)) return;
         JsonArray meshes = body(itemGeometry).getAsJsonArray("bones");
         if (meshes.size() != displays.size()) throw new IllegalArgumentException("Composite mesh/pose count mismatch");
         List<JsonObject> copies = new ArrayList<>();
         for (JsonObject display : displays) copies.add(display == null ? new JsonObject() : display.deepCopy());
         variants.add(new Variant(key, section, JSON.toJson(itemGeometry).getBytes(StandardCharsets.UTF_8), texturePng,
-                List.copyOf(copies), flat));
+                List.copyOf(copies), flat, oneSided));
     }
 
     int size() {
@@ -319,7 +333,8 @@ final class DisplayEntityResources {
                 boolean mixed = meshes.size() > 1 && sharedTransformDiffers(part.variant.displays);
                 JsonObject variantBones = new JsonObject();
                 for (int mesh = 0; mesh < meshes.size(); mesh++) {
-                    String prefix = "twp" + index + "_" + mesh;
+                    // One-sided meshes take another prefix: the render controller gives them the one-sided material.
+                    String prefix = (part.variant.oneSided ? "twc" : "twp") + index + "_" + mesh;
                     String meshParent = "ctx_s";
                     if (mixed) {
                         for (String suffix : List.of("t", "x", "y", "z", "s")) {
@@ -439,7 +454,9 @@ final class DisplayEntityResources {
                                     JsonObject animations, JsonArray animate) {
         JsonObject description = new JsonObject();
         description.addProperty("identifier", "twilight:item_display");
-        description.add("materials", stringProperty("default", "entity_alphatest"));
+        JsonObject entityMaterials = stringProperty("default", "entity_alphatest");
+        entityMaterials.addProperty("one_sided", BedrockPackCompiler.ONE_SIDED);
+        description.add("materials", entityMaterials);
         description.add("textures", textures);
         description.add("geometry", geometries);
         animations.addProperty("pose", "animation.twilight.display_pose");
@@ -482,13 +499,18 @@ final class DisplayEntityResources {
         controller.add("textures", strings("Array.textures[" + sheet + "]"));
         JsonArray materials = new JsonArray();
         materials.add(stringProperty("*", "Material.default"));
+        materials.add(stringProperty("twc*", "Material.one_sided"));
         controller.add("materials", materials);
         JsonArray visibility = new JsonArray();
         visibility.add(stringProperty("*", "q.property('twilight:appearance')>=0"));
         JsonObject hidden = new JsonObject();
         hidden.addProperty("twp*", false);
+        hidden.addProperty("twc*", false);
         visibility.add(hidden);
-        for (int part = 0; part < PARTS; part++) visibility.add(stringProperty("twp" + part + "_*", "v.part==" + part));
+        for (int part = 0; part < PARTS; part++) {
+            visibility.add(stringProperty("twp" + part + "_*", "v.part==" + part));
+            visibility.add(stringProperty("twc" + part + "_*", "v.part==" + part));
+        }
         controller.add("part_visibility", visibility);
         JsonObject lit = controller.deepCopy();
         lit.addProperty("ignore_lighting", true);

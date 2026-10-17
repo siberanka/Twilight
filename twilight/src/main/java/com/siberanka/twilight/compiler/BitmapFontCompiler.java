@@ -347,7 +347,8 @@ final class BitmapFontCompiler {
             }
         }
         if (image == null && textureAssets.isEmpty()) {
-            problem("bitmap textures are missing", providerKey, font + " -> " + textureIdentifier);
+            // Java skips a bitmap provider whose texture is missing and keeps the font's other providers.
+            notice("bitmap font textures are missing; their glyphs are left out, as on Java", font + " -> " + textureIdentifier);
             return;
         }
         if (image == null && lastFailure != null) {
