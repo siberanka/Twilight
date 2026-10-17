@@ -1481,6 +1481,31 @@ class BedrockPackCompilerTest {
 
     /** Worn custom armour shows its equipment asset on Bedrock instead of nothing; a held one keeps its icon. */
     @Test
+    void longEquipmentNamesKeepPackPathsShort() throws Exception {
+        Path source = root.resolve("long-armour");
+        String asset = "elder_grove_dryadia:keeper_of_the_grove_nature_gearforge_armorset";
+        String name = asset.substring(asset.indexOf(':') + 1);
+        write(source, "assets/elder_grove_dryadia/models/item/helmet.json",
+                "{\"parent\":\"minecraft:item/generated\",\"textures\":{\"layer0\":\"elder_grove_dryadia:item/helmet\"}}");
+        png(source.resolve("assets/elder_grove_dryadia/textures/item/helmet.png"), Color.ORANGE);
+        write(source, "assets/elder_grove_dryadia/equipment/" + name + ".json",
+                "{\"layers\":{\"humanoid\":[{\"texture\":\"" + asset + "\"}]}}");
+        png(source.resolve("assets/elder_grove_dryadia/textures/entity/equipment/humanoid/" + name + ".png"), Color.RED);
+        BuildResult result = new BedrockPackCompiler(root.resolve("long-armour-data"), config()).build(
+                List.of(new ContentSource("test", ContentSource.Kind.RESOURCE_PACK, source, 1)),
+                List.of(new CustomItemDescriptor("test", "minecraft:chainmail_helmet",
+                        Optional.of("elder_grove_dryadia:item/helmet"), OptionalInt.empty(), "Helmet",
+                        Optional.of(new CustomItemDescriptor.Equipment("head", Optional.of(asset))))));
+        assertTrue(result.problems().isEmpty(), result.problems().toString());
+        try (ZipFile zip = new ZipFile(result.outputDirectory().resolve("pack.zip").toFile())) {
+            assertTrue(zip.stream().anyMatch(e -> e.getName().startsWith("textures/twilight/equipment/")));
+            for (ZipEntry entry : zip.stream().toList()) {
+                assertTrue(entry.getName().length() < 80, entry.getName());
+            }
+        }
+    }
+
+    @Test
     void wornArmourGetsItsEquipmentAsset() throws Exception {
         Path source = root.resolve("armour");
         for (String piece : List.of("helmet", "leggings", "ghost")) {

@@ -1311,7 +1311,8 @@ public final class BedrockPackCompiler {
             if (!missing.isEmpty()) notices.add(label + ": equipment textures that exist in no pack are left out: " + missing);
             if (texture.isEmpty()) return;
             String raw = asset.replaceAll("[^a-z0-9_]", "_");
-            if (raw.length() > 40) raw = raw.substring(raw.length() - 40);
+            // Pack paths stay under 80 characters: Geyser warns and some Bedrock platforms fail to load longer ones.
+            if (raw.length() > 30) raw = raw.substring(raw.length() - 30);
             String texturePath = "textures/twilight/equipment/" + raw + '_' + shortHash(variant);
             packFiles.putIfAbsent(texturePath + ".png", TextureSet.png(texture.get()));
             packFiles.put("attachables/" + safe + ".worn.json",
