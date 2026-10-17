@@ -40,7 +40,7 @@ public final class BukkitItemCollector {
         Bukkit.getOnlinePlayers().forEach(player -> {
             for (ItemStack stack : player.getInventory().getContents()) add("inventory", stack, descriptors);
         });
-        for (ProviderProbe probe : PROVIDERS) probe.collect(descriptors, issues);
+        for (ProviderProbe probe : PROVIDERS) probe.collect(descriptors, issues, notices);
         collectBetterModel(descriptors, issues);
         collectModelEngine(descriptors, issues);
         return new CollectionResult(List.copyOf(descriptors.values()), List.copyOf(issues), List.copyOf(notices));
@@ -287,9 +287,14 @@ public final class BukkitItemCollector {
         return null;
     }
 
+    private static volatile Method getItemModel;
+
     private static Optional<String> itemModel(ItemMeta meta) {
         try {
-            Method method = meta.getClass().getMethod("getItemModel");
+            // Looked up on the API interface: the server's meta classes are not all public, and a method found on a
+            // non-public class cannot be invoked (plain items lost their item model this way on 1.21.4).
+            Method method = getItemModel;
+            if (method == null) getItemModel = method = ItemMeta.class.getMethod("getItemModel");
             Object value = method.invoke(meta);
             if (value instanceof NamespacedKey key) return Optional.of(key.toString());
             if (value != null) return Optional.of(value.toString());
@@ -310,9 +315,11 @@ public final class BukkitItemCollector {
         for (String methodName : List.of("getItemStack", "build", "buildBukkitItem")) {
             try {
                 Method method = value.getClass().getMethod(methodName);
+                // Public methods of a provider's non-public implementation class need this to be invoked.
+                if (!java.lang.reflect.Modifier.isPublic(method.getDeclaringClass().getModifiers())) method.setAccessible(true);
                 Object result = method.invoke(value);
                 if (result instanceof ItemStack stack) return stack;
-            } catch (ReflectiveOperationException ignored) {
+            } catch (ReflectiveOperationException | RuntimeException ignored) {
                 // Try the next stable provider shape.
             }
         }
@@ -351,7 +358,7 @@ public final class BukkitItemCollector {
     }
 
     private record ProviderProbe(String name, String className, List<String> registryMethods, List<String> itemMethods) {
-        void collect(Map<String, CustomItemDescriptor> output, Set<String> issues) {
+        void collect(Map<String, CustomItemDescriptor> output, Set<String> issues, Set<String> notices) {
             Plugin provider = Bukkit.getPluginManager().getPlugin(name);
             if (provider == null || !provider.isEnabled()) return;
             try {
@@ -378,18 +385,31 @@ public final class BukkitItemCollector {
                     issue(issues, name + " API mismatch: no supported item lookup method on " + className);
                     return;
                 }
+                // One item the provider cannot build (a broken item configuration) must not stop every build: its
+                // pack files still describe it. Only a provider that builds none of its items is incomplete.
+                List<String> failed = new ArrayList<>();
+                String firstFailure = null;
                 for (Object id : ids) {
                     try {
                         Object providerItem = itemMethod.invoke(null, String.valueOf(id));
                         ItemStack stack = unwrapStack(providerItem);
                         if (providerItem != null && stack == null) {
-                            issue(issues, name + " item " + id + " returned unsupported type " + providerItem.getClass().getName());
+                            failed.add(String.valueOf(id));
+                            if (firstFailure == null) firstFailure = "returned unsupported type " + providerItem.getClass().getName();
                         } else {
                             add(name, stack, output);
                         }
                     } catch (ReflectiveOperationException | LinkageError failure) {
-                        issue(issues, name + " item " + id + " could not be read: " + describe(failure));
+                        failed.add(String.valueOf(id));
+                        if (firstFailure == null) firstFailure = "could not be read: " + describe(failure);
                     }
+                }
+                if (!failed.isEmpty() && failed.size() == ids.size()) {
+                    issue(issues, name + " built none of its " + ids.size() + " items; item " + failed.getFirst() + " " + firstFailure);
+                } else if (!failed.isEmpty()) {
+                    notices.add(name + " could not build " + failed.size() + " of its items, which keep only what their pack files"
+                            + " describe: " + String.join(", ", failed.subList(0, Math.min(5, failed.size())))
+                            + (failed.size() > 5 ? ", ..." : "") + " (" + failed.getFirst() + " " + firstFailure + ")");
                 }
             } catch (ClassNotFoundException failure) {
                 issue(issues, name + " is enabled but its public API class is unavailable: " + className);

@@ -98,7 +98,7 @@ public final class DisplayedItems implements Listener, AutoCloseable {
         if (folia()) return;
         List<String> found = new ArrayList<>();
         for (World world : Bukkit.getWorlds()) {
-            for (Entity entity : world.getEntitiesByClasses(ItemDisplay.class, BlockDisplay.class, Item.class)) {
+            for (Entity entity : world.getEntitiesByClasses(ItemDisplay.class, BlockDisplay.class, Item.class, org.bukkit.entity.ItemFrame.class)) {
                 found.addAll(keys(entity));
             }
         }
@@ -112,7 +112,7 @@ public final class DisplayedItems implements Listener, AutoCloseable {
         record(found);
     }
 
-    /** The keys of an item display's item, a block display's block or a dropped item's custom item. */
+    /** The keys of an item display's item, a block display's block, a dropped item's or an invisible frame's custom item. */
     static List<String> keys(Entity entity) {
         try {
             if (entity instanceof ItemDisplay display) {
@@ -135,6 +135,8 @@ public final class DisplayedItems implements Listener, AutoCloseable {
                 return key != null && DisplayKeys.valid(key) && !key.equals("block=minecraft:air") ? List.of(key) : List.of();
             }
             if (entity instanceof Item item) return keys(item.getItemStack());
+            // Furniture plugins draw items in invisible frames, which Bedrock shows with the item's display model.
+            if (entity instanceof org.bukkit.entity.ItemFrame frame && !frame.isVisible()) return keys(frame.getItem());
         } catch (RuntimeException | LinkageError unreadable) {
             // An entity a plugin left half set up: nothing to learn from it.
         }
@@ -167,7 +169,8 @@ public final class DisplayedItems implements Listener, AutoCloseable {
             if (!type.isInstance(event)) return;
             try {
                 Object entity = getEntity.invoke(event);
-                if (entity instanceof ItemDisplay || entity instanceof BlockDisplay || entity instanceof Item) later((Entity) entity);
+                if (entity instanceof ItemDisplay || entity instanceof BlockDisplay || entity instanceof Item
+                        || entity instanceof org.bukkit.entity.ItemFrame) later((Entity) entity);
             } catch (ReflectiveOperationException | RuntimeException ignored) {
                 // Nothing to read.
             }

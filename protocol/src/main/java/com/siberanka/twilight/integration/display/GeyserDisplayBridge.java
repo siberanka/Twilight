@@ -61,6 +61,7 @@ public final class GeyserDisplayBridge implements AutoCloseable {
     private VanillaEntityType<TwilightItemDisplay> definition, blockDefinition;
     private VanillaEntityType<TwilightAreaEffectCloud> cloudDefinition;
     private VanillaEntityType<TwilightDroppedItem> droppedDefinition;
+    private VanillaEntityType<TwilightItemFrame> frameDefinition, glowFrameDefinition;
 
     /**
      * A backend's own Geyser: the variants of the deployed pack. With {@code learn} the display entity is
@@ -99,6 +100,7 @@ public final class GeyserDisplayBridge implements AutoCloseable {
             }
             registerCloudAnchors(logger);
             registerDroppedItems(logger, (BedrockEntityDefinition) custom);
+            registerItemFrames(logger, (BedrockEntityDefinition) custom);
             logger.info("Registered the display bridge: item and block displays, furniture and model bones show with the pack's models.");
         });
         com.siberanka.twilight.geyser.GeyserEvents.subscribe(registrar, GeyserDefineEntityPropertiesEvent.class, event -> {
@@ -161,6 +163,31 @@ public final class GeyserDisplayBridge implements AutoCloseable {
             return;
         }
         droppedDefinition = replacement;
+    }
+
+    /** Invisible item frames (furniture): their item shows with its display model, as on Java. */
+    private void registerItemFrames(Logger logger, BedrockEntityDefinition custom) {
+        frameDefinition = replaceFrame(logger, custom, EntityType.ITEM_FRAME, "minecraft:item_frame", VanillaEntities.ITEM_FRAME);
+        glowFrameDefinition = replaceFrame(logger, custom, EntityType.GLOW_ITEM_FRAME, "minecraft:glow_item_frame",
+                VanillaEntities.GLOW_ITEM_FRAME);
+    }
+
+    private VanillaEntityType<TwilightItemFrame> replaceFrame(Logger logger, BedrockEntityDefinition custom, EntityType javaType,
+                                                              String identifier, VanillaEntityType<?> original) {
+        var type = GeyserEntityType.ofVanilla(javaType);
+        if (Registries.JAVA_ENTITY_TYPES.get(type) != original || GeyserRegistries.entity(identifier, original) != original) {
+            logger.warning("Item frames keep another translator: something else already owns " + identifier + ".");
+            return null;
+        }
+        @SuppressWarnings("unchecked") var frames = (VanillaEntityType<org.geysermc.geyser.entity.type.ItemFrameEntity>) original;
+        var replacement = VanillaEntityType.<TwilightItemFrame>inherited(spawn -> new TwilightItemFrame(spawn, this), frames)
+                .type(javaType).bedrockDefinition(custom).build(false);
+        if (!Registries.JAVA_ENTITY_TYPES.get().replace(type, original, replacement)) return null;
+        if (!GeyserRegistries.replaceEntity(identifier, original, replacement)) {
+            Registries.JAVA_ENTITY_TYPES.get().replace(type, replacement, original);
+            return null;
+        }
+        return replacement;
     }
 
     private void registerCloudAnchors(Logger logger) {
@@ -228,6 +255,14 @@ public final class GeyserDisplayBridge implements AutoCloseable {
         if (blockDefinition != null) {
             Registries.JAVA_ENTITY_TYPES.get().remove(blockDefinition.type(), blockDefinition);
             GeyserRegistries.removeEntity("minecraft:block_display", blockDefinition);
+        }
+        if (frameDefinition != null) {
+            Registries.JAVA_ENTITY_TYPES.get().replace(frameDefinition.type(), frameDefinition, VanillaEntities.ITEM_FRAME);
+            GeyserRegistries.replaceEntity("minecraft:item_frame", frameDefinition, VanillaEntities.ITEM_FRAME);
+        }
+        if (glowFrameDefinition != null) {
+            Registries.JAVA_ENTITY_TYPES.get().replace(glowFrameDefinition.type(), glowFrameDefinition, VanillaEntities.GLOW_ITEM_FRAME);
+            GeyserRegistries.replaceEntity("minecraft:glow_item_frame", glowFrameDefinition, VanillaEntities.GLOW_ITEM_FRAME);
         }
         if (droppedDefinition != null) {
             Registries.JAVA_ENTITY_TYPES.get().replace(droppedDefinition.type(), droppedDefinition, VanillaEntities.ITEM);

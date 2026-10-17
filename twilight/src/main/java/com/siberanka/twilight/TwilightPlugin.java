@@ -433,8 +433,8 @@ public final class TwilightPlugin extends JavaPlugin {
             for (String issue : runtimeCollection.issues()) operationLog.warn("provider-api", issue);
             operationLog.info("operation-complete", "deferred until the provider reports its items");
             operationRunning.set(false);
-            getLogger().info("Automatic build waits for a content plugin to finish loading: "
-                    + runtimeCollection.issues().getFirst());
+            getLogger().info("Automatic build waits until a content plugin lists its items (" + runtimeCollection.issues().getFirst()
+                    + "); its next load or reload starts the build, and /twilight convert shows the details.");
             return;
         }
         // Decided once per build: the proxy's statement can change while the build runs.
