@@ -67,13 +67,21 @@ tasks.processResources {
 
 tasks.jar {
     archiveFileName = "Twilight.jar"
-    from(rootProject.file("LICENSE")) { rename { "LICENSE_Twilight" } }
-    from(rootProject.file("NOTICE")) { rename { "NOTICE_Twilight" } }
     manifest.attributes(
         "Implementation-Title" to "Twilight",
         "Implementation-Version" to project.version,
-        "Implementation-Vendor" to "siberanka"
+        "Implementation-Vendor" to "siberanka",
+        "Implementation-URL" to "https://github.com/siberanka/Twilight",
+        "Bundle-License" to "LicenseRef-Twilight-License; link=META-INF/LICENSE"
     )
+}
+
+// Every JAR (plugin and sources) carries the license and the required notice where tools look for them.
+tasks.withType<Jar>().configureEach {
+    into("META-INF") {
+        from(rootProject.file("LICENSE"))
+        from(rootProject.file("NOTICE"))
+    }
 }
 
 tasks.test {
