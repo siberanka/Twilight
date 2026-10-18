@@ -36,7 +36,7 @@ final class PngImages {
         IOException strictFailure = null;
         try {
             BufferedImage image = ImageIO.read(new ByteArrayInputStream(bytes));
-            if (image != null) return image;
+            if (image != null) return grayAsStored(image);
         } catch (IOException | RuntimeException failure) {
             strictFailure = failure instanceof IOException io ? io : new IOException(failure.getMessage(), failure);
         }
@@ -51,6 +51,32 @@ final class PngImages {
             if (strictFailure != null) failure.addSuppressed(strictFailure);
             throw failure;
         }
+    }
+
+    /**
+     * ImageIO gives grayscale PNGs a linear gray colour space, so {@code getRGB} brightens them (stored 100 reads as
+     * 168). Java uses the stored values as sRGB, like every other texture: copy them as they are.
+     */
+    static BufferedImage grayAsStored(BufferedImage image) {
+        var model = image.getColorModel();
+        if (model.getColorSpace().getType() != java.awt.color.ColorSpace.TYPE_GRAY) return image;
+        var raster = image.getRaster();
+        int bands = raster.getNumBands();
+        int grayBits = model.getComponentSize(0), alphaBits = bands > 1 ? model.getComponentSize(1) : 8;
+        BufferedImage result = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        for (int y = 0; y < image.getHeight(); y++) for (int x = 0; x < image.getWidth(); x++) {
+            int gray = eightBits(raster.getSample(x, y, 0), grayBits);
+            int alpha = bands > 1 ? eightBits(raster.getSample(x, y, 1), alphaBits) : 255;
+            result.setRGB(x, y, alpha << 24 | gray << 16 | gray << 8 | gray);
+        }
+        return result;
+    }
+
+    private static int eightBits(int sample, int bits) {
+        if (bits == 8) return sample & 0xFF;
+        if (bits > 8) return (sample >>> (bits - 8)) & 0xFF;
+        int max = (1 << bits) - 1;
+        return max == 0 ? 0 : sample * 255 / max;
     }
 
     static boolean isPng(byte[] bytes) {
