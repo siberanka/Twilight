@@ -92,7 +92,7 @@ public final class GeyserDeploymentService {
                                 + (retired.isEmpty() ? "" : " Moved " + retired.size() + " stale Twilight file(s) out of Geyser to "
                                 + dataDirectory.relativize(retired.getFirst().to().getParent().getParent()) + ": "
                                 + String.join(", ", retired.stream().map(com.siberanka.twilight.geyser.StaleFiles.Retired::file).toList()) + ".")
-                                + (restart ? " Restart the server to activate changed Geyser item mappings, display variants or player heads; geyser reload is insufficient." : ""), restart);
+                                + (restart ? " Restart the server to activate changed " + registered() + "; geyser reload is insufficient." : ""), restart);
             } catch (Exception failure) {
                 if (publicationStarted) {
                     for (String relative : artifacts.keySet()) Files.deleteIfExists(resolveTarget(geyser, relative));
@@ -143,7 +143,7 @@ public final class GeyserDeploymentService {
             boolean restart = mappingsChanged(geyser);
             return new DeploymentResult(true, geyser, selected, restored.stringPropertyNames().stream().sorted().toList(),
                     "Restored Geyser snapshot " + selected.getFileName()
-                            + (restart ? "; restart the server to activate changed Geyser item mappings, display variants or player heads." : ""), restart);
+                            + (restart ? "; restart the server to activate changed " + registered() + "." : ""), restart);
         } finally {
             lock.unlock();
         }
@@ -174,6 +174,11 @@ public final class GeyserDeploymentService {
             now.remove(DISPLAY_INDEX_KEY);
         }
         return !before.equals(now);
+    }
+
+    /** What Geyser registers only when it starts. */
+    private String registered() {
+        return liveDisplayVariants ? "custom items, blocks or player heads" : "custom items, blocks, display variants or player heads";
     }
 
     private static final String DISPLAY_INDEX_KEY = "packs/twilight.zip!twilight/display-index-v2.json";
