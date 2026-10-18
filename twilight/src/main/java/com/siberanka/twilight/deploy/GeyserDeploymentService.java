@@ -86,7 +86,7 @@ public final class GeyserDeploymentService {
                 keep.addAll(artifacts.keySet());
                 var retired = com.siberanka.twilight.geyser.StaleFiles.retire(geyser, geyser.resolve("packs"), keep,
                         dataDirectory.resolve("retired"));
-                boolean restart = !retired.isEmpty() || !startupMappings.get(geyser).equals(mappingHashes(geyser));
+                boolean restart = !retired.isEmpty() || mappingsChanged(geyser);
                 return new DeploymentResult(true, geyser, snapshot, List.copyOf(artifacts.keySet()),
                         "Deployed " + artifacts.size() + " Twilight files; retained " + config.backupsToKeep() + " Geyser snapshots."
                                 + (retired.isEmpty() ? "" : " Moved " + retired.size() + " stale Twilight file(s) out of Geyser to "
@@ -140,7 +140,7 @@ public final class GeyserDeploymentService {
             restoreSnapshot(geyser, selected);
             Properties restored = readProperties(selected.resolve("deployment.properties"));
             storeManifest(restored);
-            boolean restart = !startupMappings.get(geyser).equals(mappingHashes(geyser));
+            boolean restart = mappingsChanged(geyser);
             return new DeploymentResult(true, geyser, selected, restored.stringPropertyNames().stream().sorted().toList(),
                     "Restored Geyser snapshot " + selected.getFileName()
                             + (restart ? "; restart the server to activate changed Geyser item mappings, display variants or player heads." : ""), restart);
@@ -156,6 +156,27 @@ public final class GeyserDeploymentService {
             return stream.filter(Files::isDirectory).sorted(Comparator.comparing(Path::getFileName).reversed()).toList();
         }
     }
+
+    private volatile boolean liveDisplayVariants;
+
+    /**
+     * With {@code true}, sessions take the display variants of the pack they load ({@code LivePacks}), so a changed
+     * display index no longer needs Geyser's start.
+     */
+    public void liveDisplayVariants(boolean live) {
+        liveDisplayVariants = live;
+    }
+
+    private boolean mappingsChanged(Path geyser) throws IOException {
+        Map<String, String> before = new LinkedHashMap<>(startupMappings.get(geyser)), now = new LinkedHashMap<>(mappingHashes(geyser));
+        if (liveDisplayVariants) {
+            before.remove(DISPLAY_INDEX_KEY);
+            now.remove(DISPLAY_INDEX_KEY);
+        }
+        return !before.equals(now);
+    }
+
+    private static final String DISPLAY_INDEX_KEY = "packs/twilight.zip!twilight/display-index-v2.json";
 
     private void captureStartupMappings(Path geyser) throws IOException {
         if (!startupMappings.containsKey(geyser)) startupMappings.put(geyser, mappingHashes(geyser));

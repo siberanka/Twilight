@@ -64,6 +64,8 @@ public final class TwilightPlugin extends JavaPlugin {
     private GeyserDeploymentService deployment;
     private ProviderHookManager providerHooks;
     private AutoCloseable displayBridge;
+    /** Sends Bedrock players the pack deployed when they join; null when Geyser's start-up pack is all there is. */
+    private com.siberanka.twilight.integration.pack.LivePacks livePacks;
     private com.siberanka.twilight.integration.text.GeyserTextLayoutBridge textBridge;
     private com.siberanka.twilight.integration.world.GeyserBiomeBridge biomeBridge;
     private com.siberanka.twilight.integration.display.GeyserRiderNames riderNames;
@@ -227,9 +229,23 @@ public final class TwilightPlugin extends JavaPlugin {
         });
         loadServices();
         if (getServer().getPluginManager().getPlugin("Geyser-Spigot") != null) {
+            if (config.sendPackToBedrock()) {
+                try {
+                    livePacks = com.siberanka.twilight.integration.pack.LivePacks.start(this, servedPack(),
+                            getDataFolder().toPath().resolve("live-packs"), getLogger());
+                    deployment.liveDisplayVariants(true);
+                } catch (Exception | LinkageError failure) {
+                    getLogger().log(Level.WARNING, "Bedrock players get the Twilight pack Geyser loaded at its start; "
+                            + "a new build reaches them after Geyser reloads.", failure);
+                }
+            }
             try {
-                displayBridge = com.siberanka.twilight.integration.display.GeyserDisplayBridge.forPack(this,
-                        servedPack(), getLogger(), itemDisplayModels());
+                var live = livePacks;
+                displayBridge = live == null
+                        ? com.siberanka.twilight.integration.display.GeyserDisplayBridge.forPack(this, servedPack(),
+                                getLogger(), itemDisplayModels())
+                        : new com.siberanka.twilight.integration.display.GeyserDisplayBridge(this, live::index, getLogger(),
+                                itemDisplayModels() || !live.index(null).isEmpty());
             } catch (Exception | LinkageError failure) {
                 getLogger().log(Level.SEVERE, "Live item-display bridge is unavailable; model animation parity is not supported.", failure);
             }
@@ -266,9 +282,11 @@ public final class TwilightPlugin extends JavaPlugin {
             }
             if (config.javaTextLayout()) {
                 try {
-                    textBridge = com.siberanka.twilight.integration.text.GeyserTextLayoutBridge.create(this,
-                            servedPack(), getLogger(),
-                            config.javaTextSurfaces());
+                    textBridge = livePacks == null
+                            ? com.siberanka.twilight.integration.text.GeyserTextLayoutBridge.create(this,
+                                    servedPack(), getLogger(), config.javaTextSurfaces())
+                            : com.siberanka.twilight.integration.text.GeyserTextLayoutBridge.create(this,
+                                    livePacks.layouts(), getLogger(), config.javaTextSurfaces());
                 } catch (Exception | LinkageError failure) {
                     getLogger().log(Level.SEVERE, "Java text layout is unavailable; Bedrock chest titles of a pack "
                             + "built with the layout will be misplaced. Rebuild with ui.java-text-layout: false.", failure);
@@ -388,6 +406,10 @@ public final class TwilightPlugin extends JavaPlugin {
         if (textBridge != null) {
             try { textBridge.close(); }
             catch (Exception failure) { getLogger().log(Level.WARNING, "Could not close text layout", failure); }
+        }
+        if (livePacks != null) {
+            try { livePacks.close(); }
+            catch (RuntimeException | LinkageError failure) { getLogger().log(Level.WARNING, "Could not close live packs", failure); }
         }
         if (displayBridge != null) {
             try { displayBridge.close(); }
@@ -1052,6 +1074,13 @@ public final class TwilightPlugin extends JavaPlugin {
     }
 
     private void reloadGeyser(OperationLog operationLog, DeploymentResult deploymentResult) throws Exception {
+        var live = livePacks;
+        if (live != null && deploymentResult.success()) {
+            // Players who join from now on get this pack (and its display variants); nobody is disconnected.
+            live.prepare();
+            if (languageBridge != null) languageBridge.refresh();
+            operationLog.info("live-pack", "Bedrock players get the new pack when they join");
+        }
         if (deploymentResult.restartRequired()) {
             operationLog.warn("geyser-restart-required", deploymentResult.message());
             pendRestart();
@@ -1059,6 +1088,10 @@ public final class TwilightPlugin extends JavaPlugin {
         }
         if (!config.reloadAfterDeploy()) {
             operationLog.info("geyser-reload", "disabled by configuration");
+            return;
+        }
+        if (live != null) {
+            operationLog.info("geyser-reload", "not needed: the pack is offered to each joining player");
             return;
         }
         operationLog.info("geyser-reload", "dispatching console command: geyser reload");
