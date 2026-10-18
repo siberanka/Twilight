@@ -317,7 +317,15 @@ public final class TwilightPlugin extends JavaPlugin {
         registered.setExecutor(command);
         registered.setTabCompleter(command);
         getServer().getServicesManager().register(TwilightApi.class, new Api(), this, ServicePriority.Normal);
-        providerHooks = new ProviderHookManager(this, reason -> scheduleProviderBuild(reason, config.startupDelayTicks()));
+        providerHooks = new ProviderHookManager(this, reason -> {
+            String provider = reason.substring(0, Math.max(0, reason.indexOf(':')));
+            if (packPending.contains(provider)) {
+                // Its other events (items loaded) come before the pack exists; the pack event builds.
+                if (!reason.contains("PackGenerated")) return;
+                packPending.remove(provider);
+            }
+            scheduleProviderBuild(reason, config.startupDelayTicks());
+        });
         getServer().getPluginManager().registerEvents(new AutomationListener(), this);
         for (org.bukkit.plugin.Plugin installed : getServer().getPluginManager().getPlugins()) providerHooks.register(installed);
         configureUpdates();
@@ -344,9 +352,30 @@ public final class TwilightPlugin extends JavaPlugin {
             getLogger().log(Level.WARNING, "Could not watch item displays; every custom item gets a display model.", failure);
         }
         if (config.autoBuildOnStartup()) {
-            scheduleBuild("startup", config.startupDelayTicks());
+            // Oraxen and Nexo write their pack again at every start, after Twilight's start-up delay: a build before
+            // that reads half of it and changes the Bedrock items twice (a needless restart prompt). Their
+            // "pack generated" event starts the build instead; without it, the start-up build runs a bit later.
+            for (String provider : PACK_AT_START) {
+                // Installed is enough: one that enables after Twilight writes its pack later still.
+                if (getServer().getPluginManager().getPlugin(provider) != null) packPending.add(provider);
+            }
+            if (packPending.isEmpty()) scheduleBuild("startup", config.startupDelayTicks());
+            else {
+                getLogger().info("Start-up build waits for " + String.join(" and ", packPending) + " to write its pack.");
+                scheduler.delayed(() -> {
+                    if (packPending.isEmpty()) return;
+                    getLogger().info(String.join(" and ", packPending) + " wrote no pack within 3 minutes; building with its files as they are.");
+                    packPending.clear();
+                    scheduleBuild("startup", 1L);
+                }, PACK_AT_START_TICKS);
+            }
         }
     }
+
+    /** Content plugins that regenerate their pack at every start (asynchronously, after enabling). */
+    private static final java.util.List<String> PACK_AT_START = java.util.List.of("Oraxen", "Nexo");
+    private static final long PACK_AT_START_TICKS = 3600L;
+    private final java.util.Set<String> packPending = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     /**
      * Items appeared in item displays for the first time: the next build gives them display models. A minute's
@@ -1175,13 +1204,15 @@ public final class TwilightPlugin extends JavaPlugin {
     private final class AutomationListener implements Listener {
         @EventHandler
         public void onServerLoaded(ServerLoadEvent event) {
-            if (config.autoBuildOnStartup()) scheduleBuild("server loaded", config.startupDelayTicks());
+            if (config.autoBuildOnStartup() && packPending.isEmpty()) scheduleBuild("server loaded", config.startupDelayTicks());
         }
 
         @EventHandler
         public void onPluginEnabled(PluginEnableEvent event) {
             int hooks = providerHooks.register(event.getPlugin());
-            if (hooks > 0) scheduleProviderBuild(event.getPlugin().getName() + " enabled", config.startupDelayTicks());
+            if (hooks > 0 && !packPending.contains(event.getPlugin().getName())) {
+                scheduleProviderBuild(event.getPlugin().getName() + " enabled", config.startupDelayTicks());
+            }
         }
 
         @EventHandler(priority = org.bukkit.event.EventPriority.MONITOR)
