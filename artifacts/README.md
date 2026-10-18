@@ -1,4 +1,4 @@
-# Twilight 1.0.0-beta.5 build
+# Twilight 1.0.0-beta.6 build
 
 > Türkçe: [aşağıda](#türkçe)
 
@@ -8,7 +8,7 @@
 
 Built locally by siberanka using Java 25.0.2 and Gradle 9.6.0, with
 `:twilight:build :twilight-proxy:build --offline --no-daemon --no-configuration-cache`.
-352 tests across 61 suites passed. No hosted CI was used.
+365 tests across 63 suites passed. No hosted CI was used.
 
 The corresponding source is in this commit under `twilight/`, `twilight-proxy/` and `protocol/`, with build files
 at the repository root. Licensed under the [Twilight License](../LICENSE) (the PolyForm Noncommercial
@@ -23,7 +23,7 @@ Install the same version of both JARs and restart once after the first build.
 
 ## Türkçe
 
-### Twilight 1.0.0-beta.5 derlemesi
+### Twilight 1.0.0-beta.6 derlemesi
 
 [Twilight.jar indir](Twilight.jar?raw=true) | [SHA-256](Twilight.jar.sha256) (arka uç sunucuları)
 
@@ -31,7 +31,7 @@ Install the same version of both JARs and restart once after the first build.
 
 siberanka tarafından Java 25.0.2 ve Gradle 9.6.0 ile yerel olarak
 `:twilight:build :twilight-proxy:build --offline --no-daemon --no-configuration-cache`
-komutuyla derlendi. 61 paketteki 352 test geçti. Barındırılan CI kullanılmadı.
+komutuyla derlendi. 63 paketteki 365 test geçti. Barındırılan CI kullanılmadı.
 
 İlgili kaynak kod bu commit içinde `twilight/`, `twilight-proxy/` ve `protocol/` altında, derleme
 dosyaları depo kökündedir. [Twilight License](../LICENSE) ile (ek koşullarla birlikte PolyForm

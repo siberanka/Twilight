@@ -1,6 +1,40 @@
-# Twilight 1.0.0-beta.5
+# Twilight 1.0.0-beta.6
 
 > Türkçe: [aşağıda](#türkçe)
+
+**Worn armour and Java's poses.** Custom armour now shows on Bedrock players, armour stands and mobs: equipment
+assets of CraftEngine, Oraxen and 1.21.2+ packs, ItemsAdder's leather-coloured armour and dyed equipment. Hats,
+wings and other wearable items can be equipped by Bedrock players too. Asymmetric models no longer show their
+east and west faces swapped, items worn on the head face forward, held 3D models keep Java's first person pose,
+models with inverted elements (CraftEngine's globe) draw the right faces and furniture in invisible item frames
+stands upright.
+
+**Blocks and textures.** CraftEngine and ItemsAdder blocks built on mushroom block states show their own look
+instead of a vanilla mushroom, and grayscale textures keep their shade.
+
+**Fewer restarts.** A new build reaches Bedrock players who join afterwards without a restart and without
+`geyser reload` (which disconnected every Bedrock player): new textures and models, and the models of furniture
+seen for the first time. New custom items, blocks and player heads still need one restart, as Geyser registers
+them only when it starts. Oraxen and Nexo servers are no longer asked to restart after every restart.
+
+**Tested** on Leaf 26.3 and Leaf 1.21.4 with ItemsAdder 5.0.0-beta-2, CraftEngine 26.9 and Oraxen 1.220, Geyser
+2.12 and Floodgate, comparing Java 1.21.4 and Bedrock captures of items, tools, armour, blocks, ores and furniture
+in first and third person, and with 300 item displays and 300 dropped 3D items around the players.
+
+Test server: `oyna.twilightnw.com`.
+
+Update both JARs and restart the server and the proxy once.
+
+The [JARs and SHA-256 files](artifacts/) were built locally under siberanka using Java 25; 365 tests
+across 63 suites passed. Both JARs carry `LICENSE` and `NOTICE` in `META-INF`. No hosted CI was run.
+
+Runtime requirements: Java 21+, Paper/Folia/Spigot 1.21.4+, Geyser with custom content enabled;
+for twilight-proxy, Velocity or BungeeCord with Geyser on the proxy. The runtime bridges target
+Geyser 2.11.3 and 2.12.0; other Geyser core versions require validation.
+
+The notes below describe the previous beta.
+
+## Twilight 1.0.0-beta.5
 
 **Geyser 2.12 and CraftEngine.** Twilight now runs on Geyser 2.12 as well as 2.11: item and block displays,
 dropped 3D items and the network layer work on both. CraftEngine's content converts like ItemsAdder's: bows,
@@ -156,7 +190,43 @@ Geyser 2.11.3; other Geyser core versions require validation.
 
 ## Türkçe
 
-### Twilight 1.0.0-beta.5
+### Twilight 1.0.0-beta.6
+
+**Giyilen zırhlar ve Java'nın duruşları.** Özel zırhlar artık Bedrock oyuncularında, zırh askılarında ve
+moblarda görünür: CraftEngine'in, Oraxen'in ve 1.21.2+ paketlerinin ekipman varlıkları, ItemsAdder'ın deri
+renkli zırhları ve boyanmış ekipman. Şapkaları, kanatları ve diğer giyilebilir eşyaları Bedrock oyuncuları da
+kuşanabilir. Asimetrik modellerin doğu ve batı yüzleri artık yer değiştirmez, başa giyilen eşyalar öne bakar,
+elde tutulan 3B modeller Java'nın birinci şahıs duruşunu korur, ters öğeli modeller (CraftEngine'in küresi) doğru
+yüzleri çizer ve görünmez eşya çerçevelerindeki mobilyalar dik durur.
+
+**Bloklar ve dokular.** Mantar bloğu durumları üzerine kurulan CraftEngine ve ItemsAdder blokları vanilla mantar
+yerine kendi görünümlerini gösterir; gri tonlu dokular tonlarını korur.
+
+**Daha az yeniden başlatma.** Yeni bir derleme, sonradan giren Bedrock oyuncularına yeniden başlatma ve (tüm
+Bedrock oyuncularının bağlantısını koparan) `geyser reload` olmadan ulaşır: yeni dokular ve modeller ile ilk kez
+görülen mobilyaların modelleri. Yeni özel eşyalar, bloklar ve oyuncu kafaları, Geyser onları yalnızca açılışta
+kaydettiği için hâlâ bir yeniden başlatma gerektirir. Oraxen ve Nexo sunucularından artık her yeniden başlatmadan
+sonra yeni bir yeniden başlatma istenmez.
+
+**Test edildi:** Leaf 26.3 ve Leaf 1.21.4 üzerinde ItemsAdder 5.0.0-beta-2, CraftEngine 26.9 ve Oraxen 1.220,
+Geyser 2.12 ve Floodgate ile; eşyaların, aletlerin, zırhların, blokların, madenlerin ve mobilyaların Java 1.21.4
+ve Bedrock görüntüleri birinci ve üçüncü şahısta karşılaştırıldı, oyuncuların çevresinde 300 eşya görüntüsü ve
+300 düşen 3B eşyayla da denendi.
+
+Test sunucusu: `oyna.twilightnw.com`.
+
+İki JAR'ı da güncelleyin ve sunucuyu ve proxy'yi bir kez yeniden başlatın.
+
+[JAR'lar ve SHA-256 dosyaları](artifacts/) siberanka adına Java 25 ile yerelde derlendi; 63 paketteki
+365 test geçti. İki JAR da `META-INF` içinde `LICENSE` ve `NOTICE` taşır. Barındırılan CI çalıştırılmadı.
+
+Çalışma zamanı gereksinimleri: Java 21+, Paper/Folia/Spigot 1.21.4+, özel içeriği açık Geyser; twilight-proxy
+için proxy'de Geyser bulunan Velocity veya BungeeCord. Çalışma zamanı köprüleri Geyser 2.11.3 ve 2.12.0'ı
+hedefler; diğer Geyser çekirdek sürümleri doğrulama gerektirir.
+
+Aşağıdaki notlar önceki betayı anlatır.
+
+#### Twilight 1.0.0-beta.5
 
 **Geyser 2.12 ve CraftEngine.** Twilight artık 2.11'in yanında Geyser 2.12'de de çalışır: eşya ve blok
 görüntüleri, düşen 3B eşyalar ve ağ katmanı ikisinde de çalışır. CraftEngine'in içeriği ItemsAdder'ınki gibi
