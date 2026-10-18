@@ -41,6 +41,9 @@ sources:
 geyser:
   directory: auto
   deploy-after-build: true
+  # Bedrock players who join after a build get the new pack (and the models of furniture seen for the first
+  # time) without Geyser reloading. Only where that cannot run (Geyser too old for it) Twilight runs
+  # "geyser reload" after a build, which disconnects Bedrock players; false never does.
   reload-after-deploy: true
   backups-to-keep: 3
   # Let Geyser send the pack to Bedrock players. Every build is also written to
@@ -69,7 +72,8 @@ geyser:
   # The pack is rebuilt by itself when that changes.
   item-display-models: auto
   # Which items get those models. seen: the items this server has shown in item displays (learned as
-  # chunks load, kept in displayed-items.txt; a newly seen item is added by the next build) and every
+  # chunks load, kept in displayed-items.txt; a newly seen item is added by the next build, which Bedrock
+  # players joining afterwards get without a restart) and every
   # ModelEngine and BetterModel bone; all: every custom item. A client builds every model while loading.
   item-display-variants: seen
   # Custom blocks of content plugins (ItemsAdder's and CraftEngine's ores and blocks on note blocks, mushroom
