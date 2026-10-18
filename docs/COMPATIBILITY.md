@@ -68,7 +68,7 @@ and Geyser item mappings) for a proxy Geyser or another plugin that sends the pa
 | ItemsAdder contents/data/cache/generated packs/API | Implemented | The generated output pack (what Java players download) outranks authored roots and data/cache, which fill gaps. A leftover folder without the plugin, or a pack the settings do not send while another provider sends one, only fills gaps. First-load, load-data, and pack-compressed events are observed. |
 | CraftEngine resources/cache/generated packs/API | Implemented | `generated/resource_pack.zip` (which also merges CustomNameplates and BetterModel output) outranks the working folders when CraftEngine sends it. `loadedItems`, reload, and pack-generation events are supported; richer component mapping remains in progress. |
 | CustomNameplates and BetterHUD packs | Implemented | Discovered as resource packs; their font images take part in the text layout. Layered boss bar backgrounds and shifted text match Java; ridden players hide their own Bedrock name and the name tag box is hidden (`ui.nametag-background: auto`). Hex gradients use Bedrock's 28 text colours. |
-| Nexo/Oraxen packs/API | Implemented | Standard item assets implemented; Nexo's vanilla asset cache is ignored and its delivery settings are read. Oraxen array registries and item-load/pack events are supported, while version-specific API failures fall back to files and are logged. Nexo was verified from files; no test server runs the plugin. |
+| Nexo/Oraxen packs/API | Implemented | Standard item assets implemented; Nexo's vanilla asset cache is ignored and its delivery settings are read. Oraxen array registries and item-load/pack events are supported, while version-specific API failures fall back to files and are logged. Nexo was verified from files; no test server runs the plugin. Oraxen 1.220 is verified live on Leaf 26.3 and 1.21.4: items, display-entity furniture, custom blocks and worn equipment. |
 | BetterModel/ModelEngine generated packs | Partial | Models follow every Java item display (pose, interpolation, display context) on a backend's Geyser and on the proxy's Geyser, including models sent only as packets. Bones get display models without Bedrock items. Verified live with BetterModel and ModelEngine MythicMobs mobs through Velocity; phone performance with many animated models is not measured. |
 | Standalone `.bbmodel` sources | Discovered | Source discovery does not imply independent rig/animation conversion; generated Java item assets are currently required. |
 | RealisticSeasons pack layers and seasons | Implemented | Pack is indexed as a seasonal layer. Its seasonal biomes are read from the server registry; the current season's looks get exact Bedrock biome slots first, a season change rebuilds the pack, and biome updates reach Bedrock players without a rejoin. RealisticSeasons' data and packets are not changed. |
@@ -104,7 +104,7 @@ Open release gates:
 - Exact GUI rendering for complex 3D models rather than source-texture fallback icons.
 - Animated `.mcmeta` to Bedrock flipbook conversion (only the first authored frame currently exports).
 - Full visual hand-pose parity, especially first-person framing and complex provider models; see the [real-content review](REAL_CONTENT_REVIEW.md).
-- Live acceptance of every provider/version state matrix, including fishing lines, 3D bow/crossbow state transitions, shields, tridents/spears, armor, and elytra.
+- Live acceptance of every provider/version state matrix, including fishing lines, 3D bow/crossbow state transitions, shields, tridents/spears and elytra (worn armour is verified with ItemsAdder, CraftEngine and Oraxen on 26.3 and 1.21.4).
 - Component-rich runtime definitions and creative/recipe presentation for every provider version.
 
 ## Other custom content
@@ -227,7 +227,7 @@ Geyser eşya eşlemeleri) dışa aktarılır.
 | ItemsAdder contents/data/cache/üretilmiş paketler/API | Uygulandı | Üretilen çıktı paketi (Java oyuncularının indirdiği) yazarın kök dizinlerinin ve data/cache'in önüne geçer; onlar boşlukları doldurur. Eklentisi olmayan kalıntı bir klasör veya başka bir sağlayıcı paket gönderirken ayarların göndermediği bir paket yalnızca boşlukları doldurur. İlk yükleme, veri yükleme ve paket sıkıştırma olayları izlenir. |
 | CraftEngine resources/cache/üretilmiş paketler/API | Uygulandı | CraftEngine gönderdiğinde `generated/resource_pack.zip` (CustomNameplates ve BetterModel çıktısını da birleştirir) çalışma klasörlerinin önüne geçer. `loadedItems`, yeniden yükleme ve paket üretim olayları desteklenir; daha zengin bileşen eşlemesi sürüyor. |
 | CustomNameplates ve BetterHUD paketleri | Uygulandı | Kaynak paketi olarak keşfedilir; font görselleri yazı yerleşimine katılır. Katmanlı boss çubuğu arka planları ve kaydırılmış yazı Java ile eşleşir; binilen oyuncular kendi Bedrock adlarını gizler ve ad etiketi kutusu gizlenir (`ui.nametag-background: auto`). Hex gradyanlar Bedrock'un 28 yazı rengini kullanır. |
-| Nexo/Oraxen paketleri/API | Uygulandı | Standart eşya varlıkları uygulandı; Nexo'nun vanilla varlık önbelleği yok sayılır ve teslim ayarları okunur. Oraxen dizi kayıtları ve eşya yükleme/paket olayları desteklenir; sürüme özgü API hataları dosyalara geri düşer ve günlüğe yazılır. Nexo dosyalardan doğrulandı; hiçbir test sunucusu eklentiyi çalıştırmıyor. |
+| Nexo/Oraxen paketleri/API | Uygulandı | Standart eşya varlıkları uygulandı; Nexo'nun vanilla varlık önbelleği yok sayılır ve teslim ayarları okunur. Oraxen dizi kayıtları ve eşya yükleme/paket olayları desteklenir; sürüme özgü API hataları dosyalara geri düşer ve günlüğe yazılır. Nexo dosyalardan doğrulandı; hiçbir test sunucusu eklentiyi çalıştırmıyor. Oraxen 1.220, Leaf 26.3 ve 1.21.4 üzerinde canlı doğrulandı: eşyalar, görüntü varlığı mobilyalar, özel bloklar ve giyilen ekipman. |
 | BetterModel/ModelEngine üretilmiş paketleri | Kısmi | Modeller her Java eşya görüntüsünü (poz, ara geçiş, görüntü bağlamı) arka ucun Geyser'ında ve proxy'nin Geyser'ında izler; yalnızca paket olarak gönderilen modeller de dahil. Kemikler Bedrock eşyası olmadan görüntü modeli alır. BetterModel ve ModelEngine MythicMobs moblarıyla Velocity üzerinden canlı doğrulandı; çok sayıda animasyonlu modelle telefon başarımı ölçülmedi. |
 | Bağımsız `.bbmodel` kaynakları | Keşfedildi | Kaynak keşfi bağımsız iskelet/animasyon dönüşümü anlamına gelmez; şu an üretilmiş Java eşya varlıkları gereklidir. |
 | RealisticSeasons paket katmanları ve mevsimler | Uygulandı | Paket mevsimsel katman olarak dizinlenir. Mevsimsel biyomları sunucu kayıt defterinden okunur; geçerli mevsimin görünümleri önce birebir Bedrock biyom yuvaları alır, mevsim değişikliği paketi yeniden derler ve biyom güncellemeleri Bedrock oyuncularına yeniden katılmadan ulaşır. RealisticSeasons'ın verileri ve paketleri değiştirilmez. |
@@ -270,8 +270,9 @@ Açık sürüm kapıları:
   dışa aktarılır).
 - Özellikle birinci şahıs çerçeveleme ve karmaşık sağlayıcı modellerinde tam görsel el pozu eşdeğerliği;
   [gerçek içerik incelemesine](REAL_CONTENT_REVIEW.md) bakın.
-- Olta ipleri, 3B yay/arbalet durum geçişleri, kalkanlar, üç dişli mızraklar/mızraklar, zırh ve elytra
-  dahil her sağlayıcı/sürüm durum matrisinin canlı kabulü.
+- Olta ipleri, 3B yay/arbalet durum geçişleri, kalkanlar, üç dişli mızraklar/mızraklar ve elytra dahil her
+  sağlayıcı/sürüm durum matrisinin canlı kabulü (giyilen zırhlar ItemsAdder, CraftEngine ve Oraxen ile 26.3 ve
+  1.21.4 üzerinde doğrulandı).
 - Her sağlayıcı sürümü için bileşen zengini çalışma zamanı tanımları ve yaratıcı/tarif sunumu.
 
 #### Diğer özel içerik

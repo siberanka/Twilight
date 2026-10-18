@@ -53,9 +53,10 @@ are in the [reports](docs/); limits per feature are in [docs/COMPATIBILITY.md](d
 
 1. Put `Twilight.jar` in `plugins/` next to Geyser-Spigot and start the server.
 2. Nothing has to be configured. After the server and the content plugins have loaded, Twilight
-   finds their packs, builds the Bedrock pack, deploys it to Geyser and reloads Geyser.
-3. Bedrock players receive the pack the next time they join. When item mappings changed, the
-   console asks for one restart, because Geyser registers items only at startup.
+   finds their packs, builds the Bedrock pack and deploys it to Geyser.
+3. Bedrock players receive the pack the next time they join; nobody is disconnected and Geyser is not
+   reloaded. When custom items, blocks or player heads changed, the console asks for one restart,
+   because Geyser registers them only at startup.
 
 ### A network with a proxy
 
@@ -194,7 +195,7 @@ flow mappings are only read and checked, never changed.
 |---|---|---|
 | `directory` | `auto` | Geyser's data folder; `auto` finds `plugins/Geyser-*` |
 | `deploy-after-build` | `true` | Deploy each successful build |
-| `reload-after-deploy` | `true` | Run `geyser reload` after deploying when no restart is required |
+| `reload-after-deploy` | `true` | Only where Twilight cannot offer each joining Bedrock player the current pack (a Geyser without the session pack event): run `geyser reload` after deploying when no restart is required. Otherwise Geyser is never reloaded, as that disconnects every Bedrock player |
 | `backups-to-keep` | `3` | Geyser snapshots kept for `/twilight rollback` (1-20) |
 | `send-pack-to-bedrock` | `true` | Let Geyser send the pack; `false` when a proxy or another plugin sends `export/Twilight.mcpack` |
 | `retire-stale-files` | `true` | Move Twilight files this server does not own (older versions, copies, sync tools) out of the local Geyser to `plugins/Twilight/retired/`, at start before Geyser loads them and after every deployment |
@@ -475,8 +476,9 @@ well.
 - **Only what is shown.** With `item-display-variants: seen` (the default), items get a display model
   once they appear in an item display: Twilight learns them as chunks load and as displays spawn, and
   twilight-proxy reports the ones its players saw that the pack could not show yet (displays sent only
-  as packets never exist on the server). The next build, at most a minute later, adds them; the list is
-  kept in `displayed-items.txt`. ModelEngine and BetterModel bones always get one.
+  as packets never exist on the server). The next build, at most a minute later, adds them, and Bedrock
+  players who join after it see them without a restart; the list is kept in `displayed-items.txt`.
+  ModelEngine and BetterModel bones always get one.
 - **Bones without items.** Model bones only appear in displays, so they get no Bedrock item, attachable
   or icon: the pack is smaller and Geyser registers fewer items.
 - **On a proxy network.** Twilight on each backend learns from twilight-proxy that it shows item
@@ -868,6 +870,7 @@ by hand once. `/twilight status` and `/twilightproxy` show the result of the las
 | `reports/content-report.json` | The last scan's discovery report |
 | `reports/menus.json` | The menus players opened and how Bedrock gets their titles (`/twilight menus`) |
 | `deployment.properties` | Files Twilight owns in Geyser's folder, with hashes |
+| `live-packs/` | The last three deployed packs, offered to Bedrock players who join after a build (Geyser keeps sending the pack it loaded at start otherwise) |
 | `pack-host/<sha256>.zip` | Copies the [pack host](#pack-hosting) serves; cleared at start, removed when unused |
 | `displayed-items.txt` | Items, blocks and heads this server showed in displays (one key per line, at most 20000) |
 | `player-heads.txt` | Player head skins (hashes) and user names this server showed or its plugins name (at most 4096) |
@@ -1032,7 +1035,7 @@ the receiver's clock; messages larger than 30128 bytes are dropped unread.
 | Symptom | Check |
 |---|---|
 | Bedrock players get no pack | `/twilight status`; `plugins/Twilight/logs/`; `geyser.send-pack-to-bedrock` |
-| "Restart the server to activate changed Geyser item mappings" | Geyser registers items at startup; restart once |
+| "Restart the server to activate changed custom items, blocks or player heads" | Geyser registers them at startup; restart once. Other changes reach Bedrock players when they next join |
 | A build is not published | `build/current/build-report.json` → `problems`; strict builds keep the last good pack |
 | `auto` packs never arrive on the proxy | `/twilightproxy` shows "auto packs off": set the same `secret` on both sides or use modern forwarding |
 | Backend: "Geyser is not on this server (normal when it runs on the proxy)" | Expected on a proxy network; it says whether the pack is shared with twilight-proxy. "pack sharing ... is off" means no shared secret was found: set `proxy.secret` (and `secret` on the proxy) or use BungeeGuard / Velocity forwarding |
@@ -1132,9 +1135,10 @@ Bu sayfa yöneticiler ve eklenti geliştiricileri için başvuru kaynağıdır. 
 
 1. `Twilight.jar` dosyasını Geyser-Spigot'un yanına, `plugins/` içine koyun ve sunucuyu başlatın.
 2. Hiçbir şeyin yapılandırılması gerekmez. Sunucu ve içerik eklentileri yüklendikten sonra Twilight
-   paketlerini bulur, Bedrock paketini derler, Geyser'a dağıtır ve Geyser'ı yeniden yükler.
-3. Bedrock oyuncuları paketi bir sonraki katılışlarında alır. Eşya eşlemeleri değiştiyse konsol bir kez
-   yeniden başlatma ister, çünkü Geyser eşyaları yalnızca açılışta kaydeder.
+   paketlerini bulur, Bedrock paketini derler ve Geyser'a dağıtır.
+3. Bedrock oyuncuları paketi bir sonraki katılışlarında alır; kimsenin bağlantısı kopmaz ve Geyser yeniden
+   yüklenmez. Özel eşyalar, bloklar veya oyuncu kafaları değiştiyse konsol bir kez yeniden başlatma ister,
+   çünkü Geyser bunları yalnızca açılışta kaydeder.
 
 ##### Proxy'li bir ağ
 
@@ -1277,7 +1281,7 @@ yalnızca okunur ve denetlenir, asla değiştirilmez.
 |---|---|---|
 | `directory` | `auto` | Geyser'ın veri klasörü; `auto` `plugins/Geyser-*` klasörünü bulur |
 | `deploy-after-build` | `true` | Her başarılı derlemeyi dağıtır |
-| `reload-after-deploy` | `true` | Yeniden başlatma gerekmediğinde dağıtımdan sonra `geyser reload` çalıştırır |
+| `reload-after-deploy` | `true` | Yalnızca Twilight'ın katılan her Bedrock oyuncusuna güncel paketi sunamadığı yerde (oturum paket olayı olmayan bir Geyser): yeniden başlatma gerekmediğinde dağıtımdan sonra `geyser reload` çalıştırır. Aksi hâlde Geyser hiç yeniden yüklenmez, çünkü bu tüm Bedrock oyuncularının bağlantısını koparır |
 | `backups-to-keep` | `3` | `/twilight rollback` için saklanan Geyser anlık görüntüleri (1-20) |
 | `send-pack-to-bedrock` | `true` | Paketi Geyser'ın göndermesine izin verir; bir proxy veya başka bir eklenti `export/Twilight.mcpack` dosyasını gönderiyorsa `false` |
 | `retire-stale-files` | `true` | Bu sunucunun sahip olmadığı Twilight dosyalarını (eski sürümler, kopyalar, eşitleme araçları) açılışta Geyser onları yüklemeden önce ve her dağıtımdan sonra yerel Geyser'dan `plugins/Twilight/retired/` klasörüne taşır |
@@ -1561,8 +1565,8 @@ hareket eder. Eklentilerin yalnızca paket olarak gönderdiği görüntüler de 
   göründükleri anda bir görüntü modeli alır: Twilight onları yığınlar yüklenirken ve görüntüler doğarken
   öğrenir, twilight-proxy da oyuncularının gördüğü ama paketin henüz gösteremediği eşyaları bildirir
   (yalnızca paket olarak gönderilen görüntüler sunucuda hiç var olmaz). En geç bir dakika sonraki derleme
-  onları ekler; liste `displayed-items.txt` içinde tutulur. ModelEngine ve BetterModel kemikleri her zaman
-  bir model alır.
+  onları ekler ve ondan sonra giren Bedrock oyuncuları onları yeniden başlatma olmadan görür; liste
+  `displayed-items.txt` içinde tutulur. ModelEngine ve BetterModel kemikleri her zaman bir model alır.
 - **Eşyasız kemikler.** Model kemikleri yalnızca görüntülerde görünür; bu yüzden Bedrock eşyası, eklentisi
   (attachable) veya simgesi olmaz: paket küçülür ve Geyser daha az eşya kaydeder.
 - **Proxy'li bir ağda.** Her arka uçtaki Twilight, twilight-proxy'den eşya görüntülerini gösterdiğini öğrenir
@@ -1961,6 +1965,7 @@ izler. Önceki geliştirme derlemeleri 1.0.0-beta.1'i duyurmaz: onları bir kez 
 | `reports/content-report.json` | Son taramanın keşif raporu |
 | `reports/menus.json` | Oyuncuların açtığı menüler ve Bedrock'un başlıklarını nasıl aldığı (`/twilight menus`) |
 | `deployment.properties` | Twilight'ın Geyser klasöründe sahip olduğu dosyalar, karmalarıyla |
+| `live-packs/` | Dağıtılan son üç paket; bir derlemeden sonra giren Bedrock oyuncularına sunulur (aksi hâlde Geyser açılışta yüklediği paketi göndermeye devam eder) |
 | `pack-host/<sha256>.zip` | [Paket sunucusunun](#paket-sunucusu) sunduğu kopyalar; açılışta temizlenir, kullanılmayınca silinir |
 | `displayed-items.txt` | Bu sunucunun görüntülerde gösterdiği eşyalar, bloklar ve kafalar (satır başına bir anahtar, en fazla 20000) |
 | `player-heads.txt` | Bu sunucunun gösterdiği veya eklentilerinin adını verdiği oyuncu kafası skinleri (hash'ler) ve kullanıcı adları (en fazla 4096) |
@@ -2125,7 +2130,7 @@ içinde olmalıdır; 30128 bayttan büyük mesajlar okunmadan atılır.
 | Belirti | Denetim |
 |---|---|
 | Bedrock oyuncuları paket almıyor | `/twilight status`; `plugins/Twilight/logs/`; `geyser.send-pack-to-bedrock` |
-| "Restart the server to activate changed Geyser item mappings" | Geyser eşyaları açılışta kaydeder; bir kez yeniden başlatın |
+| "Restart the server to activate changed custom items, blocks or player heads" | Geyser bunları açılışta kaydeder; bir kez yeniden başlatın. Diğer değişiklikler Bedrock oyuncularına bir sonraki girişlerinde ulaşır |
 | Bir derleme yayımlanmıyor | `build/current/build-report.json` → `problems`; katı derlemeler son iyi paketi korur |
 | `auto` paketler proxy'ye hiç ulaşmıyor | `/twilightproxy` "auto packs off" gösteriyor: iki tarafta aynı `secret` değerini ayarlayın veya modern yönlendirme kullanın |
 | Arka uç: "Geyser is not on this server (normal when it runs on the proxy)" | Proxy'li ağda beklenir; paketin twilight-proxy ile paylaşılıp paylaşılmadığını söyler. "pack sharing ... is off" paylaşılan bir gizli anahtar bulunmadığı anlamına gelir: `proxy.secret` (ve proxy'de `secret`) ayarlayın veya BungeeGuard / Velocity yönlendirmesi kullanın |

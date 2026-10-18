@@ -4,6 +4,29 @@
 
 All notable changes in Twilight are documented here.
 
+## 1.0.0-beta.6 - 2026-10-18
+
+- Worn custom armour shows on Bedrock players, armour stands and mobs: equipment assets (CraftEngine, Oraxen,
+  1.21.2+ packs) and ItemsAdder's leather-coloured armour get their layers, dyed equipment keeps its colour, and
+  wearable items that are not armour (hats, wings) can be equipped by Bedrock players.
+- Models with inverted elements (`from` larger than `to`, such as CraftEngine's globe) draw the faces Java draws.
+- Faces of asymmetric models are no longer mirrored east to west; items worn on the head face forward and held 3D
+  models keep Java's first person pose, rotation and offset.
+- Furniture in invisible item frames shows its model upright, as on Java.
+- CraftEngine and ItemsAdder blocks on mushroom block states show their own look instead of a vanilla mushroom
+  (Geyser's built-in pack overrode them).
+- Grayscale textures keep their shade (they were much lighter on Bedrock).
+- New builds reach Bedrock players without a restart or `geyser reload`: players who join afterwards get the new
+  pack, including models of furniture seen for the first time. Only new custom items, blocks and player heads
+  still need a restart, and Twilight no longer disconnects Bedrock players by reloading Geyser after a build.
+- 1.21.4 servers: CraftEngine items whose model was only readable through a non-public class are converted again.
+- Oraxen and Nexo: the start-up build waits for the pack they write at every start, so a restart no longer asks
+  for another one. ItemsAdder: builds wait until its items are loaded and look again once it has rewritten its pack.
+- A provider item that cannot be built is reported once as a notice instead of blocking the build; a missing
+  bitmap font texture is a notice, as Java skips that font provider.
+- Worn equipment texture paths stay under the 80 characters some Bedrock platforms accept.
+- The JARs carry `LICENSE` and `NOTICE` in `META-INF`.
+
 ## 1.0.0-beta.5 - 2026-10-17
 
 - Geyser 2.12 support, keeping Geyser 2.11: item and block displays, dropped 3D items, point-cloud adaptation and
@@ -110,6 +133,33 @@ First public beta of Twilight and twilight-proxy.
 ### Değişiklik günlüğü
 
 Twilight'taki tüm önemli değişiklikler burada belgelenir.
+
+#### 1.0.0-beta.6 - 2026-10-18
+
+- Giyilen özel zırhlar Bedrock oyuncularında, zırh askılarında ve moblarda görünür: ekipman varlıkları
+  (CraftEngine, Oraxen, 1.21.2+ paketleri) ve ItemsAdder'ın deri renkli zırhları katmanlarını alır, boyanmış
+  ekipman rengini korur ve zırh olmayan giyilebilir eşyaları (şapkalar, kanatlar) Bedrock oyuncuları da kuşanabilir.
+- Ters öğeli modeller (`from` değeri `to` değerinden büyük, örneğin CraftEngine'in küresi) Java'nın çizdiği
+  yüzleri çizer.
+- Asimetrik modellerin yüzleri artık doğu-batı yönünde aynalanmaz; başa giyilen eşyalar öne bakar ve elde tutulan
+  3B modeller Java'nın birinci şahıs duruşunu, dönüşünü ve kaymasını korur.
+- Görünmez eşya çerçevelerindeki mobilyalar Java'daki gibi modellerini dik gösterir.
+- Mantar bloğu durumlarını kullanan CraftEngine ve ItemsAdder blokları vanilla mantar yerine kendi görünümlerini
+  gösterir (Geyser'ın yerleşik paketi bunları eziyordu).
+- Gri tonlu dokular tonlarını korur (Bedrock'ta çok daha açık görünüyordu).
+- Yeni derlemeler Bedrock oyuncularına yeniden başlatma veya `geyser reload` olmadan ulaşır: sonradan giren
+  oyuncular ilk kez görülen mobilyaların modelleri dahil yeni paketi alır. Yalnızca yeni özel eşyalar, bloklar ve
+  oyuncu kafaları hâlâ yeniden başlatma gerektirir ve Twilight bir derlemeden sonra Geyser'ı yeniden yükleyerek
+  Bedrock oyuncularının bağlantısını artık koparmaz.
+- 1.21.4 sunucuları: modeli yalnızca herkese açık olmayan bir sınıf üzerinden okunabilen CraftEngine eşyaları
+  yeniden dönüştürülür.
+- Oraxen ve Nexo: açılış derlemesi, her açılışta yazdıkları paketi bekler; böylece bir yeniden başlatma artık
+  bir yenisini istemez. ItemsAdder: derlemeler eşyaları yüklenene kadar bekler ve paketini yeniden yazdıktan
+  sonra bir kez daha bakar.
+- Derlenemeyen bir sağlayıcı eşyası derlemeyi durdurmak yerine bir kez bildirim olarak raporlanır; eksik bir
+  bitmap font dokusu, Java o font sağlayıcısını atladığı için bildirimdir.
+- Giyilen ekipman doku yolları, bazı Bedrock platformlarının kabul ettiği 80 karakterin altında kalır.
+- JAR'lar `META-INF` içinde `LICENSE` ve `NOTICE` taşır.
 
 #### 1.0.0-beta.5 - 2026-10-17
 
