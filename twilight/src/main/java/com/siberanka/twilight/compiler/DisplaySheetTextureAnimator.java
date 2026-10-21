@@ -30,7 +30,7 @@ import java.util.TreeMap;
  *
  * Unlike bitmap-search animation fixes, this reads the actual Java model's texture identifiers
  * and each texture's animation metadata. It therefore also works when the first frame is entirely
- * transparent (AzureSet's animations_2.png), or two different animations share a sheet.
+ * transparent, or when two different animations share a sheet.
  * Geometry, transforms, items, and worn armour are not changed.
  */
 final class DisplaySheetTextureAnimator {

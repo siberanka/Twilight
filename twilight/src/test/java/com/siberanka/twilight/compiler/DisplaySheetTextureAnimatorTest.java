@@ -6,69 +6,65 @@ import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Test;
 
 import java.awt.image.BufferedImage;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class DisplaySheetTextureAnimatorTest {
+    /** A generated sprite fixture: nothing is copied from or requires a third-party resource pack. */
     @Test
-    void azureChestUsesRealMcmetaEvenThoughFirstThreeFramesAreTransparent() throws Exception {
-        BufferedImage strip;
-        JsonObject meta;
-        try (InputStream png = getClass().getResourceAsStream("/azureset-animation/animations_2.png");
-             InputStreamReader json = new InputStreamReader(
-                     getClass().getResourceAsStream("/azureset-animation/animations_2.png.mcmeta"))) {
-            assertNotNull(png);
-            strip = PngImages.read(png.readAllBytes());
-            meta = JsonParser.parseReader(json).getAsJsonObject().getAsJsonObject("animation");
+    void transparentLeadingFramesStillAnimateWithinVisibleUvWindow() {
+        // 15 generated 32x32 frames, two ticks each. Initial frames are all transparent.
+        BufferedImage strip = new BufferedImage(32, 32 * 15, BufferedImage.TYPE_INT_ARGB);
+        for (int frame = 6; frame < 15; frame++) {
+            int pixel = 0xff000000 | (frame * 0x010101);
+            for (int y = 0; y < 32; y++) for (int x = 0; x < 32; x++)
+                strip.setRGB(x, frame * 32 + y, pixel);
         }
-        var sprites = DisplaySheetTextureAnimator.parseFrames("azureset:animations/animations_2", strip, meta);
+        JsonObject meta = JsonParser.parseString("{\"frametime\":2}").getAsJsonObject();
+        var sprites = DisplaySheetTextureAnimator.parseFrames("test:animated_fixture", strip, meta);
         assertNotNull(sprites);
         assertEquals(30, sprites.frames().size());
         assertEquals(32, sprites.frames().getFirst().getWidth());
         assertEquals(0, sprites.frames().get(0).getRGB(3, 3) >>> 24);
-        assertEquals(0, sprites.frames().get(4).getRGB(3, 3) >>> 24);
-        boolean frameSixVisible = false;
-        for (int y = 0; y < 32; y++) for (int x = 0; x < 32; x++)
-            frameSixVisible |= (sprites.frames().get(6).getRGB(x, y) >>> 24) != 0;
-        assertTrue(frameSixVisible, "Java animation starts at tick 6; no bitmap match of its first frame is possible");
+        assertEquals(0, sprites.frames().get(8).getRGB(3, 3) >>> 24);
+        assertEquals(0xff060606, sprites.frames().get(12).getRGB(3, 3));
 
-        BufferedImage sheet = new BufferedImage(96, 32, BufferedImage.TYPE_INT_ARGB);
-        for (int y = 0; y < 32; y++) for (int x = 0; x < 96; x++) sheet.setRGB(x, y, 0xff151515);
-        // Only the face at sheet x=48..64 samples the middle 16 pixels of the animated Java sprite.
+        BufferedImage sheet = colour(96, 32, 0xff151515);
         var window = new DisplaySheetTextureAnimator.Rect(48, 0, 64, 32);
         var target = new DisplaySheetTextureAnimator.Rect(40, 0, 72, 32);
         var clip = new DisplaySheetTextureAnimator.Clip(sprites, target, List.of(window));
-        var plan = new DisplaySheetTextureAnimator.Plan("twilight:azure_chest", 3, sheet, List.of(clip), 30);
+        var plan = new DisplaySheetTextureAnimator.Plan("test:animated_furniture", 3, sheet, List.of(clip), 30);
         BufferedImage before = DisplaySheetTextureAnimator.draw(plan, 0);
         BufferedImage after = DisplaySheetTextureAnimator.draw(plan, 12);
-        assertEquals(0, before.getRGB(49, 0) >>> 24); // transparent animation frame
-        assertEquals(0xff151515, before.getRGB(41, 0)); // no modification outside visible UV
+        assertEquals(0, before.getRGB(49, 0) >>> 24);
+        assertEquals(0xff151515, before.getRGB(41, 0));
         assertEquals(0xff151515, after.getRGB(41, 0));
         assertEquals(0xff151515, after.getRGB(10, 10));
-        boolean changed = false;
-        for (int y = 0; y < 32; y++) for (int x = 48; x < 64; x++)
-            changed |= before.getRGB(x, y) != after.getRGB(x, y);
-        assertTrue(changed, "The visible Azure Chest UV region must be updated after its transparent frames");
+        assertEquals(0xff060606, after.getRGB(49, 0));
+        assertEquals(0xff060606, after.getRGB(63, 31));
     }
 
     @Test
-    void azureChestJavaModelReallyUsesTheAnimatedSpriteOnANorthFace() throws Exception {
-        JsonObject model;
-        try (InputStreamReader reader = new InputStreamReader(
-                getClass().getResourceAsStream("/azureset-animation/chest.json"))) {
-            model = JsonParser.parseReader(reader).getAsJsonObject();
-        }
-        assertEquals("azureset:animations/animations_2", model.getAsJsonObject("textures").get("1").getAsString());
+    void modelSelectsCorrectAnimatedSpriteFromFaceTextureReference() {
+        // Entire synthetic model, including sprite name and UVs, constructed in this test.
+        JsonObject model = JsonParser.parseString("""
+                {
+                    "textures": {"0": "test:static", "1": "test:animated_fixture"},
+                    "elements": [{
+                        "faces": {
+                            "north": {"texture": "#1", "uv": [1, 1, 15, 15]},
+                            "south": {"texture": "#0", "uv": [0, 0, 16, 16]}
+                        }
+                    }]
+                }
+                """).getAsJsonObject();
+        assertEquals("test:animated_fixture", model.getAsJsonObject("textures").get("1").getAsString());
         int linkedFaces = 0;
         for (var element : model.getAsJsonArray("elements")) {
             JsonObject faces = element.getAsJsonObject().getAsJsonObject("faces");
-            if (faces == null) continue;
             for (var face : faces.entrySet()) {
-                if (!face.getValue().getAsJsonObject().has("texture")
-                        || !"#1".equals(face.getValue().getAsJsonObject().get("texture").getAsString())) continue;
+                if (!"#1".equals(face.getValue().getAsJsonObject().get("texture").getAsString())) continue;
                 assertEquals("north", face.getKey());
                 JsonArray uv = face.getValue().getAsJsonObject().getAsJsonArray("uv");
                 assertEquals(1.0, uv.get(0).getAsDouble());
