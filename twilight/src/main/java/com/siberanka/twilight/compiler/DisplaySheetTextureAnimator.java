@@ -122,10 +122,24 @@ final class DisplaySheetTextureAnimator {
                         TextureSet atlas = TextureSet.atlas(resources, sprites, vanilla);
                         BufferedImage source = PngImages.read(atlas.png());
                         String safe = id.contains(":") ? id.substring(id.indexOf(':') + 1) : id;
-                        JsonObject originalGeo = optionalJson(files, "models/entity/geometry." + safe + ".geo.json");
+                        // Rebuild the model's original display geometry, including its exact face UVs.
+                        // This works for both normal furniture and display-only ModelEngine/BetterModel bones:
+                        // the latter have no standalone models/entity/geometry.* file in sheet format v2.
+                        // Compare the generated face UVs against the final sheet face UVs, never infer the
+                        // translation from PNG pixels (a valid first frame may be completely transparent).
+                        JsonObject originalGeo = BedrockPackCompiler.displayGeometry("animation_probe", model, atlas);
                         int[] origin = geometryOffset(originalGeo, geo, ordinal % parts, source, image);
-                        if (origin == null) origin = imageOffset(source, image, faces, atlas, animated);
-                        if (origin == null) { diagnostic(diagnostics, id, "atlas_origin_ambiguous", 0); continue; }
+                        if (origin == null) {
+                            // Compatibility with any source variant rewritten by another local rendering pass.
+                            JsonObject writtenGeo = optionalJson(files, "models/entity/geometry." + safe + ".geo.json");
+                            if (writtenGeo != null) origin = geometryOffset(writtenGeo, geo, ordinal % parts, source, image);
+                        }
+                        if (origin == null) {
+                            // Only for block/vanilla variants whose source geometry was baked differently.
+                            // Do not require bitmap matching for normal furniture or model bones.
+                            origin = imageOffset(source, image, faces, atlas, animated);
+                        }
+                        if (origin == null) { diagnostic(diagnostics, id, "atlas_origin_unresolved", 0); continue; }
                         List<Clip> clips = new ArrayList<>();
                         for (Map.Entry<String, AnimatedSprite> animation : animated.entrySet()) {
                             TextureSet.Region region = atlas.region(animation.getKey());
@@ -273,7 +287,13 @@ final class DisplaySheetTextureAnimator {
         }
         if (linked == 0) return null;
         int x = (int) Math.round(dx), y = (int) Math.round(dy);
-        return matches(atlas, base, x, y) ? new int[]{x, y} : null;
+        // Face UVs give an exact transform independent of alpha, palettes or sprite recycling.
+        // A bitmap equality test would reject valid geometry when another repair changed the
+        // first-frame pixels, defeating the purpose of using the geometry as provenance.
+        if (Math.abs(x - dx) > 0.01 || Math.abs(y - dy) > 0.01) return null;
+        if (x < 0 || y < 0 || x + atlas.getWidth() > base.getWidth()
+                || y + atlas.getHeight() > base.getHeight()) return null;
+        return new int[]{x, y};
     }
 
     /** Fallback for display-only model bones with no standalone attachable geometry. */
