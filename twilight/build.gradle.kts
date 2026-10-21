@@ -16,10 +16,12 @@ dependencies {
     // Item-display translation is not exposed by Geyser's public API yet.
     // Pin the adapter to a reviewed core build; never bundle Geyser classes.
     compileOnly("org.geysermc.geyser:core:2.11.3-20260925.135253-13")
-    // Bukkit's YAML for the configuration checks.
-    testImplementation("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT") { isTransitive = false }
+    // Paper test types need their runtime dependencies for executable Mockito/Bukkit tests.
+    testImplementation("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
+    // Preserve upstream YAML and Guava dependencies, plus the local Mockito tests.
     testImplementation("org.yaml:snakeyaml:2.2")
     testImplementation("com.google.guava:guava:33.3.1-jre") { isTransitive = false }
+    testImplementation("org.mockito:mockito-core:5.24.0")
     // Title layout tests drive the reflective Adventure bridge with unrelocated components.
     testImplementation("net.kyori:adventure-api:4.17.0")
     // Text surface tests rewrite real protocol packets.
@@ -38,6 +40,8 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:5.14.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("com.google.code.gson:gson:2.11.0")
+    // Run public-API-only Elytra bridge regression tests without bundling Geyser in Twilight.jar.
+    testImplementation("org.geysermc.geyser:api:2.11.2-SNAPSHOT")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

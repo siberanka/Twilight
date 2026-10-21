@@ -6,6 +6,8 @@ package com.siberanka.twilight;
 
 import com.siberanka.twilight.config.TwilightConfig;
 import com.siberanka.twilight.compiler.BedrockPackCompiler;
+import com.siberanka.twilight.compiler.ElytraVanillaFlightBridge;
+import com.siberanka.twilight.geyser.ArmorItemComponents;
 import com.siberanka.twilight.compiler.BuildResult;
 import com.siberanka.twilight.compiler.ConversionException;
 import com.siberanka.twilight.api.TwilightApi;
@@ -351,6 +353,9 @@ public final class TwilightPlugin extends JavaPlugin {
         } catch (RuntimeException | LinkageError failure) {
             getLogger().log(Level.WARNING, "Could not watch item displays; every custom item gets a display model.", failure);
         }
+        // Bedrock armour and Elytra features from the local snapshot.
+        ArmorItemComponents.start(this);
+        ElytraVanillaFlightBridge.start(this);
         if (config.autoBuildOnStartup()) {
             // Oraxen and Nexo write their pack again at every start, after Twilight's start-up delay: a build before
             // that reads half of it and changes the Bedrock items twice (a needless restart prompt). Their
@@ -446,6 +451,8 @@ public final class TwilightPlugin extends JavaPlugin {
         }
         getServer().getServicesManager().unregisterAll(this);
         if (worker != null) worker.shutdownNow();
+        ArmorItemComponents.stop(this);
+        ElytraVanillaFlightBridge.stop();
     }
 
     private void loadServices() {

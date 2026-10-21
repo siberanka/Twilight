@@ -1,6 +1,8 @@
 /* Copyright (c) 2026 siberanka. Twilight License (PolyForm Noncommercial 1.0.0 + terms), see LICENSE. */
 package com.siberanka.twilight.integration.text;
 
+import com.siberanka.twilight.integration.TranslatorChainGuard;
+
 import com.google.gson.JsonParser;
 import com.siberanka.twilight.text.LayerEncoding;
 import com.siberanka.twilight.text.TextLayout;
@@ -169,8 +171,9 @@ public final class GeyserTextLayoutBridge implements AutoCloseable {
                 missing.add(surface.type.getSimpleName());
                 continue;
             }
-            // Already in the chain (another Twilight part wrapped it since): stays where it is.
-            if (!com.siberanka.twilight.geyser.TranslatorChain.installed(current, surface)) {
+            // Keep the upstream typed-chain check and the local compatibility guard.
+            if (!com.siberanka.twilight.geyser.TranslatorChain.installed(current, surface)
+                    && !TranslatorChainGuard.contains(current, surface)) {
                 surface.original = current;
                 translators.put(surface.type, surface);
             }
@@ -335,7 +338,7 @@ public final class GeyserTextLayoutBridge implements AutoCloseable {
                                                    TextLayoutTable table) throws ReflectiveOperationException {
         // Bedrock's own pocket layout keeps its centred native title; only glyph substitution applies there.
         // A pack whose pocket chest screens use the Java layout lays their titles out like desktop ones.
-        var profile = session.getClientData() == null ? null : session.getClientData().getUiProfile();
+        var profile = session.getClientData() == null ? null : SafeUiProfile.get(session.getClientData());
         boolean pocket = profile != null && "POCKET".equals(profile.toString()) && !table.pocketJavaLayout();
         if (!pocket && table.plainTitles() && TextSurfaces.CHEST_SCREENS.contains(packet.getType())) {
             return chestTitle(session, packet, table);

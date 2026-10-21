@@ -129,10 +129,6 @@ test-material/
 # Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
 !gradle-wrapper.jar
 
-# Deliberately published local build; private fixture archives stay ignored.
-!/artifacts/Twilight.jar
-!/artifacts/TwilightProxy.jar
-
 # Editor workspace settings
 .vscode/
 

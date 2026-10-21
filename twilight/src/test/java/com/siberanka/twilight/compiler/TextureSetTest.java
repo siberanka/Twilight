@@ -24,15 +24,15 @@ class TextureSetTest {
         texture();
         Path data = cacheVanillaTexture();
         try (ResourceIndex index = index(); VanillaAssetCache vanilla = new VanillaAssetCache(data, "26.2", false)) {
-            TextureSet atlas = TextureSet.atlas(index, List.of("minecraft:block/fire_0"), vanilla);
+            TextureSet atlas = TextureSet.atlas(index, List.of("minecraft:block/water_still"), vanilla);
             assertEquals(8, atlas.height());
             assertEquals(Color.BLUE.getRGB(), ImageIO.read(new ByteArrayInputStream(atlas.png())).getRGB(0,0));
-            assertEquals(Color.BLUE.getRGB(), TextureSet.layeredIcon(index, List.of("minecraft:block/fire_0"), vanilla).getRGB(0,0));
+            assertEquals(Color.BLUE.getRGB(), TextureSet.layeredIcon(index, List.of("minecraft:block/water_still"), vanilla).getRGB(0,0));
             // A texture that exists in no pack is Java's missing texture, recorded for the build report.
             TextureSet.MISSING_FILES.get().clear();
-            var missing = TextureSet.atlas(index, List.of("unknown:block/fire_0"), vanilla);
+            var missing = TextureSet.atlas(index, List.of("unknown:block/water_still"), vanilla);
             assertEquals(0xFF000000, ImageIO.read(new ByteArrayInputStream(missing.png())).getRGB(0, 0));
-            assertTrue(TextureSet.MISSING_FILES.get().contains("unknown:block/fire_0"));
+            assertTrue(TextureSet.MISSING_FILES.get().contains("unknown:block/water_still"));
         }
     }
 
@@ -40,11 +40,11 @@ class TextureSetTest {
     void customVanillaTextureDoesNotInheritLowerPriorityAnimationMetadata() throws Exception {
         texture();
         Path data = cacheVanillaTexture();
-        Path custom = root.resolve("assets/minecraft/textures/block/fire_0.png");
+        Path custom = root.resolve("assets/minecraft/textures/block/water_still.png");
         Files.createDirectories(custom.getParent());
         Files.copy(root.resolve("assets/demo/textures/item/test.png"), custom);
         try (ResourceIndex index = index(); VanillaAssetCache vanilla = new VanillaAssetCache(data, "26.2", false)) {
-            TextureSet atlas = TextureSet.atlas(index, List.of("minecraft:block/fire_0"), vanilla);
+            TextureSet atlas = TextureSet.atlas(index, List.of("minecraft:block/water_still"), vanilla);
             assertEquals(16, atlas.height());
             assertEquals(Color.RED.getRGB(), ImageIO.read(new ByteArrayInputStream(atlas.png())).getRGB(0,0));
         }
@@ -55,10 +55,10 @@ class TextureSetTest {
         Path cache = Files.createDirectories(data.resolve("cache/vanilla/26.2"));
         Path jar = cache.resolve("client.jar");
         try (var zip = new java.util.zip.ZipOutputStream(Files.newOutputStream(jar))) {
-            zip.putNextEntry(new java.util.zip.ZipEntry("assets/minecraft/textures/block/fire_0.png"));
+            zip.putNextEntry(new java.util.zip.ZipEntry("assets/minecraft/textures/block/water_still.png"));
             zip.write(Files.readAllBytes(root.resolve("assets/demo/textures/item/test.png")));
             zip.closeEntry();
-            zip.putNextEntry(new java.util.zip.ZipEntry("assets/minecraft/textures/block/fire_0.png.mcmeta"));
+            zip.putNextEntry(new java.util.zip.ZipEntry("assets/minecraft/textures/block/water_still.png.mcmeta"));
             zip.write("{\"animation\":{\"frames\":[1,0]}}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
             zip.closeEntry();
         }

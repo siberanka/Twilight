@@ -1,6 +1,8 @@
 /* Copyright (c) 2026 siberanka. Twilight License (PolyForm Noncommercial 1.0.0 + terms), see LICENSE. */
 package com.siberanka.twilight.integration.display;
 
+import com.siberanka.twilight.integration.TranslatorChainGuard;
+
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataTypes;
 import org.geysermc.geyser.api.GeyserApi;
 import org.geysermc.geyser.api.event.EventRegistrar;
@@ -73,7 +75,9 @@ public final class GeyserRiderNames implements AutoCloseable {
         var translators = Registries.JAVA_PACKET_TRANSLATORS.get();
         for (Hook<?> hook : hooks) {
             PacketTranslator<? extends Packet> current = translators.get(hook.type);
-            if (current == null || com.siberanka.twilight.geyser.TranslatorChain.installed(current, hook)) continue;
+            // Both adapters may be installed in chains: handle typed links and local compatibility links.
+            if (current == null || com.siberanka.twilight.geyser.TranslatorChain.installed(current, hook)
+                    || TranslatorChainGuard.contains(current, hook)) continue;
             hook.original = current;
             translators.put(hook.type, hook);
         }

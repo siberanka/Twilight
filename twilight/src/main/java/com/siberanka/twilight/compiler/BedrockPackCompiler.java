@@ -252,7 +252,7 @@ public final class BedrockPackCompiler {
                         ResolvedJavaModel stateModel = dynamicWeapon.states().get(state);
                         GeometryBounds bounds = geometryBounds(stateModel);
                         packFiles.put("models/entity/geometry." + stateSafe + ".geo.json",
-                                jsonBytes(geometry(stateSafe, stateModel, atlas, bounds)));
+                                jsonBytes(ConvertedFirstPersonPatch.rewriteGeometry(geometry(stateSafe, stateModel, atlas, bounds), stateModel)));
                         packFiles.put("animations/" + stateSafe + ".animation.json",
                                 jsonBytes(animations(stateSafe, stateModel)));
                     }
@@ -274,7 +274,7 @@ public final class BedrockPackCompiler {
                     icon = TextureSet.png(GuiIconRenderer.render(model, atlas, geometryElements(model)));
                     packFiles.put("textures/twilight/" + safe + "_icon.png", icon);
                     packFiles.put("models/entity/geometry." + safe + ".geo.json",
-                            jsonBytes(geometry(safe, model, atlas, bounds)));
+                            jsonBytes(ConvertedFirstPersonPatch.rewriteGeometry(geometry(safe, model, atlas, bounds), model)));
                     packFiles.put("animations/" + safe + ".animation.json",
                             jsonBytes(animations(safe, model)));
                     packFiles.put("attachables/" + safe + ".json",
@@ -309,7 +309,8 @@ public final class BedrockPackCompiler {
                         ? "textures/twilight/" + safe + "_icon" : texturePath);
                 textureData.add(iconKey, iconEntry);
                 CustomItemDescriptor.Equipment equipment = worn.get(selectorKey(candidate));
-                addMapping(mappedItems, candidate, identifier, iconKey, model.handheld(), equipment);
+                addMapping(mappedItems, candidate, identifier, iconKey,
+                        HandheldMappingFix.displayHandheld(model, resources, candidate, vanillaAssets), equipment);
                 if (equipment != null && equipment.assetId().isPresent()) {
                     wear(resources, vanillaAssets, candidate, identifier, safe, equipment, packFiles, notices);
                 }
@@ -332,6 +333,7 @@ public final class BedrockPackCompiler {
             }
         }
         TextureSet.MISSING_FILES.remove();
+        ContextualItemFix.apply(resources, resolver, candidates, vanillaAssets, packFiles, textureData, mappedItems, notices);
 
         if (itemDisplays) for (String key : new java.util.TreeSet<>(displayedOwn)) {
             try {
@@ -475,8 +477,59 @@ public final class BedrockPackCompiler {
         JsonObject mappings = new JsonObject();
         mappings.addProperty("format_version", 2);
         mappings.add("items", mappedItems);
+        mappings = GeyserMappingsRepair.clean(mappings);
         // twilight-proxy reads the mappings from the pack it receives and registers them with the proxy's Geyser.
         packFiles.put(PACK_MAPPINGS, jsonBytes(mappings));
+        BedrockAnimationBridge.repair(resources, candidates, packFiles);
+        FirstPersonSwingBridge.install(packFiles, mappings);
+        NativeSpearBridge.apply(packFiles);
+        NativeSpearBridge.syncMapping(packFiles, mappings);
+        BowDrawRuntimeFix.repair(resources, candidates, packFiles);
+        RangedWeaponAnimationBridge.install(packFiles);
+        JavaGuiIconSelectionBridge.install(resources, packFiles);
+        DynamicWeaponTextureAnimationBridge.install(resources, candidates, packFiles);
+        JavaItemTextureRepair.apply(resources, candidates, packFiles, vanillaAssets);
+        ArmorAndFishingRodRepair.apply(resources, candidates, packFiles);
+        // Local shader-atlas armor must win over the upstream generic wearable for
+        // the same Bedrock item. Keep the upstream wearable for every item that
+        // does not have an actual local shader-atlas armor conversion.
+        preferLocalShaderArmor(packFiles);
+        ArmorVisibilityRepair.apply(packFiles);
+        ArmorColorFallbackRepair.apply(resources, candidates, packFiles);
+        ArmorFixedColumnBridge.apply(resources, candidates, packFiles);
+        ArmorBakedTintRepair.apply(packFiles);
+        ArmorLegacyCleanup.apply(packFiles);
+        BowHandheldRepair.apply(resources, packFiles);
+        ArmorBowRegressionRepair.apply(resources, packFiles);
+        ArmorBakedTintRepair.apply(packFiles);
+        ArmorLegacyCleanup.apply(packFiles);
+        ArmorBowRegressionRepair.pruneAfterBake(packFiles);
+        Reference2DBowRepair.apply(packFiles);
+        VanillaBowDrawRepair.apply(packFiles);
+        VanillaFishingRodReferenceRepair.apply(packFiles);
+        FishingRod3DCastLineRepair.apply(packFiles);
+        Reference3DRangedHoldRepair.apply(packFiles);
+        VanillaFullChargeBowVibrationRepair.apply(packFiles);
+        Restore3DBowBasisRepair.apply(packFiles);
+        ReferenceTridentHoldRepair.apply(packFiles, resources);
+        NativeTridentAliasMappingRepair.apply(packFiles, resources);
+        VanillaTridentWieldRepair.apply(packFiles);
+        UniformTridentModelAlignmentRepair.apply(packFiles);
+        Reverse3DBowDrawDepthRepair.apply(packFiles);
+        BowArrowAndStringDrawRepair.apply(packFiles);
+        BowIdleStringUvRepair.apply(packFiles);
+        Crossbow3DProjectileAlignmentRepair.apply(packFiles);
+        AnimatedAtlasVisibilityRepair.apply(packFiles);
+        ElytraVanillaWearablePackRepair.apply(packFiles, resources);
+        ElytraWornBindingRepair.apply(packFiles);
+        // Final pass: Geyser's default for custom items is allow_offhand=true.
+        // Respect Bedrock's native restrictions using the underlying Java base item,
+        // not the custom sprite/model or item name.
+        com.siberanka.twilight.geyser.BedrockOffhandPolicy.apply(packFiles);
+        // Keep the upstream worn-equipment binding consistent with the final
+        // Geyser item mapping, after local armor repairs have finished. This
+        // leaves locally generated .json/.player.json armor attachables alone.
+        repairWornEquipmentBindings(packFiles);
         minifyJson(packFiles);
         packFiles.put("manifest.json", jsonBytes(manifest(packFiles)));
         packFiles.put("README.txt", ("Generated by Twilight. Converted " + converted + " of " + candidates.size() +
@@ -488,7 +541,8 @@ public final class BedrockPackCompiler {
         Files.createDirectories(staging.resolve("custom_mappings"));
         Path pack = staging.resolve("pack.zip");
         writeZip(pack, packFiles);
-        Files.write(staging.resolve("custom_mappings/geyser_item_mappings.json"), jsonBytes(mappings));
+        BowHandheldRepair.writeFinalMapping(staging.resolve("custom_mappings/geyser_item_mappings.json"),
+                jsonBytes(mappings), new java.nio.file.OpenOption[0], packFiles);
         JsonObject report = new JsonObject();
         report.addProperty("candidates", candidates.size());
         report.addProperty("converted", converted);
@@ -517,11 +571,12 @@ public final class BedrockPackCompiler {
         report.addProperty("language_strings", languages.strings());
         report.addProperty("vanilla_override", config.vanillaOverride());
         Files.write(staging.resolve("build-report.json"), jsonBytes(report));
-        validate(pack, mappings, converted - displayOnly);
+        // Predicate cleanup can remove invalid definitions. Display-only models never create item mappings.
+        validate(pack, mappings, GeyserMappingsRepair.validatedDefinitionCount(mappings, converted - displayOnly));
         deleteTree(current.resolveSibling("previous"));
         if (Files.exists(current)) Files.move(current, current.resolveSibling("previous"), StandardCopyOption.REPLACE_EXISTING);
-        Files.move(staging, current, StandardCopyOption.REPLACE_EXISTING);
-        deleteTree(current.resolveSibling("previous"));
+        WindowsBuildPublishRepair.publish(staging, current, new java.nio.file.CopyOption[]{StandardCopyOption.REPLACE_EXISTING});
+        WindowsBuildPublishRepair.cleanupOldBuild(current.resolveSibling("previous"));
         return new BuildResult(current, candidates.size(), converted, threeDimensional, fonts.glyphs(), fonts.pages(),
                 fonts.vanillaFallbackTextures(),
                 fonts.namedFonts(), fonts.namedGlyphs(),
@@ -559,7 +614,7 @@ public final class BedrockPackCompiler {
         manifest.addProperty("format_version", 2);
         manifest.add("header", headerJson);
         JsonArray modules = new JsonArray(); modules.add(moduleJson); manifest.add("modules", modules);
-        return manifest;
+        return JavaItemTextureRepair.requireEngine(manifest, contentWithoutManifest);
     }
 
     static List<String> flatLayers(ResolvedJavaModel model) {
@@ -1043,7 +1098,7 @@ public final class BedrockPackCompiler {
     }
 
     private static JsonObject animations(String safe, ResolvedJavaModel model) {
-        if (model.parts().isEmpty()) return animations(safe, model.display());
+        if (model.parts().isEmpty()) return animationsForModel(safe, model.display(), model);
         JsonObject result = null;
         for (int i = 0; i < model.parts().size(); i++) {
             JsonObject part = animations(safe, model.parts().get(i).display());
@@ -1064,8 +1119,8 @@ public final class BedrockPackCompiler {
         JsonObject firstLeft = transform(display, "firstperson_lefthand", firstRight);
         JsonObject thirdRight = transform(display, "thirdperson_righthand", null);
         JsonObject thirdLeft = transform(display, "thirdperson_lefthand", thirdRight);
-        definitions.add("animation.twilight." + safe + ".first_person_right", animation(mapFirst(firstRight)));
-        definitions.add("animation.twilight." + safe + ".first_person_left", animation(mapFirst(
+        definitions.add("animation.twilight." + safe + ".first_person_right", animation(mapFirstConvertedRight(firstRight)));
+        definitions.add("animation.twilight." + safe + ".first_person_left", animation(mapFirstConvertedLeft(
                 mirror(firstLeft))));
         definitions.add("animation.twilight." + safe + ".third_person_right", animation(mapThird(thirdRight)));
         definitions.add("animation.twilight." + safe + ".third_person_left", animation(mapThird(
@@ -1091,14 +1146,9 @@ public final class BedrockPackCompiler {
 
     private static MappedTransform mapFirst(JsonObject transform) {
         double[] t = vector(transform.getAsJsonArray("translation"), 0, 0, 0), r = vector(transform.getAsJsonArray("rotation"), 0, 0, 0), s = vector(transform.getAsJsonArray("scale"), 1, 1, 1);
-        // Java applies translation, then rotation in its view frame. The bone frame is that frame turned by
-        // FIRST_PERSON_VIEW with x mirrored, so the rotation is conjugated by the mirror (y and z signs flip).
-        Quaternion view = FIRST_PERSON_VIEW;
-        Quaternion q = view.mirrorX().inverse().mul(Quaternion.axis(r[0], 1, 0, 0)).mul(Quaternion.axis(-r[1], 0, 1, 0))
-                .mul(Quaternion.axis(-r[2], 0, 0, 1));
-        double[] offset = view.inverse().rotate(new double[]{t[0] + FIRST_PERSON_OFFSET[0], t[1] + FIRST_PERSON_OFFSET[1],
-                t[2] + FIRST_PERSON_OFFSET[2]});
-        return new MappedTransform(new double[]{offset[0], 12.5 + offset[1], -offset[2]}, q.eulerXYZ(), s);
+        // Local authored first-person item position and orientation are intentional; do not override.
+        Quaternion q = Quaternion.axis(-90, 1, 0, 0).mul(Quaternion.axis(r[0], 0, 0, 1)).mul(Quaternion.axis(r[1], 1, 0, 0)).mul(Quaternion.axis(-r[2], 0, 1, 0));
+        return new MappedTransform(new double[]{-t[1], 15.0 + t[2], t[0]}, q.eulerXYZ(), s);
     }
 
     private static MappedTransform mapThird(JsonObject transform) {
@@ -1252,6 +1302,113 @@ public final class BedrockPackCompiler {
         root.addProperty("format_version", "1.8.0");
         root.add("render_controllers", controllers);
         return root;
+    }
+
+
+    /**
+     * Local shader-atlas armor renders dyed/animated armor with its own player and
+     * humanoid attachables. Upstream's generic equipment renderer writes a second
+     * attachable with the same identifier and a .worn.json suffix; loading two
+     * definitions for one item makes the chosen appearance resource-order dependent.
+     * Only remove that competing definition for armor actually converted by the
+     * local shader-atlas converter. All other upstream wearables stay untouched.
+     */
+    static int preferLocalShaderArmor(Map<String, byte[]> packFiles) {
+        byte[] reportBytes = packFiles.get("twilight/armor-conversion.json");
+        if (reportBytes == null) return 0;
+        JsonObject report = JsonParser.parseString(new String(reportBytes, StandardCharsets.UTF_8)).getAsJsonObject();
+        JsonArray converted = report.getAsJsonArray("items");
+        if (converted == null) return 0;
+        int removed = 0;
+        for (JsonElement element : converted) {
+            if (!element.isJsonObject()) continue;
+            JsonObject item = element.getAsJsonObject();
+            if (!item.has("identifier") || !item.get("identifier").isJsonPrimitive()) continue;
+            String identifier = item.get("identifier").getAsString();
+            if (!identifier.startsWith("twilight:")) continue;
+            String suffix = identifier.substring("twilight:".length());
+            // Do not suppress an upstream wearable unless the local shader
+            // converter actually emitted its own humanoid attachable.
+            if (!packFiles.containsKey("attachables/" + suffix + ".json")) continue;
+            if (packFiles.remove("attachables/" + suffix + ".worn.json") != null) removed++;
+        }
+        return removed;
+    }
+
+    /**
+     * Reconciles an upstream generic worn attachable with its final custom item
+     * identifier. Its description can survive conversion while the item selector
+     * is missing or still refers to an earlier key, leaving the wearable
+     * unbound. Do not touch Twilight's shader-atlas armor attachables: those are
+     * named .json and .player.json, not .worn.json.
+     */
+    static int repairWornEquipmentBindings(Map<String, byte[]> packFiles) {
+        byte[] mappingBytes = packFiles.get(PACK_MAPPINGS);
+        if (mappingBytes == null) return 0;
+        JsonObject definitions;
+        try {
+            definitions = JsonParser.parseString(new String(mappingBytes, StandardCharsets.UTF_8))
+                    .getAsJsonObject().getAsJsonObject("items");
+        } catch (RuntimeException malformed) {
+            return 0;
+        }
+        if (definitions == null) return 0;
+
+        Map<String, String> equipmentSlots = new LinkedHashMap<>();
+        for (Map.Entry<String, JsonElement> entry : definitions.entrySet()) {
+            if (!entry.getValue().isJsonArray()) continue;
+            for (JsonElement definition : entry.getValue().getAsJsonArray()) {
+                if (!definition.isJsonObject()) continue;
+                JsonObject mapping = definition.getAsJsonObject();
+                if (!mapping.has("bedrock_identifier") || !mapping.has("components")) continue;
+                JsonObject components = mapping.getAsJsonObject("components");
+                if (components == null || !components.has("minecraft:equippable")) continue;
+                JsonObject equippable = components.getAsJsonObject("minecraft:equippable");
+                if (equippable == null || !equippable.has("slot")) continue;
+                String identifier = mapping.get("bedrock_identifier").getAsString();
+                String slot = equippable.get("slot").getAsString();
+                if (identifier.startsWith("twilight:") &&
+                        (slot.equals("head") || slot.equals("chest") || slot.equals("legs") || slot.equals("feet"))) {
+                    equipmentSlots.putIfAbsent(identifier, slot);
+                }
+            }
+        }
+
+        int corrected = 0;
+        for (String path : new ArrayList<>(packFiles.keySet())) {
+            if (!path.startsWith("attachables/") || !path.endsWith(".worn.json")) continue;
+            JsonObject root;
+            JsonObject description;
+            try {
+                root = JsonParser.parseString(new String(packFiles.get(path), StandardCharsets.UTF_8)).getAsJsonObject();
+                JsonObject attachable = root.getAsJsonObject("minecraft:attachable");
+                if (attachable == null) continue;
+                description = attachable.getAsJsonObject("description");
+                if (description == null || !description.has("identifier")) continue;
+            } catch (RuntimeException malformed) {
+                continue;
+            }
+            String wornIdentifier = description.get("identifier").getAsString();
+            if (!wornIdentifier.endsWith(".worn")) continue;
+            String identifier = wornIdentifier.substring(0, wornIdentifier.length() - ".worn".length());
+            if (!identifier.startsWith("twilight:") || !path.equals("attachables/"
+                    + identifier.substring("twilight:".length()) + ".worn.json")) continue;
+            String slot = equipmentSlots.get(identifier);
+            if (slot == null) continue;
+            JsonObject item = description.getAsJsonObject("item");
+            if (item != null && item.has(identifier)) continue;
+
+            // The generic upstream wearable normally carries exactly one item
+            // binding. Preserve its other fields; rebuild only that binding.
+            if (item != null && item.size() > 1) continue;
+            JsonObject binding = new JsonObject();
+            binding.addProperty(identifier, "query.is_item_name_any('" + EquipmentModels.slotName(slot)
+                    + "', 0, '" + identifier + "')");
+            description.add("item", binding);
+            packFiles.put(path, jsonBytes(root));
+            corrected++;
+        }
+        return corrected;
     }
 
     /** The equipment of the live items by the selector Geyser matches them with (the first in a stable order). */
@@ -1411,6 +1568,54 @@ public final class BedrockPackCompiler {
 
     private static String sha256(Path path) throws IOException { try { MessageDigest d=MessageDigest.getInstance("SHA-256"); try(InputStream in=Files.newInputStream(path)){byte[] b=new byte[65536]; for(int n;(n=in.read(b))>=0;)if(n>0)d.update(b,0,n);} return HexFormat.of().formatHex(d.digest()).toUpperCase(Locale.ROOT);}catch(NoSuchAlgorithmException e){throw new IllegalStateException(e);} }
     private static void deleteTree(Path path) throws IOException { if(!Files.exists(path))return; try(var stream=Files.walk(path)){for(Path entry:stream.sorted(Comparator.reverseOrder()).toList()){if(Files.isSymbolicLink(entry))throw new IOException("Symbolic build path rejected: "+entry); Files.deleteIfExists(entry);}} }
+
+    private static JsonObject animationsFlat(String safe, JsonObject display) {
+        JsonObject definitions = new JsonObject();
+        JsonObject firstRight = transform(display, "firstperson_righthand", null);
+        JsonObject firstLeft = transform(display, "firstperson_lefthand", firstRight);
+        JsonObject thirdRight = transform(display, "thirdperson_righthand", null);
+        JsonObject thirdLeft = transform(display, "thirdperson_lefthand", thirdRight);
+        definitions.add("animation.twilight." + safe + ".first_person_right", animation(mapFirst(firstRight)));
+        definitions.add("animation.twilight." + safe + ".first_person_left", animation(mapFirst(mirror(firstLeft))));
+        definitions.add("animation.twilight." + safe + ".third_person_right", animation(mapThird(thirdRight)));
+        definitions.add("animation.twilight." + safe + ".third_person_left", animation(mapThird(mirror(thirdLeft))));
+        definitions.add("animation.twilight." + safe + ".head", animation(mapHead(transform(display, "head", null))));
+        JsonObject root = new JsonObject();
+        root.addProperty("format_version", "1.8.0");
+        root.add("animations", definitions);
+        return root;
+    }
+
+    private static JsonObject animationsForModel(String safe, JsonObject display, ResolvedJavaModel model) {
+        return model.isThreeDimensional() ? ConvertedFirstPersonPatch.rewriteAnimations(safe, display, animations(safe, display)) : animationsFlat(safe, display);
+    }
+
+    private static MappedTransform mapFirstConvertedRight(JsonObject transform) {
+        double[] t = vector(transform.getAsJsonArray("translation"), 0.0, 0.0, 0.0);
+        double[] r = vector(transform.getAsJsonArray("rotation"), 0.0, 0.0, 0.0);
+        double[] s = vector(transform.getAsJsonArray("scale"), 1.0, 1.0, 1.0);
+        Quaternion q = Quaternion.axis(-40.0, 0.0, 0.0, 1.0)
+            .mul(Quaternion.axis(60.0, 0.0, 1.0, 0.0))
+            .mul(Quaternion.axis(90.0, 1.0, 0.0, 0.0))
+            .mul(Quaternion.axis(-r[0], 1.0, 0.0, 0.0))
+            .mul(Quaternion.axis(-r[1], 0.0, 1.0, 0.0))
+            .mul(Quaternion.axis(r[2], 0.0, 0.0, 1.0))
+            .mul(Quaternion.axis(180.0, 0.0, 1.0, 0.0));
+        return new MappedTransform(new double[]{-t[1], 15.0 + t[2], t[0]}, q.eulerXYZ(), s);
+    }
+
+    private static MappedTransform mapFirstConvertedLeft(JsonObject transform) {
+        double[] t = vector(transform.getAsJsonArray("translation"), 0.0, 0.0, 0.0);
+        double[] r = vector(transform.getAsJsonArray("rotation"), 0.0, 0.0, 0.0);
+        double[] s = vector(transform.getAsJsonArray("scale"), 1.0, 1.0, 1.0);
+        Quaternion q = Quaternion.axis(180.0, 0.0, 0.0, 1.0)
+            .mul(Quaternion.axis(180.0, 1.0, 0.0, 0.0))
+            .mul(Quaternion.axis(-r[0], 1.0, 0.0, 0.0))
+            .mul(Quaternion.axis(-r[1], 0.0, 1.0, 0.0))
+            .mul(Quaternion.axis(r[2], 0.0, 0.0, 1.0))
+            .mul(Quaternion.axis(180.0, 0.0, 1.0, 0.0));
+        return new MappedTransform(new double[]{-t[1], 15.0 + t[2], t[0]}, q.eulerXYZ(), s);
+    }
 
     private record MappedTransform(double[] position, double[] rotation, double[] scale) {}
     private record NativeWeapon(String type, List<byte[]> frames) {}

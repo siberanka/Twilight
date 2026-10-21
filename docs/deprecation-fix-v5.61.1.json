@@ -1,0 +1,13 @@
+{
+  "change": "Use ambientOcclusionExponent(float) instead of deprecated ambientOcclusion(boolean); false=0.0f, true=1.0f.",
+  "build_successful": true,
+  "java_deprecation_warnings": 0,
+  "focused_test_suite": "com.siberanka.twilight.geyser.CustomBlocksTest",
+  "tests_passed": 3,
+  "changed_jar_entries": [
+    "META-INF/MANIFEST.MF",
+    "com/siberanka/twilight/geyser/CustomBlocks.class",
+    "plugin.yml",
+    "META-INF/twilight-patch-version.txt"
+  ]
+}

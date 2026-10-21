@@ -1,3 +1,23 @@
+## v5.61.7 – PackHost : bannissement avant la réponse de refus (2026-10-15)
+
+- `PackHost` comptabilise les requêtes invalides et applique leur éventuel bannissement avant d'envoyer les réponses 404/405. Le client ne peut plus recevoir le 20e refus puis reconnecter avant l'enregistrement du bannissement. Les seuils restent inchangés.
+- `blocksAddressesThatKeepGuessing` vérifie les 20 refus et attend la fermeture des 19 premières connexions pour que la limite de connexions simultanées ne fausse pas le comptage. La dernière vérification reste immédiate après le 20e refus, sans temporisation ni nouvelle tentative.
+- Les corrections de feu et les mappings offhand de la v5.61.6 sont conservés à l'identique.
+- Vérification statique des sources et de l'archive uniquement ; aucune compilation ni exécution des tests pour cette livraison.
+
+## v5.61.6 – Feux natifs et mappings offhand Bedrock (2026-10-15)
+
+- Intégration des corrections de feu v5.61.4 dans le projet v5.61.5 fourni ; la politique offhand, son appel dans le compilateur, ses tests et sa documentation sont conservés à l'identique.
+- Les feux colorés exportent une sélection explicitement vide : aucun contour sur les flammes. Le clic sur la face du support utilise le traitement natif du feu de Geyser pour demander l'extinction au serveur.
+- Les positions et orientations des flammes, les particules de destruction transparentes, le son d'extinction et la correction de l'API ambientOcclusion sont conservés.
+- Sources et assertions mises à jour ; aucune compilation, aucun test exécuté et aucune validation en jeu pour cette livraison.
+
+## v5.61.5 – Offhand Bedrock : mappings client uniquement (2026-10-15)
+
+- Les mappings Geyser émettent `bedrock_options.allow_offhand: false` uniquement pour les matériaux Java de base non autorisés dans l'offhand Bedrock.
+- Aucune interception serveur : aucun listener Bukkit/Paper, aucune manipulation d'inventaire ni contrôle différé. Comportement Java inchangé.
+- Le rendu, les items et la conversion v5.61.3 sont préservés ; test JUnit du mapping fourni.
+
 # Changelog
 
 > Türkçe: [aşağıda](#türkçe)
