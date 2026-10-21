@@ -352,8 +352,9 @@ public final class PackHost implements AutoCloseable {
             throws IOException {
         InetAddress client = clientAddress(remote, request);
         if (!request.method.equals("GET") && !request.method.equals("HEAD")) {
-            respond(out, 405, "Allow: GET, HEAD\r\n");
+            // Commit the failure (and any ban) before the client can read the refusal and reconnect.
             fail(peer, remote);
+            respond(out, 405, "Allow: GET, HEAD\r\n");
             return -1;
         }
         Matcher path = PATH.matcher(request.target);
@@ -364,8 +365,8 @@ public final class PackHost implements AutoCloseable {
         }
         if (link == null || !path.group(2).equals(link.snapshot.tag()) || link.expires < System.currentTimeMillis()
                 || link.player != null && !link.player.equals(client) || !Files.isRegularFile(link.snapshot.file())) {
-            respond(out, 404, "");
             fail(peer, remote);
+            respond(out, 404, "");
             return -1;
         }
         boolean get = request.method.equals("GET");
@@ -387,8 +388,8 @@ public final class PackHost implements AutoCloseable {
         }
         // Only a download that is answered uses up the link; HEAD and refused ranges do not.
         if (get && link.downloads.getAndDecrement() <= 0) {
-            respond(out, 404, "");
             fail(peer, remote);
+            respond(out, 404, "");
             return -1;
         }
         long length = end - start + 1;

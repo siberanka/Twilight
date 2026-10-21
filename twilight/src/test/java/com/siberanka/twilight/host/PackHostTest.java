@@ -110,8 +110,15 @@ class PackHostTest {
         Path pack = pack(1000);
         host = start(true, 3);
         String url = path(link(pack, LOCAL));
-        for (int attempt = 0; attempt < 20; attempt++) get("/twilight/" + "B".repeat(43) + "/0000000000000000.zip", "");
-        assertNull(get(url, "").statusOrNull()); // the connection is closed without an answer
+        String guess = "GET /twilight/" + "B".repeat(43) + "/0000000000000000.zip HTTP/1.1\r\nHost: localhost\r\n\r\n";
+        for (int attempt = 1; attempt <= 20; attempt++) {
+            // Finish the first 19 connections so the connection limit cannot discard a guess.
+            // Read the 20th response without waiting for its connection to close: the ban must already apply.
+            Response refusal = request(guess, attempt < 20);
+            assertNotNull(refusal, "guess " + attempt + " must be processed");
+            assertEquals(404, refusal.status, "guess " + attempt);
+        }
+        assertNull(get(url, "").statusOrNull(), "the next request must be blocked as soon as the 20th refusal arrives");
     }
 
     @Test
@@ -247,11 +254,20 @@ class PackHostTest {
 
     /** Sends raw bytes; null when the server closes without an answer. */
     private Response request(String raw) throws IOException {
+        return request(raw, false);
+    }
+
+    private Response request(String raw, boolean waitForClose) throws IOException {
         try (Socket socket = new Socket(LOCAL, host.port())) {
             socket.setSoTimeout(10_000);
             socket.getOutputStream().write(raw.getBytes(StandardCharsets.ISO_8859_1));
             socket.getOutputStream().flush();
-            return read(socket.getInputStream(), raw.startsWith("HEAD"));
+            if (waitForClose) socket.shutdownOutput();
+            Response response = read(socket.getInputStream(), raw.startsWith("HEAD"));
+            if (waitForClose && response != null) {
+                assertEquals(-1, socket.getInputStream().read(), "the server must finish this connection");
+            }
+            return response;
         }
     }
 

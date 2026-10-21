@@ -224,11 +224,14 @@ public final class CustomBlocks implements AutoCloseable {
             JsonObject value = material.getValue().getAsJsonObject();
             String renderMethod = value.get("render_method").getAsString();
             opaqueCube &= renderMethod.equals("opaque");
-            components.materialInstance(material.getKey(), MaterialInstance.builder()
+            MaterialInstance.Builder instance = MaterialInstance.builder()
                     .texture(value.get("texture").getAsString())
                     .renderMethod(renderMethod)
-                    .faceDimming(true)
-                    .build());
+                    .faceDimming(!value.has("face_dimming") || value.get("face_dimming").getAsBoolean());
+            if (value.has("ambient_occlusion")) {
+                instance.ambientOcclusionExponent(value.get("ambient_occlusion").getAsBoolean() ? 1.0f : 0.0f);
+            }
+            components.materialInstance(material.getKey(), instance.build());
         }
         components.selectionBox(box(block.getAsJsonArray("selection")));
         List<BoxComponent> collision = new ArrayList<>();
@@ -238,6 +241,7 @@ public final class CustomBlocks implements AutoCloseable {
         // Java decides how long breaking takes; Geyser drives it, as for its own custom blocks.
         components.destructibleByMining(Float.MAX_VALUE);
         if (!opaqueCube) components.lightDampening(0);
+        if (block.has("light_emission")) components.lightEmission(Math.max(0, Math.min(15, block.get("light_emission").getAsInt())));
         if (block.has("rotation")) {
             JsonArray rotation = block.getAsJsonArray("rotation");
             components.transformation(new TransformationComponent(bedrockRotation(rotation.get(0).getAsInt()),

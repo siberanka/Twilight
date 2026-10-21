@@ -6,6 +6,8 @@ package com.siberanka.twilight;
 
 import com.siberanka.twilight.config.TwilightConfig;
 import com.siberanka.twilight.compiler.BedrockPackCompiler;
+import com.siberanka.twilight.compiler.ElytraVanillaFlightBridge;
+import com.siberanka.twilight.geyser.ArmorItemComponents;
 import com.siberanka.twilight.compiler.BuildResult;
 import com.siberanka.twilight.compiler.ConversionException;
 import com.siberanka.twilight.api.TwilightApi;
@@ -217,6 +219,8 @@ public final class TwilightPlugin extends JavaPlugin {
         if (config.autoBuildOnStartup()) {
             scheduleBuild("startup", config.startupDelayTicks());
         }
+        ArmorItemComponents.start(this);
+        ElytraVanillaFlightBridge.start(this);
     }
 
     @Override
@@ -248,6 +252,8 @@ public final class TwilightPlugin extends JavaPlugin {
         }
         getServer().getServicesManager().unregisterAll(this);
         if (worker != null) worker.shutdownNow();
+        ArmorItemComponents.stop(this);
+        ElytraVanillaFlightBridge.stop();
     }
 
     private void loadServices() {

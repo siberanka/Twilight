@@ -189,7 +189,7 @@ public final class BedrockPackCompiler {
                         ResolvedJavaModel stateModel = dynamicWeapon.states().get(state);
                         GeometryBounds bounds = geometryBounds(stateModel);
                         packFiles.put("models/entity/geometry." + stateSafe + ".geo.json",
-                                jsonBytes(geometry(stateSafe, stateModel, atlas, bounds)));
+                                jsonBytes(ConvertedFirstPersonPatch.rewriteGeometry(geometry(stateSafe, stateModel, atlas, bounds), stateModel)));
                         packFiles.put("animations/" + stateSafe + ".animation.json",
                                 jsonBytes(animations(stateSafe, stateModel)));
                     }
@@ -211,7 +211,7 @@ public final class BedrockPackCompiler {
                     icon = TextureSet.png(GuiIconRenderer.render(model, atlas, geometryElements(model)));
                     packFiles.put("textures/twilight/" + safe + "_icon.png", icon);
                     packFiles.put("models/entity/geometry." + safe + ".geo.json",
-                            jsonBytes(geometry(safe, model, atlas, bounds)));
+                            jsonBytes(ConvertedFirstPersonPatch.rewriteGeometry(geometry(safe, model, atlas, bounds), model)));
                     packFiles.put("animations/" + safe + ".animation.json",
                             jsonBytes(animations(safe, model)));
                     packFiles.put("attachables/" + safe + ".json",
@@ -238,7 +238,8 @@ public final class BedrockPackCompiler {
                 iconEntry.addProperty("textures", model.isThreeDimensional() || customFlat || dynamicWeapon != null
                         ? "textures/twilight/" + safe + "_icon" : texturePath);
                 textureData.add(iconKey, iconEntry);
-                addMapping(mappedItems, candidate, identifier, iconKey, model.handheld());
+                addMapping(mappedItems, candidate, identifier, iconKey,
+                        HandheldMappingFix.displayHandheld(model, resources, candidate, vanillaAssets));
                 if (model.isThreeDimensional() && candidate.visualModels().size() == 1) {
                     itemModels.putIfAbsent(JavaModelResolver.qualified(candidate.visualModels().getFirst(), "minecraft"), identifier);
                     // Providers often give the item another model file than the block, with the same shape and art.
@@ -258,6 +259,7 @@ public final class BedrockPackCompiler {
             }
         }
         TextureSet.MISSING_FILES.remove();
+        ContextualItemFix.apply(resources, resolver, candidates, vanillaAssets, packFiles, textureData, mappedItems, notices);
 
         displays.finish(packFiles);
         CustomBlockCompiler.Result blocks = new CustomBlockCompiler.Result(0, 0, null);
@@ -360,8 +362,51 @@ public final class BedrockPackCompiler {
         JsonObject mappings = new JsonObject();
         mappings.addProperty("format_version", 2);
         mappings.add("items", mappedItems);
+        mappings = GeyserMappingsRepair.clean(mappings);
         // twilight-proxy reads the mappings from the pack it receives and registers them with the proxy's Geyser.
         packFiles.put(PACK_MAPPINGS, jsonBytes(mappings));
+        BedrockAnimationBridge.repair(resources, candidates, packFiles);
+        FirstPersonSwingBridge.install(packFiles, mappings);
+        NativeSpearBridge.apply(packFiles);
+        NativeSpearBridge.syncMapping(packFiles, mappings);
+        BowDrawRuntimeFix.repair(resources, candidates, packFiles);
+        RangedWeaponAnimationBridge.install(packFiles);
+        JavaGuiIconSelectionBridge.install(resources, packFiles);
+        DynamicWeaponTextureAnimationBridge.install(resources, candidates, packFiles);
+        JavaItemTextureRepair.apply(resources, candidates, packFiles, vanillaAssets);
+        ArmorAndFishingRodRepair.apply(resources, candidates, packFiles);
+        ArmorVisibilityRepair.apply(packFiles);
+        ArmorColorFallbackRepair.apply(resources, candidates, packFiles);
+        ArmorFixedColumnBridge.apply(resources, candidates, packFiles);
+        ArmorBakedTintRepair.apply(packFiles);
+        ArmorLegacyCleanup.apply(packFiles);
+        BowHandheldRepair.apply(resources, packFiles);
+        ArmorBowRegressionRepair.apply(resources, packFiles);
+        ArmorBakedTintRepair.apply(packFiles);
+        ArmorLegacyCleanup.apply(packFiles);
+        ArmorBowRegressionRepair.pruneAfterBake(packFiles);
+        Reference2DBowRepair.apply(packFiles);
+        VanillaBowDrawRepair.apply(packFiles);
+        VanillaFishingRodReferenceRepair.apply(packFiles);
+        FishingRod3DCastLineRepair.apply(packFiles);
+        Reference3DRangedHoldRepair.apply(packFiles);
+        VanillaFullChargeBowVibrationRepair.apply(packFiles);
+        Restore3DBowBasisRepair.apply(packFiles);
+        ReferenceTridentHoldRepair.apply(packFiles, resources);
+        NativeTridentAliasMappingRepair.apply(packFiles, resources);
+        VanillaTridentWieldRepair.apply(packFiles);
+        UniformTridentModelAlignmentRepair.apply(packFiles);
+        Reverse3DBowDrawDepthRepair.apply(packFiles);
+        BowArrowAndStringDrawRepair.apply(packFiles);
+        BowIdleStringUvRepair.apply(packFiles);
+        Crossbow3DProjectileAlignmentRepair.apply(packFiles);
+        AnimatedAtlasVisibilityRepair.apply(packFiles);
+        ElytraVanillaWearablePackRepair.apply(packFiles, resources);
+        ElytraWornBindingRepair.apply(packFiles);
+        // Final pass: Geyser's default for custom items is allow_offhand=true.
+        // Respect Bedrock's native restrictions using the underlying Java base item,
+        // not the custom sprite/model or item name.
+        com.siberanka.twilight.geyser.BedrockOffhandPolicy.apply(packFiles);
         minifyJson(packFiles);
         packFiles.put("manifest.json", jsonBytes(manifest(packFiles)));
         packFiles.put("README.txt", ("Generated by Twilight. Converted " + converted + " of " + candidates.size() +
@@ -373,7 +418,8 @@ public final class BedrockPackCompiler {
         Files.createDirectories(staging.resolve("custom_mappings"));
         Path pack = staging.resolve("pack.zip");
         writeZip(pack, packFiles);
-        Files.write(staging.resolve("custom_mappings/geyser_item_mappings.json"), jsonBytes(mappings));
+        BowHandheldRepair.writeFinalMapping(staging.resolve("custom_mappings/geyser_item_mappings.json"),
+                jsonBytes(mappings), new java.nio.file.OpenOption[0], packFiles);
         JsonObject report = new JsonObject();
         report.addProperty("candidates", candidates.size());
         report.addProperty("converted", converted);
@@ -399,11 +445,11 @@ public final class BedrockPackCompiler {
         report.addProperty("language_strings", languages.strings());
         report.addProperty("vanilla_override", config.vanillaOverride());
         Files.write(staging.resolve("build-report.json"), jsonBytes(report));
-        validate(pack, mappings, converted);
+        validate(pack, mappings, GeyserMappingsRepair.validatedDefinitionCount(mappings, converted));
         deleteTree(current.resolveSibling("previous"));
         if (Files.exists(current)) Files.move(current, current.resolveSibling("previous"), StandardCopyOption.REPLACE_EXISTING);
-        Files.move(staging, current, StandardCopyOption.REPLACE_EXISTING);
-        deleteTree(current.resolveSibling("previous"));
+        WindowsBuildPublishRepair.publish(staging, current, new java.nio.file.CopyOption[]{StandardCopyOption.REPLACE_EXISTING});
+        WindowsBuildPublishRepair.cleanupOldBuild(current.resolveSibling("previous"));
         return new BuildResult(current, candidates.size(), converted, threeDimensional, fonts.glyphs(), fonts.pages(),
                 fonts.vanillaFallbackTextures(),
                 fonts.namedFonts(), fonts.namedGlyphs(),
@@ -441,7 +487,7 @@ public final class BedrockPackCompiler {
         manifest.addProperty("format_version", 2);
         manifest.add("header", headerJson);
         JsonArray modules = new JsonArray(); modules.add(moduleJson); manifest.add("modules", modules);
-        return manifest;
+        return JavaItemTextureRepair.requireEngine(manifest, contentWithoutManifest);
     }
 
     static List<String> flatLayers(ResolvedJavaModel model) {
@@ -839,7 +885,7 @@ public final class BedrockPackCompiler {
     }
 
     private static JsonObject animations(String safe, ResolvedJavaModel model) {
-        if (model.parts().isEmpty()) return animations(safe, model.display());
+        if (model.parts().isEmpty()) return animationsForModel(safe, model.display(), model);
         JsonObject result = null;
         for (int i = 0; i < model.parts().size(); i++) {
             JsonObject part = animations(safe, model.parts().get(i).display());
@@ -860,8 +906,8 @@ public final class BedrockPackCompiler {
         JsonObject firstLeft = transform(display, "firstperson_lefthand", firstRight);
         JsonObject thirdRight = transform(display, "thirdperson_righthand", null);
         JsonObject thirdLeft = transform(display, "thirdperson_lefthand", thirdRight);
-        definitions.add("animation.twilight." + safe + ".first_person_right", animation(mapFirst(firstRight)));
-        definitions.add("animation.twilight." + safe + ".first_person_left", animation(mapFirst(
+        definitions.add("animation.twilight." + safe + ".first_person_right", animation(mapFirstConvertedRight(firstRight)));
+        definitions.add("animation.twilight." + safe + ".first_person_left", animation(mapFirstConvertedLeft(
                 mirror(firstLeft))));
         definitions.add("animation.twilight." + safe + ".third_person_right", animation(mapThird(thirdRight)));
         definitions.add("animation.twilight." + safe + ".third_person_left", animation(mapThird(
@@ -879,7 +925,7 @@ public final class BedrockPackCompiler {
     private static MappedTransform mapFirst(JsonObject transform) {
         double[] t = vector(transform.getAsJsonArray("translation"), 0, 0, 0), r = vector(transform.getAsJsonArray("rotation"), 0, 0, 0), s = vector(transform.getAsJsonArray("scale"), 1, 1, 1);
         Quaternion q = Quaternion.axis(-90, 1, 0, 0).mul(Quaternion.axis(r[0], 0, 0, 1)).mul(Quaternion.axis(r[1], 1, 0, 0)).mul(Quaternion.axis(-r[2], 0, 1, 0));
-        return new MappedTransform(new double[]{-t[1], 12.5 + t[2], t[0]}, q.eulerXYZ(), s);
+        return new MappedTransform(new double[]{-t[1], 15.0 + t[2], t[0]}, q.eulerXYZ(), s);
     }
 
     private static MappedTransform mapThird(JsonObject transform) {
@@ -1055,6 +1101,54 @@ public final class BedrockPackCompiler {
 
     private static String sha256(Path path) throws IOException { try { MessageDigest d=MessageDigest.getInstance("SHA-256"); try(InputStream in=Files.newInputStream(path)){byte[] b=new byte[65536]; for(int n;(n=in.read(b))>=0;)if(n>0)d.update(b,0,n);} return HexFormat.of().formatHex(d.digest()).toUpperCase(Locale.ROOT);}catch(NoSuchAlgorithmException e){throw new IllegalStateException(e);} }
     private static void deleteTree(Path path) throws IOException { if(!Files.exists(path))return; try(var stream=Files.walk(path)){for(Path entry:stream.sorted(Comparator.reverseOrder()).toList()){if(Files.isSymbolicLink(entry))throw new IOException("Symbolic build path rejected: "+entry); Files.deleteIfExists(entry);}} }
+
+    private static JsonObject animationsFlat(String safe, JsonObject display) {
+        JsonObject definitions = new JsonObject();
+        JsonObject firstRight = transform(display, "firstperson_righthand", null);
+        JsonObject firstLeft = transform(display, "firstperson_lefthand", firstRight);
+        JsonObject thirdRight = transform(display, "thirdperson_righthand", null);
+        JsonObject thirdLeft = transform(display, "thirdperson_lefthand", thirdRight);
+        definitions.add("animation.twilight." + safe + ".first_person_right", animation(mapFirst(firstRight)));
+        definitions.add("animation.twilight." + safe + ".first_person_left", animation(mapFirst(mirror(firstLeft))));
+        definitions.add("animation.twilight." + safe + ".third_person_right", animation(mapThird(thirdRight)));
+        definitions.add("animation.twilight." + safe + ".third_person_left", animation(mapThird(mirror(thirdLeft))));
+        definitions.add("animation.twilight." + safe + ".head", animation(mapHead(transform(display, "head", null))));
+        JsonObject root = new JsonObject();
+        root.addProperty("format_version", "1.8.0");
+        root.add("animations", definitions);
+        return root;
+    }
+
+    private static JsonObject animationsForModel(String safe, JsonObject display, ResolvedJavaModel model) {
+        return model.isThreeDimensional() ? ConvertedFirstPersonPatch.rewriteAnimations(safe, display, animations(safe, display)) : animationsFlat(safe, display);
+    }
+
+    private static MappedTransform mapFirstConvertedRight(JsonObject transform) {
+        double[] t = vector(transform.getAsJsonArray("translation"), 0.0, 0.0, 0.0);
+        double[] r = vector(transform.getAsJsonArray("rotation"), 0.0, 0.0, 0.0);
+        double[] s = vector(transform.getAsJsonArray("scale"), 1.0, 1.0, 1.0);
+        Quaternion q = Quaternion.axis(-40.0, 0.0, 0.0, 1.0)
+            .mul(Quaternion.axis(60.0, 0.0, 1.0, 0.0))
+            .mul(Quaternion.axis(90.0, 1.0, 0.0, 0.0))
+            .mul(Quaternion.axis(-r[0], 1.0, 0.0, 0.0))
+            .mul(Quaternion.axis(-r[1], 0.0, 1.0, 0.0))
+            .mul(Quaternion.axis(r[2], 0.0, 0.0, 1.0))
+            .mul(Quaternion.axis(180.0, 0.0, 1.0, 0.0));
+        return new MappedTransform(new double[]{-t[1], 15.0 + t[2], t[0]}, q.eulerXYZ(), s);
+    }
+
+    private static MappedTransform mapFirstConvertedLeft(JsonObject transform) {
+        double[] t = vector(transform.getAsJsonArray("translation"), 0.0, 0.0, 0.0);
+        double[] r = vector(transform.getAsJsonArray("rotation"), 0.0, 0.0, 0.0);
+        double[] s = vector(transform.getAsJsonArray("scale"), 1.0, 1.0, 1.0);
+        Quaternion q = Quaternion.axis(180.0, 0.0, 0.0, 1.0)
+            .mul(Quaternion.axis(180.0, 1.0, 0.0, 0.0))
+            .mul(Quaternion.axis(-r[0], 1.0, 0.0, 0.0))
+            .mul(Quaternion.axis(-r[1], 0.0, 1.0, 0.0))
+            .mul(Quaternion.axis(r[2], 0.0, 0.0, 1.0))
+            .mul(Quaternion.axis(180.0, 0.0, 1.0, 0.0));
+        return new MappedTransform(new double[]{-t[1], 15.0 + t[2], t[0]}, q.eulerXYZ(), s);
+    }
 
     private record MappedTransform(double[] position, double[] rotation, double[] scale) {}
     private record NativeWeapon(String type, List<byte[]> frames) {}
