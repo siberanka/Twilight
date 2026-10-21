@@ -2,7 +2,7 @@
 
 > Türkçe: [aşağıda](#türkçe)
 
-Twilight 1.0.0-pre.10 was checked with three more kinds of server content: boss bars whose sprites a
+Twilight development build 10 was checked with three more kinds of server content: boss bars whose sprites a
 resource pack redraws, the boss bar of CustomNameplates with the plugin's own default configuration,
 and an animated BetterModel mob model. Everything was captured on the isolated test server (Paper 26.2,
 Geyser 2.11.3, Java 26.2 and Bedrock 1.26.5203.0 at GUI scale 2). The boss bar sprites and the model
@@ -76,7 +76,7 @@ saved deaths). No hosted CI was used.
 
 ### Özel boss çubukları, CustomNameplates boss çubuğu ve animasyonlu bir model - 5 Ekim 2026
 
-Twilight 1.0.0-pre.10 üç tür sunucu içeriğiyle daha denetlendi: sprite'larını bir kaynak paketinin
+Twilight geliştirme derlemesi 10 üç tür sunucu içeriğiyle daha denetlendi: sprite'larını bir kaynak paketinin
 yeniden çizdiği boss çubukları, eklentinin kendi varsayılan yapılandırmasıyla CustomNameplates'in boss
 çubuğu ve animasyonlu bir BetterModel mob modeli. Her şey yalıtılmış test sunucusunda çekildi (Paper 26.2,
 Geyser 2.11.3, arayüz ölçeği 2'de Java 26.2 ve Bedrock 1.26.5203.0). Boss çubuğu sprite'ları ve model bu

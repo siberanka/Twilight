@@ -1,4 +1,4 @@
-# Twilight 1.0.1-pre.5 prerelease build
+# Twilight 1.0.0-beta.6 build
 
 > Türkçe: [aşağıda](#türkçe)
 
@@ -8,79 +8,22 @@
 
 Built locally by siberanka using Java 25.0.2 and Gradle 9.6.0, with
 `:twilight:build :twilight-proxy:build --offline --no-daemon --no-configuration-cache`.
-263 tests across 45 suites passed. No hosted CI was used.
+365 tests across 63 suites passed. No hosted CI was used.
 
 The corresponding source is in this commit under `twilight/`, `twilight-proxy/` and `protocol/`, with build files
-at the repository root. Licensed under [LGPL-3.0-or-later](../LICENSE.LESSER);
-the accompanying [GPL text](../LICENSE) is also provided.
+at the repository root. Licensed under the [Twilight License](../LICENSE) (the PolyForm Noncommercial
+License 1.0.0 with additional terms): it may run on any server or network, including ones that earn money;
+selling it is not permitted, and copied or adapted parts must credit Twilight ([NOTICE](../NOTICE)).
 
 Read the [release notes](../RELEASE_NOTES.md), the [wiki](../WIKI.md) and the
-[stacked images, nameplates and exact biomes](../docs/LAYERS_BIOMES_2026-10-04.md)
-report before deployment, and the [beta status and compatibility](../README.md#beta-status-and-compatibility)
-summary. 1.0.1-pre.5 prepares item mappings on FlameCord before Geyser starts and makes automatic discovery
-more complete (ModelEngine fallback, provider merge folders). 1.0.1-pre.4 registers custom blocks on FlameCord and other BungeeCord forks that start Geyser early.
-1.0.1-pre.3 converts content plugins' custom blocks (ores and blocks on note blocks, mushroom blocks and
-tripwire) and shows their items in 3D; restart once after updating. 1.0.1-pre.2 gives phones and tablets (Bedrock's pocket UI profile) Java's chest layout, so menu art
-no longer sits behind the slots there. 1.0.1-pre.1 fixes the loading protection of 1.0.0-pre.19 and 1.0.0-beta.1, which made Paper drop
-Bedrock players right after joining on servers with Geyser when `forward-player-ping` is off; update from
-those versions. 1.0.0-beta.1 is the first beta: it orders release stages correctly in the update check (servers on
-1.0.0-pre.14 to pre.19 do not announce it; replace both JARs by hand once) and adds issue templates, a
-[security policy](../SECURITY.md) and [contribution notes](../CONTRIBUTING.md). 1.0.0-pre.19 left item display models out of packs for servers without
-Geyser (Survival's loading after joining fell from 156 s to under 10 s), keeps Bedrock players connected
-while their client loads the packs, and runs Twilight's text layout and translations in the proxy's Geyser,
-so images such as BoxPVP's ItemsAdder prefix no longer show as Unicode characters on proxy networks
-([field report](../docs/FIELD_REPORT_2026-10-10.md)). 1.0.0-pre.18 moved stale Twilight files out of Geyser
-automatically, read backends on the same machine from their folders and announced (or performed, with
-`when-empty`) the Geyser restarts changed items need. 1.0.0-pre.17 attached twilight-proxy to Geyser on proxies that load
-Floodgate first (FlameCord, Waterfall, Velocity with Floodgate), which every earlier version had failed
-with "loader constraint violation" ([field report](../docs/FIELD_REPORT_2026-10-09.md)). 1.0.0-pre.16 named a
-Geyser that a proxy fork hides and explained the missing Geyser on backends of a proxy network. 1.0.0-pre.15 fixed conversions on Paper 1.21 servers with Java 17+, made
-twilight-proxy find a Geyser that loads after it, delivered every backend's custom items to the proxy's
-Geyser and found login servers on its own ([field report](../docs/FIELD_REPORT_2026-10-09.md)); restart
-Geyser once after updating from 1.0.0-pre.14 or older. 1.0.0-pre.14 added an update check: both plugins look for a newer release on
-GitHub (GitLab when GitHub cannot be reached) and tell the console and players with the update permission;
-`update-check.enabled: false` turns it off ([wiki](../WIKI.md#updates)). 1.0.0-pre.13 made twilight-proxy's
-pack reconnects work with LeaderOS Auth Plus, BungeeGuard, Floodgate and Velocity modern forwarding
-([login plugin test](../docs/PROXY_AUTH_2026-10-09.md)); 1.0.0-pre.12 covered other login plugins, protections and large packs
-([reconnect test](../docs/PROXY_RECONNECT_2026-10-08.md)).
-1.0.0-pre.11 added the pack host: Bedrock players download the packs over HTTP from the server that
-runs Geyser, through links that only work for their own session ([wiki](../WIKI.md#pack-hosting)).
-1.0.0-pre.10 draws boss bars whose sprites a pack redraws with those
-sprites, shows long boss bar names whole and fits CustomNameplates' default boss bar into Bedrock's
-name limit ([boss bar and model review](../docs/BOSSBARS_MODELS_2026-10-05.md)). Since 1.0.0-pre.9,
-releases include twilight-proxy, per-server Bedrock packs for
-networks with Geyser on a Velocity or BungeeCord proxy
-([proxy test](../docs/PROXY_2026-10-05.md)). It draws text and images that Java moves back
-over earlier ones (stacked menu art, CustomNameplates backgrounds) with one Bedrock
-label per layer, shows custom and RealisticSeasons biomes in their exact colours,
-applies Java's name rules to nameplates, lets each provider's source and the Bedrock
-pack delivery be chosen in `config.yml`, and exports every build to
-`plugins/Twilight/export`. Complete builds of seven production servers pass strict
-publication with the default configuration.
-
-It builds on the [UI campaign](../docs/UI_CAMPAIGN_2026-10-04.md) (104 real menus),
-the Java text layout on every Bedrock text surface
-([text surface review](../docs/TEXT_SURFACES_2026-10-04.md)), the chest title
-layout ([text layout review](../docs/TEXT_LAYOUT_2026-10-03.md)) and the container
-layout ([container layout review](../docs/CONTAINER_LAYOUT_2026-10-03.md)), and
-includes the live display bridge, [cloud-anchor corrections](../docs/CLOUD_ANCHORS_2026-09-29.md)
-and [Java-compatible cloud mount height](../docs/DISPLAY_SEATS_2026-09-29.md).
-
-Full animation, first-person, UI and entity parity remain incomplete. Item names
-and lore keep raw font characters, text displays riding mobs sit about 0.4 blocks
-lower, hex text uses Bedrock's 28 colours, a glyph directly after text without a
-space differs by a unit, and high-resolution glyph sampling differs.
-
-The [extended content checks](../docs/BROAD_CONTENT_2026-09-29.md), the
-[new-sample regression](../docs/COMPOSITE_MODELS_2026-09-30.md) and the
-[font metrics regression](../docs/FONT_METRICS_2026-10-01.md) document earlier
-item, glyph and menu results.
+[beta status and compatibility](../README.md#beta-status-and-compatibility) summary before deployment.
+Install the same version of both JARs and restart once after the first build.
 
 ---
 
 ## Türkçe
 
-### Twilight 1.0.1-pre.5 ön sürüm derlemesi
+### Twilight 1.0.0-beta.6 derlemesi
 
 [Twilight.jar indir](Twilight.jar?raw=true) | [SHA-256](Twilight.jar.sha256) (arka uç sunucuları)
 
@@ -88,71 +31,14 @@ item, glyph and menu results.
 
 siberanka tarafından Java 25.0.2 ve Gradle 9.6.0 ile yerel olarak
 `:twilight:build :twilight-proxy:build --offline --no-daemon --no-configuration-cache`
-komutuyla derlendi. 45 paketteki 263 test geçti. Barındırılan CI kullanılmadı.
+komutuyla derlendi. 63 paketteki 365 test geçti. Barındırılan CI kullanılmadı.
 
 İlgili kaynak kod bu commit içinde `twilight/`, `twilight-proxy/` ve `protocol/` altında, derleme
-dosyaları depo kökündedir. [LGPL-3.0-or-later](../LICENSE.LESSER) ile lisanslanmıştır;
-eşlik eden [GPL metni](../LICENSE) de sağlanır.
+dosyaları depo kökündedir. [Twilight License](../LICENSE) ile (ek koşullarla birlikte PolyForm
+Noncommercial License 1.0.0) lisanslanmıştır: para kazananlar dahil her sunucuda veya ağda çalışabilir;
+satılması yasaktır ve kopyalanan veya uyarlanan parçalar Twilight'ı kaynak olarak göstermelidir
+([NOTICE](../NOTICE)).
 
 Dağıtımdan önce [sürüm notlarını](../RELEASE_NOTES.md), [wiki'yi](../WIKI.md) ve
-[üst üste görseller, isim plakaları ve birebir biyomlar](../docs/LAYERS_BIOMES_2026-10-04.md)
-raporunu ve [beta durumu ve uyumluluk](../README.md#beta-durumu-ve-uyumluluk) özetini okuyun.
-1.0.1-pre.5 FlameCord'da eşya eşlemelerini Geyser başlamadan önce hazırlar ve otomatik keşfi daha eksiksiz yapar
-(ModelEngine yedeği, sağlayıcıların birleştirme klasörleri).
-1.0.1-pre.4 özel blokları FlameCord'da ve Geyser'ı erken başlatan diğer BungeeCord türevlerinde kaydeder.
-1.0.1-pre.3 içerik eklentilerinin özel bloklarını (nota bloğu, mantar bloğu ve tuzak teli üzerindeki madenler ve
-bloklar) dönüştürür ve eşyalarını 3B gösterir; güncellemeden sonra bir kez yeniden başlatın. 1.0.1-pre.2 telefon ve tabletlere (Bedrock'un pocket arayüz profili) Java'nın sandık yerleşimini verir; menü
-görselleri orada artık yuvaların arkasında kalmaz. 1.0.1-pre.1, `forward-player-ping` kapalıyken Geyser'lı sunucularda Paper'ın Bedrock oyuncularını katıldıktan hemen
-sonra atmasına yol açan 1.0.0-pre.19 ve 1.0.0-beta.1 yükleme korumasını düzeltir; bu sürümlerden güncelleyin.
-1.0.0-beta.1 ilk betadır: güncelleme denetiminde sürüm aşamalarını doğru sıralar (1.0.0-pre.14 ile pre.19
-arasındaki sunucular onu duyurmaz; iki JAR'ı bir kez elle değiştirin) ve issue şablonları, bir
-[güvenlik politikası](../SECURITY.md#türkçe) ve [katkı notları](../CONTRIBUTING.md#türkçe) ekler. 1.0.0-pre.19, Geyser'ı olmayan sunucuların paketlerinden eşya görüntüsü modellerini çıkarır
-(Survival'ın katıldıktan sonraki yüklemesi 156 saniyeden 10 saniyenin altına indi), istemcileri paketleri
-yüklerken Bedrock oyuncularını bağlı tutar ve Twilight'ın yazı yerleşimiyle çevirilerini proxy'deki Geyser'da
-çalıştırır; böylece BoxPVP'nin ItemsAdder öneki gibi görseller proxy'li ağlarda artık Unicode karakteri olarak
-görünmez ([saha raporu](../docs/FIELD_REPORT_2026-10-10.md)). 1.0.0-pre.18 eski Twilight dosyalarını Geyser'dan
-kendiliğinden taşıdı, aynı makinedeki arka uçları klasörlerinden okudu ve değişen eşyaların gerektirdiği Geyser
-yeniden başlatmalarını duyurdu (`when-empty` ile yaptı). 1.0.0-pre.17 twilight-proxy'yi Floodgate'i önce yükleyen proxy'lerde (FlameCord, Waterfall,
-Floodgate bulunan Velocity) Geyser'a bağladı; önceki bütün sürümler burada "loader constraint violation" ile
-başarısız oluyordu ([saha raporu](../docs/FIELD_REPORT_2026-10-09.md)). 1.0.0-pre.16, bir proxy türevinin
-gizlediği Geyser'ı adıyla bildirdi ve proxy'li ağın arka uçlarında Geyser'ın neden olmadığını açıkladı. 1.0.0-pre.15 Java 17+ ile çalışan Paper 1.21 sunucularında dönüştürmeleri düzeltti,
-twilight-proxy'nin kendisinden sonra yüklenen bir Geyser'ı bulmasını sağladı, her arka ucun özel eşyalarını
-proxy'deki Geyser'a ulaştırdı ve giriş sunucularını kendisi buldu
-([saha raporu](../docs/FIELD_REPORT_2026-10-09.md)); 1.0.0-pre.14 veya daha eski bir sürümden güncelledikten
-sonra Geyser'ı bir kez yeniden başlatın.
-1.0.0-pre.14 bir güncelleme denetimi ekledi: iki eklenti de GitHub'da (GitHub'a ulaşılamadığında
-GitLab'da) daha yeni bir sürüm arar ve konsola ve güncelleme iznine sahip oyunculara bildirir;
-`update-check.enabled: false` kapatır ([wiki](../WIKI.md#güncellemeler)). 1.0.0-pre.13 twilight-proxy'nin paket
-yeniden bağlanmalarını LeaderOS Auth Plus, BungeeGuard, Floodgate ve Velocity modern yönlendirmesiyle çalışır
-hâle getirdi ([giriş eklentisi testi](../docs/PROXY_AUTH_2026-10-09.md)); 1.0.0-pre.12 diğer giriş eklentilerini, korumaları
-ve büyük paketleri kapsadı ([yeniden bağlanma testi](../docs/PROXY_RECONNECT_2026-10-08.md)).
-1.0.0-pre.11 paket sunucusunu ekledi: Bedrock oyuncuları paketleri Geyser'ı çalıştıran sunucudan, yalnızca
-kendi oturumları için çalışan bağlantılarla HTTP üzerinden indirir ([wiki](../WIKI.md#paket-sunucusu)).
-1.0.0-pre.10, sprite'larını bir paketin yeniden çizdiği boss çubuklarını
-bu sprite'larla çizer, uzun boss çubuğu adlarını tamamen gösterir ve CustomNameplates'in varsayılan boss çubuğunu Bedrock'un ad
-sınırına sığdırır ([boss çubuğu ve model incelemesi](../docs/BOSSBARS_MODELS_2026-10-05.md)). 1.0.0-pre.9'dan
-beri sürümler, Geyser'ı Velocity veya BungeeCord proxy'si üzerinde çalıştıran ağlar için sunucuya özel Bedrock
-paketleri sunan twilight-proxy'yi içerir
-([proxy testi](../docs/PROXY_2026-10-05.md)). Java'nın önceki öğelerin üzerine geri çizdiği yazı ve
-görselleri (üst üste menü görselleri, CustomNameplates arka planları) katman başına bir Bedrock
-etiketiyle çizer, özel ve RealisticSeasons biyomlarını birebir renkleriyle gösterir, isim
-plakalarına Java'nın isim kurallarını uygular, her sağlayıcının kaynağını ve Bedrock paket
-gönderimini `config.yml` içinde seçtirir ve her derlemeyi `plugins/Twilight/export` altına
-aktarır. Yedi üretim sunucusunun tam derlemeleri varsayılan ayarlarla katı yayımlamayı geçer.
-
-[Arayüz kampanyası](../docs/UI_CAMPAIGN_2026-10-04.md) (104 gerçek menü), her Bedrock yazı
-yüzeyindeki Java yazı yerleşimi ([yazı yüzeyi incelemesi](../docs/TEXT_SURFACES_2026-10-04.md)),
-sandık başlığı yerleşimi ([yazı yerleşimi incelemesi](../docs/TEXT_LAYOUT_2026-10-03.md)) ve
-konteyner yerleşimi ([konteyner yerleşimi incelemesi](../docs/CONTAINER_LAYOUT_2026-10-03.md))
-üzerine kuruludur; canlı görüntü köprüsünü, [bulut çapası düzeltmelerini](../docs/CLOUD_ANCHORS_2026-09-29.md)
-ve [Java uyumlu bulut binme yüksekliğini](../docs/DISPLAY_SEATS_2026-09-29.md) içerir.
-
-Tam animasyon, birinci şahıs, arayüz ve varlık eşdeğerliği henüz tamamlanmadı. Eşya adları ve
-açıklamaları ham font karakterlerini korur, moblara binen yazı gösterimleri yaklaşık 0,4 blok
-aşağıda durur, hex renkli yazılar Bedrock'un 28 rengini kullanır, boşluksuz olarak yazının hemen
-ardından gelen bir glif bir birim farklı durur ve yüksek çözünürlüklü glif örneklemesi farklıdır.
-
-[Genişletilmiş içerik denetimleri](../docs/BROAD_CONTENT_2026-09-29.md),
-[yeni örnek regresyonu](../docs/COMPOSITE_MODELS_2026-09-30.md) ve
-[font ölçüleri regresyonu](../docs/FONT_METRICS_2026-10-01.md) önceki eşya, glif ve menü
-sonuçlarını belgeler.
+[beta durumu ve uyumluluk](../README.md#beta-durumu-ve-uyumluluk) özetini okuyun. İki JAR'ın aynı sürümünü
+kurun ve ilk derlemeden sonra bir kez yeniden başlatın.

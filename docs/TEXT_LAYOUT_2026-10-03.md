@@ -4,12 +4,12 @@
 
 > The screenshots of this report were retired on 4 October 2026 in favour of current captures; the measurements below remain. Current Java/Bedrock captures are in the [README](../README.md#visual-acceptance-tests).
 
-> Later change (1.0.0-pre.6): the layout now also covers chat, the action bar,
+> Later change (development build 6): the layout now also covers chat, the action bar,
 > titles, boss bars, scoreboards, entity names and other container titles, and no
 > longer requires the container layout. See the
 > [text surface review](TEXT_SURFACES_2026-10-04.md).
 
-Twilight 1.0.0-pre.5 lays out container titles for Bedrock players with Java font
+Twilight development build 5 lays out container titles for Bedrock players with Java font
 metrics. Real Java menu titles combine negative-space characters with large GUI
 images. On Bedrock these titles previously failed in three ways: characters that
 Java remaps in `minecraft:default` (for example `七` or `ἃ`) showed Bedrock's own
@@ -113,11 +113,11 @@ glyphs on Java. Twilight now matches this instead of applying the font's advance
 > Bu raporun ekran görüntüleri 4 Ekim 2026'da güncel görüntüler lehine kaldırıldı; aşağıdaki ölçümler
 > geçerlidir. Güncel Java/Bedrock görüntüleri [README](../README.md#visual-acceptance-tests) içindedir.
 
-> Sonraki değişiklik (1.0.0-pre.6): yerleşim artık sohbeti, aksiyon çubuğunu, başlıkları, boss
+> Sonraki değişiklik (geliştirme derlemesi 6): yerleşim artık sohbeti, aksiyon çubuğunu, başlıkları, boss
 > çubuklarını, skor tablolarını, varlık adlarını ve diğer konteyner başlıklarını da kapsar ve konteyner
 > yerleşimini gerektirmez. [Yazı yüzeyi incelemesine](TEXT_SURFACES_2026-10-04.md) bakın.
 
-Twilight 1.0.0-pre.5, konteyner başlıklarını Bedrock oyuncuları için Java font ölçüleriyle yerleştirir.
+Twilight geliştirme derlemesi 5, konteyner başlıklarını Bedrock oyuncuları için Java font ölçüleriyle yerleştirir.
 Gerçek Java menü başlıkları negatif boşluk karakterlerini büyük arayüz görselleriyle birleştirir.
 Bedrock'ta bu başlıklar önceden üç şekilde bozuluyordu: Java'nın `minecraft:default` içinde yeniden
 eşlediği karakterler (örneğin `七` veya `ἃ`) Bedrock'un kendi harflerini gösteriyordu, negatif ve özel
@@ -199,7 +199,7 @@ ilerlemelerini uygulamak yerine buna uyar.
 - Sıradan yazının hemen ardından (arada boşluk olmadan) gelen bir glif hâlâ bir birim sağdadır, çünkü
   Bedrock kalemi sola taşıyamaz. Arada boşluk varsa birebirdir.
 - Üst üste binen katmanlar (bir görselin üzerine yazı çizmek için geri giden başlık) yeniden
-  üretilmiyor; bu tür geri gitmeler yaklaşık olarak sayılır. (1.0.0-pre.8 ile çözüldü.)
+  üretilmiyor; bu tür geri gitmeler yaklaşık olarak sayılır. (geliştirme derlemesi 8 ile çözüldü.)
 - Sıradan karakterlerin iki istemcide aynı genişlikte olduğu varsayılır; bir glifin önündeki ASCII
   olmayan yazı genişlikler farklıysa onu kaydırabilir.
 - Bitmap renklendirmesi, kalın glifler, sohbet, eşya adları, açıklamalar, skor tabloları ve boss

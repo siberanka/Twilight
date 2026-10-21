@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2026 siberanka.
- * Licensed under the GNU LGPL v3.0 or later.
+ * Licensed under the Twilight License (PolyForm Noncommercial 1.0.0 with additional terms); see LICENSE.
  */
 package com.siberanka.twilight.world;
 

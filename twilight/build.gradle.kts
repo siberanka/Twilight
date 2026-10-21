@@ -16,13 +16,24 @@ dependencies {
     // Item-display translation is not exposed by Geyser's public API yet.
     // Pin the adapter to a reviewed core build; never bundle Geyser classes.
     compileOnly("org.geysermc.geyser:core:2.11.3-20260925.135253-13")
-    testCompileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
+    // Bukkit's YAML for the configuration checks.
+    testImplementation("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT") { isTransitive = false }
+    testImplementation("org.yaml:snakeyaml:2.2")
+    testImplementation("com.google.guava:guava:33.3.1-jre") { isTransitive = false }
     // Title layout tests drive the reflective Adventure bridge with unrelocated components.
     testImplementation("net.kyori:adventure-api:4.17.0")
     // Text surface tests rewrite real protocol packets.
     testImplementation("org.geysermc.mcprotocollib:protocol:26.2-20260824.124638-17") { isTransitive = false }
     testImplementation("io.netty:netty-buffer:4.2.7.Final")
     testImplementation("org.cloudburstmc:nbt:3.0.5.Final")
+    // The Bedrock network layer is tested in a real Netty pipeline with Geyser's Bedrock packets.
+    for (module in listOf("bedrock-connection", "bedrock-codec", "common")) {
+        testImplementation("org.cloudburstmc.protocol:$module:3.0.0.Beta13-20260917.001841-27") { isTransitive = false }
+    }
+    testImplementation("org.cloudburstmc.math:api:2.0") { isTransitive = false }
+    testImplementation("org.cloudburstmc.math:immutable:2.0") { isTransitive = false }
+    testImplementation("it.unimi.dsi:fastutil:8.5.15")
+    testImplementation("io.netty:netty-transport:4.2.7.Final")
 
     testImplementation(platform("org.junit:junit-bom:5.14.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
@@ -56,13 +67,21 @@ tasks.processResources {
 
 tasks.jar {
     archiveFileName = "Twilight.jar"
-    from(rootProject.file("LICENSE")) { rename { "LICENSE_Twilight" } }
-    from(rootProject.file("LICENSE.LESSER")) { rename { "LICENSE.LESSER_Twilight" } }
     manifest.attributes(
         "Implementation-Title" to "Twilight",
         "Implementation-Version" to project.version,
-        "Implementation-Vendor" to "siberanka"
+        "Implementation-Vendor" to "siberanka",
+        "Implementation-URL" to "https://github.com/siberanka/Twilight",
+        "Bundle-License" to "LicenseRef-Twilight-License; link=META-INF/LICENSE"
     )
+}
+
+// Every JAR (plugin and sources) carries the license and the required notice where tools look for them.
+tasks.withType<Jar>().configureEach {
+    into("META-INF") {
+        from(rootProject.file("LICENSE"))
+        from(rootProject.file("NOTICE"))
+    }
 }
 
 tasks.test {
@@ -122,6 +141,7 @@ tasks.register<JavaExec>("auditServerBuilds") {
     }
     providers.gradleProperty("twilight.audit.item-displays").orNull?.let { systemProperty("twilight.audit.itemDisplays", it) }
     providers.gradleProperty("twilight.audit.max-glyph-cell").orNull?.let { systemProperty("twilight.audit.maxGlyphCell", it) }
+    providers.gradleProperty("twilight.audit.displayed-items").orNull?.let { systemProperty("twilight.audit.displayedItems", it) }
     doFirst {
         val parsed = roots.orNull?.split(',')?.filter { it.isNotBlank() }
             ?: throw GradleException("Pass -Ptwilight.audit.roots=<server-root>,<server-root>")

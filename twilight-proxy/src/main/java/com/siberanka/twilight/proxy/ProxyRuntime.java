@@ -1,11 +1,14 @@
 /*
  * Copyright (c) 2026 siberanka.
- * Licensed under the GNU LGPL v3.0 or later.
+ * Licensed under the Twilight License (PolyForm Noncommercial 1.0.0 with additional terms); see LICENSE.
  */
 package com.siberanka.twilight.proxy;
 
 import com.siberanka.twilight.geyser.CustomBlocks;
 import com.siberanka.twilight.geyser.LoadingGuard;
+import com.siberanka.twilight.integration.display.DisplayIndex;
+import com.siberanka.twilight.integration.display.GeyserDisplayBridge;
+import com.siberanka.twilight.integration.display.GeyserRiderNames;
 import com.siberanka.twilight.integration.text.GeyserLanguageBridge;
 import com.siberanka.twilight.integration.text.GeyserTextLayoutBridge;
 import org.geysermc.geyser.session.GeyserSession;
@@ -26,8 +29,9 @@ import java.util.logging.Logger;
 /**
  * Twilight's runtime on the proxy's Geyser, the part a backend's own Geyser would otherwise run: the Java text
  * layout (custom font glyphs, menu titles, aliases of ordinary characters and named fonts, spacing), the packs'
- * translations, and keeping clients alive while they load large packs. Each Bedrock session gets the layout of
- * the pack it loaded for its server. Only this class and the bridges it starts touch Geyser's internals.
+ * translations, keeping clients alive while they load large packs, custom blocks, Java item displays (furniture,
+ * ModelEngine and BetterModel bones) and Java's rider name rule. Each Bedrock session gets the layout and display
+ * variants of the pack it loaded for its server. Only this class and the bridges it starts touch Geyser's internals.
  */
 final class ProxyRuntime implements AutoCloseable {
     private static final int MAX_CACHED = 64;
@@ -35,6 +39,13 @@ final class ProxyRuntime implements AutoCloseable {
     private final GeyserTextLayoutBridge text;
     private final GeyserLanguageBridge language;
     private final LoadingGuard guard;
+    private volatile GeyserDisplayBridge displays;
+    private volatile GeyserRiderNames riderNames;
+    private volatile SessionDisplays sessionDisplays;
+    private final DisplaySightings sightings = new DisplaySightings();
+    private volatile com.siberanka.twilight.network.NetworkSettings networkSettings =
+            com.siberanka.twilight.network.NetworkSettings.DEFAULTS;
+    private volatile com.siberanka.twilight.network.BedrockNetwork network;
 
     private ProxyRuntime(GeyserTextLayoutBridge text, GeyserLanguageBridge language, LoadingGuard guard) {
         this.text = text;
@@ -48,12 +59,16 @@ final class ProxyRuntime implements AutoCloseable {
      */
     static ProxyRuntime start(Object owner, ProxyConfig config, Platform platform, Function<String, Optional<Path>> packOf,
                               Supplier<Collection<Path>> packs) {
-        return start(owner, config, platform, packOf, packs, null);
+        return start(owner, config, platform, packOf, packs, null, null, null);
     }
 
-    /** @param registered custom blocks already subscribed in the proxy's load phase, or null */
+    /**
+     * @param registered      custom blocks already subscribed in the proxy's load phase, or null
+     * @param earlyDisplays   the display bridge subscribed in the load phase with its variant holder, or null
+     */
     static ProxyRuntime start(Object owner, ProxyConfig config, Platform platform, Function<String, Optional<Path>> packOf,
-                              Supplier<Collection<Path>> packs, CustomBlocks registered) {
+                              Supplier<Collection<Path>> packs, CustomBlocks registered, EarlyDisplays earlyDisplays,
+                              com.siberanka.twilight.geyser.CustomSkulls registeredSkulls) {
         Logger logger = logger(platform);
         GeyserTextLayoutBridge text = null;
         GeyserLanguageBridge language = null;
@@ -74,16 +89,103 @@ final class ProxyRuntime implements AutoCloseable {
             platform.warn("Loading protection is unavailable for this Geyser build.", failure);
         }
         ProxyRuntime runtime = new ProxyRuntime(text, language, guard);
+        runtime.networkSettings = config.network();
+        if (config.network().enabled()) {
+            int threads = com.siberanka.twilight.network.Threads.network(config.network().threads(), 0);
+            try {
+                runtime.network = com.siberanka.twilight.network.BedrockNetwork.start(owner, () -> runtime.networkSettings,
+                        threads, platform::info, platform::warn);
+                platform.info("Bedrock network layer active: updates of entities a Bedrock player cannot see are held"
+                        + " back and limits follow each connection (" + threads + " line-of-sight thread(s)).");
+            } catch (RuntimeException | LinkageError failure) {
+                platform.warn("The Bedrock network layer is unavailable for this Geyser build; packets go unchanged.", failure);
+            }
+        }
         try {
             if (registered != null) runtime.blocks = registered;
             else if (config.customBlocks()) runtime.blocks = CustomBlocks.start(owner, packs, platform::info, platform::warn);
         } catch (RuntimeException | LinkageError failure) {
             platform.warn("Custom blocks are unavailable for this Geyser build; they keep the vanilla look on Bedrock.", failure);
         }
+        try {
+            if (registeredSkulls != null) runtime.skulls = registeredSkulls;
+            else if (config.playerHeads()) runtime.skulls = com.siberanka.twilight.geyser.CustomSkulls.start(owner, packs,
+                    platform::info, platform::warn);
+        } catch (RuntimeException | LinkageError failure) {
+            platform.warn("Player head skins are unavailable for this Geyser build; Bedrock shows Steve's head.", failure);
+        }
+        if (config.itemDisplays()) {
+            try {
+                SessionDisplays variants = new SessionDisplays(packOf);
+                runtime.sessionDisplays = variants;
+                if (earlyDisplays != null) {
+                    earlyDisplays.variants = variants;
+                    runtime.displays = earlyDisplays.bridge;
+                } else {
+                    runtime.displays = new GeyserDisplayBridge(owner, variants, logger, true);
+                }
+                DisplaySightings sightings = runtime.sightings;
+                runtime.displays.onUnshown((session, keys) -> {
+                    java.util.UUID player = session.javaUuid();
+                    if (player != null) platform.currentServer(player).ifPresent(server -> sightings.seen(server, keys));
+                });
+            } catch (RuntimeException | LinkageError failure) {
+                platform.warn("Item displays are unavailable for this Geyser build; furniture and model bones stay"
+                        + " invisible for Bedrock players.", failure);
+            }
+        }
+        try {
+            runtime.riderNames = GeyserRiderNames.create(owner, logger);
+        } catch (RuntimeException | LinkageError failure) {
+            platform.warn("Java's rider name rule is unavailable for this Geyser build.", failure);
+        }
         return runtime;
     }
 
+    /**
+     * The display bridge subscribed in the proxy's load phase (BungeeCord forks start Geyser before this plugin
+     * enables); its variants follow the sessions' packs once the runtime starts.
+     */
+    static final class EarlyDisplays implements GeyserDisplayBridge.Variants {
+        volatile GeyserDisplayBridge.Variants variants = session -> DisplayIndex.EMPTY;
+        GeyserDisplayBridge bridge;
+
+        @Override public DisplayIndex of(GeyserSession session) {
+            return variants.of(session);
+        }
+    }
+
+    /** New {@code bedrock-network} settings from a reload ({@code enabled} and {@code threads} need a restart). */
+    void networkSettings(com.siberanka.twilight.network.NetworkSettings settings) {
+        if (settings != null) networkSettings = settings;
+    }
+
+    /** {@code /twilightproxy network}. */
+    java.util.List<String> networkReport() {
+        var running = network;
+        return running == null ? java.util.List.of("The Bedrock network layer is not running (bedrock-network.enabled: false,"
+                + " or this Geyser build cannot take it).") : running.report();
+    }
+
+    /** Whether Java item displays are shown: Geyser registered the display entity with this runtime. */
+    boolean showsItemDisplays() {
+        GeyserDisplayBridge bridge = displays;
+        return bridge != null && bridge.registered();
+    }
+
+    /** Items seen in displays without a model, to report to their servers. */
+    DisplaySightings sightings() {
+        return sightings;
+    }
+
+    /** Reads a new pack's display variants off the event loop, before a session needs them. */
+    void prepare(Path pack) {
+        SessionDisplays variants = sessionDisplays;
+        if (variants != null) variants.load(pack);
+    }
+
     private volatile CustomBlocks blocks;
+    private volatile com.siberanka.twilight.geyser.CustomSkulls skulls;
 
     /**
      * The servers' packs changed: their translations are read again.
@@ -93,16 +195,25 @@ final class ProxyRuntime implements AutoCloseable {
      */
     String packsChanged() {
         if (language != null) language.refresh();
+        java.util.List<String> changed = new java.util.ArrayList<>();
         CustomBlocks custom = blocks;
         CustomBlocks.Merged registered = custom == null ? null : custom.registered();
-        if (registered == null) return null;
-        CustomBlocks.Merged now = custom.current();
-        return now.hash().equals(registered.hash()) ? null : now.blocks().size() + " custom block(s)";
+        if (registered != null) {
+            CustomBlocks.Merged now = custom.current();
+            if (!now.hash().equals(registered.hash())) changed.add(now.blocks().size() + " custom block(s)");
+        }
+        var heads = skulls;
+        var registeredHeads = heads == null ? null : heads.registered();
+        if (registeredHeads != null) {
+            var now = heads.current();
+            if (!now.sameShown(registeredHeads)) changed.add(now.skins().size() + now.names().size() + " player head(s)");
+        }
+        return changed.isEmpty() ? null : String.join(" and ", changed);
     }
 
     @Override
     public void close() {
-        for (AutoCloseable part : new AutoCloseable[]{text, language, guard, blocks}) {
+        for (AutoCloseable part : new AutoCloseable[]{network, text, language, guard, blocks, skulls, displays, riderNames}) {
             if (part == null) continue;
             try {
                 part.close();
@@ -151,15 +262,51 @@ final class ProxyRuntime implements AutoCloseable {
         }
     }
 
+    /** The display variants of the pack each session loaded, read once per pack version (versions never change). */
+    static final class SessionDisplays implements GeyserDisplayBridge.Variants {
+        private final Function<String, Optional<Path>> packOf;
+        private final Map<Path, DisplayIndex> variants = new ConcurrentHashMap<>();
+
+        SessionDisplays(Function<String, Optional<Path>> packOf) {
+            this.packOf = packOf;
+        }
+
+        @Override public DisplayIndex of(GeyserSession session) {
+            String xuid = session.xuid();
+            if (xuid == null || xuid.isEmpty()) return DisplayIndex.EMPTY;
+            Optional<Path> pack = packOf.apply(xuid);
+            return pack.isEmpty() ? DisplayIndex.EMPTY : load(pack.get());
+        }
+
+        DisplayIndex load(Path pack) {
+            DisplayIndex known = variants.get(pack);
+            if (known != null) return known;
+            DisplayIndex read;
+            try {
+                read = DisplayIndex.read(pack);
+            } catch (IOException | RuntimeException unreadable) {
+                // A malformed or hostile index shows nothing rather than wrong models.
+                read = DisplayIndex.EMPTY;
+            }
+            if (variants.size() >= MAX_CACHED) variants.clear();
+            variants.put(pack, read);
+            return read;
+        }
+    }
+
     /** The bridges log through java.util.logging; this forwards to the proxy's log. */
     private static Logger logger(Platform platform) {
+        return logger(platform::info, platform::warn);
+    }
+
+    static Logger logger(java.util.function.Consumer<String> info, java.util.function.BiConsumer<String, Throwable> warn) {
         Logger logger = Logger.getAnonymousLogger();
         logger.setUseParentHandlers(false);
         logger.addHandler(new Handler() {
             @Override public void publish(LogRecord record) {
                 String message = record.getMessage();
-                if (record.getLevel().intValue() >= Level.WARNING.intValue()) platform.warn(message, record.getThrown());
-                else platform.info(message);
+                if (record.getLevel().intValue() >= Level.WARNING.intValue()) warn.accept(message, record.getThrown());
+                else info.accept(message);
             }
 
             @Override public void flush() {

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2026 siberanka.
- * Licensed under the GNU LGPL v3.0 or later.
+ * Licensed under the Twilight License (PolyForm Noncommercial 1.0.0 with additional terms); see LICENSE.
  */
 package com.siberanka.twilight.compiler;
 
@@ -41,16 +41,26 @@ final class LayerLabels {
      * Where a label's text comes from: a variable (with the always-present global property that makes its
      * expressions valid) or a (global or collection) binding property.
      */
-    record Source(String variable, String empty, JsonObject binding, String property) {
+    record Source(String variable, String empty, JsonObject binding, String property, int skipped) {
         static Source variable(String variable, String empty) {
-            return new Source(variable, empty, null, null);
+            return new Source(variable, empty, null, null, 0);
         }
 
         static Source binding(JsonObject binding, String property) {
-            return new Source(null, null, binding, property);
+            return new Source(null, null, binding, property, 0);
         }
 
-        String operand() { return variable != null ? "$twilight_text" : property; }
+        /** The same text without its first {@code bytes} UTF-8 bytes (the plain title block). */
+        Source skipping(int bytes) {
+            return new Source(variable, empty, binding, property, bytes);
+        }
+
+        String base() { return variable != null ? "$twilight_text" : property; }
+
+        String operand() {
+            String text = base();
+            return skipped == 0 ? text : "(" + text + " - ('%." + skipped + "s' * " + text + "))";
+        }
 
         String close(String expression) {
             return empty == null ? expression : "(" + expression + " + ('%.0s' * " + empty + "))";
@@ -76,6 +86,24 @@ final class LayerLabels {
      */
     static void showBlock(JsonObject label, Source source, int layer, int blockBytes) {
         showBlock(label, source, layer, blockBytes, blockBytes);
+    }
+
+    /** Makes a label show the first {@code bytes} UTF-8 bytes of the source's text (the plain title block). */
+    static void showStart(JsonObject label, Source source, int bytes) {
+        label.addProperty("text", LAYER_PROPERTY);
+        label.addProperty("localize", false);
+        JsonArray bindings = baseBindings(label, source);
+        bindings.add(view(source.close("('%." + bytes + "s' * " + source.base() + ")"), LAYER_PROPERTY));
+        label.add("bindings", bindings);
+    }
+
+    /** Makes a label show all of the source's text (after the bytes it skips). */
+    static void showAll(JsonObject label, Source source) {
+        label.addProperty("text", LAYER_PROPERTY);
+        label.addProperty("localize", false);
+        JsonArray bindings = baseBindings(label, source);
+        bindings.add(view(source.close(source.operand()), LAYER_PROPERTY));
+        label.add("bindings", bindings);
     }
 
     static void showBlock(JsonObject label, Source source, int layer, int firstBytes, int blockBytes) {

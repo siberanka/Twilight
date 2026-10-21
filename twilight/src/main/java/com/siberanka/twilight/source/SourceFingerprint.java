@@ -81,7 +81,9 @@ public final class SourceFingerprint {
 
     private static String itemToken(CustomItemDescriptor item) {
         return item.provider() + '\u0000' + item.baseItem() + '\u0000' + item.itemModel().orElse("") + '\u0000' +
-                (item.customModelData().isPresent() ? item.customModelData().getAsInt() : "") + '\u0000' + item.displayName();
+                (item.customModelData().isPresent() ? item.customModelData().getAsInt() : "") + '\u0000' + item.displayName()
+                + item.equipment().map(worn -> "\u0000" + worn.slot() + '=' + worn.assetId().orElse("")
+                        + (worn.dye().isPresent() ? "#" + worn.dye().getAsInt() : "")).orElse("");
     }
 
     private static void token(MessageDigest digest, String value) {

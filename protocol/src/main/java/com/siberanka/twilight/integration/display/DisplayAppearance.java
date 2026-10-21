@@ -1,4 +1,4 @@
-/* Copyright (c) 2026 siberanka. Licensed under the GNU LGPL v3.0 or later. */
+/* Copyright (c) 2026 siberanka. Twilight License (PolyForm Noncommercial 1.0.0 + terms), see LICENSE. */
 package com.siberanka.twilight.integration.display;
 
 /** Keeps the selected item while a provider temporarily disables display rendering. */
@@ -10,6 +10,7 @@ final class DisplayAppearance {
     void variant(int value) { variant = value; }
     void context(byte value) { context = Math.clamp((int) value, 0, 8); }
     void viewRange(float value) { viewRange = value; }
+    int context() { return context; }
 
     int packed() {
         // Java compares distance against the squared range. Zero (including -0)

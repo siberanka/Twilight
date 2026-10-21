@@ -152,6 +152,24 @@ class BitmapFontLayoutTest {
         assertThrows(IllegalArgumentException.class,()->compile(300));
     }
 
+    /**
+     * With the title layout, large glyphs go to pages of their own instead of making the page of the small glyphs
+     * next to them 8192x8192; the layout maps the original code points to them.
+     */
+    @Test
+    void groupsLargeGlyphsOnPagesOfTheirOwnWithTheTitleLayout() throws Exception {
+        add(0xE000,200,200,10,0,200);
+        add(0xE001,16,8,7,0,16);
+        var output=compile(512,true);
+        assertTrue(output.result.problems().isEmpty(),output.result.problems().toString());
+        assertEquals(256,output.page("E0").getWidth(),"the small glyph's page keeps a small cell");
+        long large=output.files.entrySet().stream().filter(e->e.getKey().startsWith("font/glyph_")).filter(e->{
+            try {return ImageIO.read(new ByteArrayInputStream(e.getValue())).getWidth()==8192;}
+            catch(java.io.IOException failure) {throw new java.io.UncheckedIOException(failure);}
+        }).count();
+        assertEquals(1,large,"the large glyph sits on one page of large cells");
+    }
+
     private void add(int codePoint,int sourceSize,int height,int ascent,int visibleStart,int visibleEnd) throws Exception {
         BufferedImage image=new BufferedImage(sourceSize,sourceSize,BufferedImage.TYPE_INT_ARGB);
         for(int y=visibleStart;y<visibleEnd;y++) for(int x=0;x<sourceSize;x++) image.setRGB(x,y,0xFFFF0000);
@@ -172,12 +190,16 @@ class BitmapFontLayoutTest {
     }
 
     private Output compile(int maxCell) throws Exception {
+        return compile(maxCell,false);
+    }
+
+    private Output compile(int maxCell,boolean textLayout) throws Exception {
         Path path=root.resolve("assets/minecraft/font/default.json");Files.createDirectories(path.getParent());
         JsonObject font=new JsonObject();font.add("providers",providers);Files.writeString(path,font.toString());
         var config=new TwilightConfig(false,true,false,false,40,100,10_000_000,1000,false,false,List.of(),"auto",false,false,3);
         try(var index=ResourceIndex.build(List.of(new ContentSource("test",ContentSource.Kind.RESOURCE_PACK,root,1)),config)) {
             Map<String,byte[]> files=new LinkedHashMap<>();
-            return new Output(new BitmapFontCompiler(index,null).maxCell(maxCell).compile(files),files);
+            return new Output(new BitmapFontCompiler(index,null,false,textLayout).maxCell(maxCell).compile(files),files);
         }
     }
     private record Output(BitmapFontCompiler.Result result,Map<String,byte[]> files) {

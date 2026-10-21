@@ -70,7 +70,7 @@ coverage; they are not implied by successful item-display registration.
   binaries and source content must not enter public artifacts.
 
 The adapter and compiler code are authored by siberanka under Twilight's
-LGPL-3.0-or-later license. See the upstream projects for their complete license
+license ([Twilight License](../LICENSE): PolyForm Noncommercial 1.0.0 with additional terms, summary in [NOTICE](../NOTICE)). See the upstream projects for their complete license
 texts and contributor histories.
 
 ---
@@ -139,5 +139,5 @@ görüntüsü kaydı bunları kapsamaz.
 - ModelEngine ve MythicMobs test kurulumları özel kalır. Tescilli ikilileri ve kaynak içerikleri
   herkese açık dosyalara giremez.
 
-Bağdaştırıcı ve derleyici kodu siberanka tarafından Twilight'ın LGPL-3.0-or-later lisansıyla
-yazılmıştır. Tam lisans metinleri ve katkıda bulunan geçmişleri için kaynak projelere bakın.
+Bağdaştırıcı ve derleyici kodu siberanka tarafından Twilight'ın lisansıyla ([Twilight License](../LICENSE): ek koşullarla
+birlikte PolyForm Noncommercial 1.0.0, özeti [NOTICE](../NOTICE) içinde) yazılmıştır. Tam lisans metinleri ve katkıda bulunan geçmişleri için kaynak projelere bakın.

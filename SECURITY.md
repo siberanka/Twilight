@@ -5,8 +5,8 @@
 ## Supported versions
 
 Security fixes are made for the newest version of Twilight and twilight-proxy, currently the 1.0.0 betas.
-Each fix is a new version: published JARs are never replaced. Earlier previews (1.0.0-pre.N) receive no
-fixes; update to the newest version.
+Each fix is a new version: published JARs are never replaced. Earlier development builds receive no fixes;
+update to the newest version.
 
 ## Reporting a vulnerability
 
@@ -44,8 +44,8 @@ such a problem worse, report it here as well.
 #### Desteklenen sürümler
 
 Güvenlik düzeltmeleri Twilight ve twilight-proxy'nin en yeni sürümü için yapılır; şu anda 1.0.0 betaları.
-Her düzeltme yeni bir sürümdür: yayımlanmış JAR'lar asla değiştirilmez. Önceki ön izleme sürümleri
-(1.0.0-pre.N) düzeltme almaz; en yeni sürüme güncelleyin.
+Her düzeltme yeni bir sürümdür: yayımlanmış JAR'lar asla değiştirilmez. Önceki geliştirme derlemeleri düzeltme
+almaz; en yeni sürüme güncelleyin.
 
 #### Bir güvenlik açığını bildirme
 

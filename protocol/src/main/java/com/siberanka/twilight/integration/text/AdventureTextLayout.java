@@ -1,4 +1,4 @@
-/* Copyright (c) 2026 siberanka. Licensed under the GNU LGPL v3.0 or later. */
+/* Copyright (c) 2026 siberanka. Twilight License (PolyForm Noncommercial 1.0.0 + terms), see LICENSE. */
 package com.siberanka.twilight.integration.text;
 
 import com.siberanka.twilight.text.LayeredTextLayout;
@@ -149,6 +149,26 @@ final class AdventureTextLayout {
             layers.add(root);
         }
         return layers;
+    }
+
+    /**
+     * A chest title that needs no layout (no custom character, nothing the layout would move): the component with
+     * pack translations resolved, or null when the title needs the layout.
+     */
+    static Object plainTitle(TextLayoutTable table, Object component, Function<String, String> translations)
+            throws ReflectiveOperationException {
+        Adventure adventure = Adventure.of(component);
+        List<TextLayout.Segment> segments = segments(adventure, component, translations, true);
+        TextLayout.Result result = TextLayout.layout(table, segments, TextLayout.Mode.CONTAINER);
+        if (result.customCharacters() > 0 || result.approximations() > 0) return null;
+        List<String> texts = new ArrayList<>();
+        for (TextLayout.Segment segment : segments) texts.add(segment.text() == null ? "" : segment.text());
+        return rebuild(adventure, component, texts, new int[]{0}, translations);
+    }
+
+    /** The title's text runs with their fonts (no translations), for analysis. */
+    static List<TextLayout.Segment> titleSegments(Object component) throws ReflectiveOperationException {
+        return segments(Adventure.of(component), component, null, true);
     }
 
     /** {@code text} followed by the component (an unstyled parent, so the component keeps its style). */

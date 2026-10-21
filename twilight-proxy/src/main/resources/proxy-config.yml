@@ -98,6 +98,49 @@ bedrock:
   # Custom blocks from the servers' packs (content plugins' ores and blocks on note blocks, mushroom blocks
   # and tripwire), registered with the proxy's Geyser when it starts; their items show the block in 3D.
   custom-blocks: true
+  # Java item displays with the servers' models: furniture, ModelEngine and BetterModel models and the NPCs
+  # and mobs built from them. Twilight on each backend learns that this proxy shows them and builds its
+  # pack with their models. Also applies Java's rule that a ridden mob shows no name. Takes effect on restart.
+  item-displays: true
+  # Player heads with their skins instead of Steve's (menus, hands, holograms): the heads the servers' packs list
+  # are registered with the proxy's Geyser as custom skulls when it starts; new heads need a proxy restart.
+  player-heads: true
+
+bedrock-network:
+  # Lighter traffic for Bedrock players on this Geyser: movement and data of entities a player cannot see
+  # (behind them or behind walls) are held back and sent as one update when they come into view or every
+  # few seconds; distant entities get fewer movement updates; each connection has an update budget; and a
+  # struggling connection gets stronger compression. Spawns, removals, chunks, inventories, chat, sounds and
+  # effects always pass unchanged and in order, and a revealed entity always shows the server's latest
+  # state. Every number accepts auto: it then follows the player's round trip and how well the client
+  # keeps up (wider margins for a high ping, fewer updates for a struggling device). /twilightproxy network
+  # shows the result per player. Applied on /twilightproxy reload (enabled and threads on restart).
+  enabled: true
+  # Line-of-sight worker threads for all players; auto = a quarter of the processors (1-4).
+  threads: auto
+  # Hold back entities outside the view (behind the player).
+  culling: true
+  # Other players too (with 1.5 times the distances below).
+  cull-players: true
+  # Degrees of the view counted as visible; auto = 220, wider with ping. 360 turns view culling off.
+  view-angle: auto
+  # Entities closer than this always get every update, wherever they are; auto = 10-24 blocks by ping.
+  behind-distance: auto
+  # Hold back entities behind walls.
+  wall-culling: true
+  # From this distance on; auto = 16-32 blocks by ping.
+  wall-distance: auto
+  # Solid, opaque blocks every line of sight must cross; auto = 3, so one wall, glass, leaves, fences
+  # and doorways never hide anything.
+  wall-thickness: auto
+  # Visible entities beyond this get fewer movement updates; auto = 40 blocks.
+  far-distance: auto
+  # Hidden entities are brought up to date this often anyway (ms); auto = 1000-3000 by connection.
+  hidden-update-ms: auto
+  # Entity movement and data updates per second and player that may wait; auto = 2400 down to 600.
+  packets-per-second: auto
+  # Raise zlib compression (by up to 2 levels above Geyser's) for struggling connections.
+  adaptive-compression: true
 
 # Geyser item mappings of every server, written to the proxy's Geyser (custom_mappings/twilight-proxy_item_mappings.json).
 item-mappings:

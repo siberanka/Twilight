@@ -29,7 +29,10 @@ hosts carry the same history. You can write in English or Turkish.
 - Keep changes focused and follow the surrounding code. Do not add files from other projects unless their
   licence allows it, and name their source.
 - Public Markdown files have an English part and a full Turkish translation under `## Türkçe`; update both.
-- Contributions are licensed under [LGPL-3.0-or-later](LICENSE.LESSER), like the rest of Twilight.
+- Twilight is licensed under the [Twilight License](LICENSE) (the PolyForm Noncommercial License 1.0.0
+  with additional terms; summary in [NOTICE](NOTICE)). By
+  submitting a contribution you confirm that you wrote it or may submit it, and you allow siberanka to
+  publish it under that license and to license it to others, commercially as well.
 
 ---
 
@@ -66,4 +69,7 @@ kabul edilir; iki barındırıcı da aynı geçmişi taşır. İngilizce veya T�
   eklemeyin ve kaynaklarını belirtin.
 - Herkese açık Markdown dosyalarında bir İngilizce bölüm ve `## Türkçe` altında tam bir Türkçe çeviri bulunur;
   ikisini de güncelleyin.
-- Katkılar, Twilight'ın geri kalanı gibi [LGPL-3.0-or-later](LICENSE.LESSER) ile lisanslanır.
+- Twilight, [Twilight License](LICENSE) ile (ek koşullarla birlikte PolyForm Noncommercial License 1.0.0;
+  özeti [NOTICE](NOTICE) içinde) lisanslanmıştır. Bir
+  katkı göndererek onu sizin yazdığınızı veya gönderme hakkınız olduğunu onaylar; siberanka'nın onu bu lisansla
+  yayımlamasına ve başkalarına, ticari olarak da, lisanslamasına izin verirsiniz.

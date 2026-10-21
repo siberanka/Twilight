@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2026 siberanka.
- * Licensed under the GNU LGPL v3.0 or later.
+ * Licensed under the Twilight License (PolyForm Noncommercial 1.0.0 with additional terms); see LICENSE.
  */
 package com.siberanka.twilight.proxy;
 
@@ -48,6 +48,10 @@ final class AutoTransfers {
         this.keys = List.copyOf(keys);
     }
 
+    List<PackChannel.Key> keys() {
+        return keys;
+    }
+
     boolean enabled() {
         return !keys.isEmpty();
     }
@@ -63,6 +67,23 @@ final class AutoTransfers {
         if (decoded instanceof PackChannel.Announce announce) return onAnnounce(server.toLowerCase(Locale.ROOT), announce, maxBytes, current);
         if (decoded instanceof PackChannel.Chunk chunk) onChunk(server.toLowerCase(Locale.ROOT), chunk);
         return null;
+    }
+
+    /**
+     * The signed features of this proxy's runtime, answering a valid announcement from a backend (whatever its
+     * pack source here); null for anything else.
+     */
+    byte[] capabilities(byte[] message, int flags) {
+        List<PackChannel.Key> current = keys;
+        if (current.isEmpty()) return null;
+        if (!(PackChannel.read(message, current, System.currentTimeMillis()) instanceof PackChannel.Announce)) return null;
+        return PackChannel.capabilities(current.getFirst(), System.currentTimeMillis(), flags);
+    }
+
+    /** The signed features of this proxy's runtime, unprompted (a backend without a pack has nothing to announce). */
+    byte[] capabilities(int flags) {
+        List<PackChannel.Key> current = keys;
+        return current.isEmpty() ? null : PackChannel.capabilities(current.getFirst(), System.currentTimeMillis(), flags);
     }
 
     private synchronized byte[] onAnnounce(String server, PackChannel.Announce announce, long maxBytes,

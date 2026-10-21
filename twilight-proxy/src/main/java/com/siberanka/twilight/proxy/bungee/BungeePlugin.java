@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2026 siberanka.
- * Licensed under the GNU LGPL v3.0 or later.
+ * Licensed under the Twilight License (PolyForm Noncommercial 1.0.0 with additional terms); see LICENSE.
  */
 package com.siberanka.twilight.proxy.bungee;
 
@@ -71,6 +71,7 @@ public final class BungeePlugin extends Plugin implements Listener {
             @Override public void execute(CommandSender sender, String[] args) {
                 String result = args.length > 0 && args[0].equalsIgnoreCase("reload")
                         ? (created.reload() ? "twilight-proxy reloaded." : "Reload failed; see the console.")
+                        : args.length > 0 && args[0].equalsIgnoreCase("network") ? created.networkText()
                         : created.statusText();
                 sender.sendMessage(new TextComponent(result));
             }
@@ -89,8 +90,9 @@ public final class BungeePlugin extends Plugin implements Listener {
         // Consumed in both directions: clients never see it and cannot send it to a backend.
         event.setCancelled(true);
         if (core == null || !(event.getSender() instanceof Server server) || !(event.getReceiver() instanceof ProxiedPlayer)) return;
-        byte[] reply = core.serverMessage(server.getInfo().getName(), event.getData());
-        if (reply != null) server.sendData(PackChannel.CHANNEL, reply);
+        for (byte[] reply : core.serverMessage(server.getInfo().getName(), event.getData())) {
+            server.sendData(PackChannel.CHANNEL, reply);
+        }
     }
 
     /** The first server BungeeCord picked for each joining player, before other plugins changed it. */
@@ -142,8 +144,18 @@ public final class BungeePlugin extends Plugin implements Listener {
 
     @EventHandler
     public void onConnected(ServerConnectedEvent event) {
-        if (core != null) core.connected(event.getPlayer().getUniqueId(), event.getPlayer().getName(),
-                event.getServer().getInfo().getName());
+        if (core == null) return;
+        core.connected(event.getPlayer().getUniqueId(), event.getPlayer().getName(), event.getServer().getInfo().getName());
+        ProxiedPlayer player = event.getPlayer();
+        String server = event.getServer().getInfo().getName();
+        // Once the player plays on the server (plugin messages before that may be dropped).
+        getProxy().getScheduler().schedule(this, () -> {
+            Server current = player.getServer();
+            byte[] statement = core == null ? null : core.capabilitiesStatement();
+            if (statement != null && current != null && current.getInfo().getName().equals(server)) {
+                current.sendData(PackChannel.CHANNEL, statement);
+            }
+        }, 3, java.util.concurrent.TimeUnit.SECONDS);
     }
 
     @EventHandler
@@ -223,6 +235,14 @@ public final class BungeePlugin extends Plugin implements Listener {
         }
 
         @Override public String version() { return getDescription().getVersion(); }
+
+        @Override public boolean sendToServer(String server, byte[] message) {
+            for (var entry : getProxy().getServers().entrySet()) {
+                // Without queueing: only through a player who is there now.
+                if (entry.getKey().equalsIgnoreCase(server)) return entry.getValue().sendData(PackChannel.CHANNEL, message, false);
+            }
+            return false;
+        }
 
         @Override public Map<String, java.net.InetSocketAddress> serverAddresses() {
             Map<String, java.net.InetSocketAddress> addresses = new java.util.LinkedHashMap<>();

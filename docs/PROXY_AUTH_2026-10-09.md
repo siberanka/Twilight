@@ -2,7 +2,7 @@
 
 > Türkçe: [aşağıda](#türkçe)
 
-twilight-proxy 1.0.0-pre.13 was tested with LeaderOS Auth Plus 1.1.1-siberanka (release build, hashes
+twilight-proxy development build 13 was tested with LeaderOS Auth Plus 1.1.1-siberanka (release build, hashes
 checked) against a local stand-in for the LeaderOS web panel, on BungeeCord 26.1 and Velocity 4.2.0, each
 with Geyser 2.11.3 on the proxy, three isolated Paper 26.2 backends (`lobby` with Twilight's pack, `survival`
 with a 10 MiB load-test pack, `auth_lobby` with LeaderOS Auth on Bukkit) and Bedrock 1.26.5203 for Windows.
@@ -61,7 +61,7 @@ the target after everyone, refused redirects, name lookups from another address,
 
 ### Giriş eklentileri, yönlendirme ve korumalar - 9 Ekim 2026
 
-twilight-proxy 1.0.0-pre.13; LeaderOS Auth Plus 1.1.1-siberanka (karmaları denetlenmiş sürüm derlemesi) ile,
+twilight-proxy geliştirme derlemesi 13; LeaderOS Auth Plus 1.1.1-siberanka (karmaları denetlenmiş sürüm derlemesi) ile,
 LeaderOS web panelinin yerel bir yerine geçeniyle, BungeeCord 26.1 ve Velocity 4.2.0 üzerinde test edildi.
 Her birinde proxy'de Geyser 2.11.3, yalıtılmış üç Paper 26.2 arka ucu (Twilight paketiyle `lobby`, 10 MiB'lik
 yük testi paketiyle `survival`, Bukkit'te LeaderOS Auth bulunan `auth_lobby`) ve Windows için Bedrock 1.26.5203

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2026 siberanka.
- * Licensed under the GNU LGPL v3.0 or later.
+ * Licensed under the Twilight License (PolyForm Noncommercial 1.0.0 with additional terms); see LICENSE.
  */
 package com.siberanka.twilight.text;
 
@@ -111,6 +111,16 @@ public final class LayerEncoding {
     /** UTF-8 offset of a block: block 0 has its own size, the others share one. */
     public static int blockStart(int block, int firstBytes, int blockBytes) {
         return block == 0 ? 0 : firstBytes + (block - 1) * blockBytes;
+    }
+
+    /**
+     * Zero-width codes of exactly {@code bytes} UTF-8 bytes (an odd number of codes) that begin and end with italic,
+     * so that neither Geyser's leading reset before them nor a reset after them is ever doubled (Geyser drops a
+     * reset that follows a reset).
+     */
+    public static String filler(int bytes) {
+        if (bytes < 3 || bytes % 6 != 3) throw new IllegalArgumentException("filler of " + bytes + " bytes");
+        return ITALIC + (RESET + ITALIC).repeat((bytes / 3 - 1) / 2);
     }
 
     /** {@code count} zero-width codes ending with a reset, never two resets in a row. */

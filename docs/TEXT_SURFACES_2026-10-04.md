@@ -2,7 +2,7 @@
 
 > Türkçe: [aşağıda](#türkçe)
 
-Twilight 1.0.0-pre.6 extends the Java font layout from chest titles to the other
+Twilight development build 6 extends the Java font layout from chest titles to the other
 places where servers draw custom font content: chat, the action bar, titles and
 subtitles, boss bars, scoreboards, entity names and text displays (holograms,
 nameplates), and the titles of other containers. The same release fixes several
@@ -78,9 +78,9 @@ show third-party rank and nameplate art and are therefore not published.
 
 A new audit runs the complete build (items, fonts with the layout, sounds, UI)
 for each server's discovered sources, as the plugin would on that server. The
-same five servers were built with the pre.5 release and with this release:
+same five servers were built with development build 5 and with development build 6:
 
-| Server | Custom items, pre.5 | Custom items, pre.6 | Problems pre.5 → pre.6 |
+| Server | Custom items, build 5 | Custom items, build 6 | Problems build 5 → build 6 |
 | --- | --- | --- | --- |
 | Survival | 125 / 130 | 837 / 841 | 152 → 75 |
 | SkyBlock | 0 / 0 | 29 / 52 (21 skin heads left native) | 44 → 43 |
@@ -164,7 +164,7 @@ paths and content names are omitted.
 
 ### Her Bedrock yüzeyinde Java yazısı ve üretim derlemeleri - 4 Ekim 2026
 
-Twilight 1.0.0-pre.6, Java font yerleşimini sandık başlıklarından sunucuların özel font içeriği çizdiği
+Twilight geliştirme derlemesi 6, Java font yerleşimini sandık başlıklarından sunucuların özel font içeriği çizdiği
 diğer yerlere genişletir: sohbet, aksiyon çubuğu, başlıklar ve alt başlıklar, boss çubukları, skor
 tabloları, varlık adları ve yazı görüntüleri (hologramlar, ad etiketleri) ile diğer konteynerlerin
 başlıkları. Aynı sürüm, dört başka gerçek sunucunun bağımsız içeriğinin ortaya çıkardığı birkaç dönüşüm
@@ -234,10 +234,10 @@ etiketi görselleri içerdiğinden yayımlanmaz.
 #### Beş gerçek sunucunun üretim derlemeleri
 
 Yeni bir denetim, her sunucunun keşfedilen kaynakları için eklentinin o sunucuda yapacağı gibi tam derlemeyi
-(eşyalar, yerleşimli fontlar, sesler, arayüz) çalıştırır. Aynı beş sunucu pre.5 sürümüyle ve bu sürümle
+(eşyalar, yerleşimli fontlar, sesler, arayüz) çalıştırır. Aynı beş sunucu geliştirme derlemesi 5 ve geliştirme derlemesi 6 ile
 derlendi:
 
-| Sunucu | Özel eşya, pre.5 | Özel eşya, pre.6 | Sorunlar pre.5 → pre.6 |
+| Sunucu | Özel eşya, derleme 5 | Özel eşya, derleme 6 | Sorunlar derleme 5 → derleme 6 |
 | --- | --- | --- | --- |
 | Survival | 125 / 130 | 837 / 841 | 152 → 75 |
 | SkyBlock | 0 / 0 | 29 / 52 (21 kaplama kafası yerel bırakıldı) | 44 → 43 |
@@ -291,7 +291,7 @@ Kategori başına ölçülen sayılar yayımlanan ölçümlerin parçasıdır; s
   karakterlerini gösterir.
 - Sıradan yazının hemen ardından boşluksuz gelen bir glif Java'nın bir birim sağındadır; Bedrock kalemi geri
   alamaz. Aynısı negatif kaydırmayla bir ad etiketi arka planının üzerine çizilen yazı gibi üst üste binen
-  katmanlar için de geçerlidir. (1.0.0-pre.8 ile katmanlar çözüldü.)
+  katmanlar için de geçerlidir. (geliştirme derlemesi 8 ile katmanlar çözüldü.)
 - Yüksek çözünürlüklü dokulardan çizilen bitmap glifler Bedrock'ta arayüz birimlerine indirgenir (Java
   onları ekran çözünürlüğünde örnekler); bu yüzden rütbe görsellerinin içindeki küçük yazılar daha az
   keskindir.

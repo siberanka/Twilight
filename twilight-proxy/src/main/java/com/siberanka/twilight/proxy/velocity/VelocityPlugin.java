@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2026 siberanka.
- * Licensed under the GNU LGPL v3.0 or later.
+ * Licensed under the Twilight License (PolyForm Noncommercial 1.0.0 with additional terms); see LICENSE.
  */
 package com.siberanka.twilight.proxy.velocity;
 
@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit;
  */
 @SuppressWarnings("deprecation")
 public final class VelocityPlugin {
-    private static final MinecraftChannelIdentifier CHANNEL = MinecraftChannelIdentifier.from(PackChannel.CHANNEL);
+    static final MinecraftChannelIdentifier CHANNEL = MinecraftChannelIdentifier.from(PackChannel.CHANNEL);
 
     private final ProxyServer proxy;
     private final Logger logger;
@@ -79,6 +79,7 @@ public final class VelocityPlugin {
                     String[] args = invocation.arguments();
                     String result = args.length > 0 && args[0].equalsIgnoreCase("reload")
                             ? (created.reload() ? "twilight-proxy reloaded." : "Reload failed; see the console.")
+                            : args.length > 0 && args[0].equalsIgnoreCase("network") ? created.networkText()
                             : created.statusText();
                     invocation.source().sendMessage(Component.text(result));
                 });
@@ -95,8 +96,9 @@ public final class VelocityPlugin {
         // Consumed in both directions: clients never see it and cannot send it to a backend.
         event.setResult(PluginMessageEvent.ForwardResult.handled());
         if (!(event.getSource() instanceof ServerConnection server) || core == null) return;
-        byte[] reply = core.serverMessage(server.getServerInfo().getName(), event.getData());
-        if (reply != null) server.sendPluginMessage(CHANNEL, reply);
+        for (byte[] reply : core.serverMessage(server.getServerInfo().getName(), event.getData())) {
+            server.sendPluginMessage(CHANNEL, reply);
+        }
     }
 
     /** The first server Velocity picked for each joining player, before other plugins changed it. */
@@ -153,8 +155,18 @@ public final class VelocityPlugin {
 
     @Subscribe
     public void onConnected(ServerConnectedEvent event) {
-        if (core != null) core.connected(event.getPlayer().getUniqueId(), event.getPlayer().getUsername(),
+        if (core == null) return;
+        core.connected(event.getPlayer().getUniqueId(), event.getPlayer().getUsername(),
                 event.getServer().getServerInfo().getName());
+        Player player = event.getPlayer();
+        String server = event.getServer().getServerInfo().getName();
+        // Once the player plays on the server (plugin messages before that may be dropped).
+        proxy.getScheduler().buildTask(this, () -> player.getCurrentServer()
+                .filter(current -> current.getServerInfo().getName().equals(server))
+                .ifPresent(current -> {
+                    byte[] statement = core == null ? null : core.capabilitiesStatement();
+                    if (statement != null) current.sendPluginMessage(CHANNEL, statement);
+                })).delay(3, java.util.concurrent.TimeUnit.SECONDS).schedule();
     }
 
     @Subscribe

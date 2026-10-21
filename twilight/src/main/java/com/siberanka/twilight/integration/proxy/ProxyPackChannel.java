@@ -1,4 +1,4 @@
-/* Copyright (c) 2026 siberanka. Licensed under the GNU LGPL v3.0 or later. */
+/* Copyright (c) 2026 siberanka. Twilight License (PolyForm Noncommercial 1.0.0 + terms), see LICENSE. */
 package com.siberanka.twilight.integration.proxy;
 
 import com.siberanka.twilight.protocol.PackChannel;
@@ -60,6 +60,8 @@ public final class ProxyPackChannel implements PluginMessageListener, Listener, 
     private volatile Fingerprint fingerprint;
     private Transfer active;
     private long lastCompleted;
+    private volatile java.util.function.Consumer<PackChannel.Capabilities> capabilities = ignored -> { };
+    private volatile java.util.function.Consumer<List<String>> displayed = ignored -> { };
 
     private ProxyPackChannel(Plugin plugin, java.util.function.ObjLongConsumer<Runnable> later, Path pack,
                              List<PackChannel.Key> keys) {
@@ -67,6 +69,16 @@ public final class ProxyPackChannel implements PluginMessageListener, Listener, 
         this.later = later;
         this.pack = pack;
         this.keys = List.copyOf(keys);
+    }
+
+    /** Receives the items the proxy saw in item displays without a model in this server's pack (verified). */
+    public void onDisplayed(java.util.function.Consumer<List<String>> listener) {
+        displayed = listener;
+    }
+
+    /** Receives the proxy's verified statements of what its Bedrock runtime shows. */
+    public void onCapabilities(java.util.function.Consumer<PackChannel.Capabilities> listener) {
+        capabilities = listener;
     }
 
     /** Null (and a log line) when no secret is shared with a proxy. */
@@ -151,7 +163,16 @@ public final class ProxyPackChannel implements PluginMessageListener, Listener, 
     @Override
     public void onPluginMessageReceived(String channel, Player player, byte[] message) {
         if (!PackChannel.CHANNEL.equals(channel) || message == null || message.length > PackChannel.MAX_MESSAGE) return;
-        if (!(PackChannel.read(message, keys, System.currentTimeMillis()) instanceof PackChannel.Request request)) return;
+        Object decoded = PackChannel.read(message, keys, System.currentTimeMillis());
+        if (decoded instanceof PackChannel.Capabilities features) {
+            capabilities.accept(features);
+            return;
+        }
+        if (decoded instanceof PackChannel.Displayed seen) {
+            displayed.accept(seen.keys());
+            return;
+        }
+        if (!(decoded instanceof PackChannel.Request request)) return;
         if (usedNonces.put(HexFormat.of().formatHex(request.nonce()), Boolean.TRUE) != null) return;
         Fingerprint current = fingerprint();
         if (current == null || !MessageDigest.isEqual(current.sha256, request.sha256())) return;

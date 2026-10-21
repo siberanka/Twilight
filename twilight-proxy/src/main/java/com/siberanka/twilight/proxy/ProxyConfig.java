@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2026 siberanka.
- * Licensed under the GNU LGPL v3.0 or later.
+ * Licensed under the Twilight License (PolyForm Noncommercial 1.0.0 with additional terms); see LICENSE.
  */
 package com.siberanka.twilight.proxy;
 
@@ -22,7 +22,8 @@ record ProxyConfig(PackSource defaultSource, Map<String, PackSource> servers, bo
                    int transferTimeoutSeconds, java.util.Set<String> loginServers,
                    com.siberanka.twilight.host.HostSettings host, boolean updateCheck, boolean updateNotify,
                    LocalSettings local, boolean retireStaleFiles, boolean restartWhenEmpty,
-                   boolean textLayout, boolean translations, int loadingProtectionSeconds, boolean customBlocks) {
+                   boolean textLayout, boolean translations, int loadingProtectionSeconds, boolean customBlocks,
+                   boolean itemDisplays, boolean playerHeads, com.siberanka.twilight.network.NetworkSettings network) {
     /** {@code local-backends}: read the exports of backends on this machine from their folders. */
     record LocalSettings(boolean enabled, java.util.List<Path> search, Map<String, Path> servers) {
         static final LocalSettings OFF = new LocalSettings(false, java.util.List.of(), Map.of());
@@ -48,6 +49,41 @@ record ProxyConfig(PackSource defaultSource, Map<String, PackSource> servers, bo
 
         /** A direct download link to a .mcpack or .zip. */
         record Url(URI uri) implements PackSource {}
+    }
+
+    /** Sections whose keys are the administrator's own: never added, checked or reported. */
+    static final java.util.Set<String> FREE_FORM = java.util.Set.of("packs.server", "local-backends.server");
+
+    /**
+     * Loads the file after bringing it up to date: new settings are added with their defaults and explanations,
+     * invalid values set back to their defaults one by one, and a file that is not readable is restored from the
+     * last version that worked; the old file is kept in {@code config-backups/} first.
+     */
+    static ProxyConfig loadMaintained(Path file, java.util.function.Consumer<String> info,
+                                      java.util.function.Consumer<String> warn) throws IOException {
+        if (Files.isRegularFile(file)) {
+            try (InputStream defaults = ProxyConfig.class.getResourceAsStream("/proxy-config.yml")) {
+                if (defaults != null) {
+                    String text = new String(defaults.readAllBytes(), StandardCharsets.UTF_8);
+                    var report = com.siberanka.twilight.settings.ConfigMaintenance.run(file, text, new com.siberanka.twilight.settings.ConfigMaintenance.Validator() {
+                        @Override public void syntax(String yaml) {
+                            SimpleYaml.parse(yaml);
+                        }
+
+                        @Override public void validate(String yaml) {
+                            parse(yaml);
+                        }
+                    }, FREE_FORM, info, warn, java.time.LocalDateTime.now());
+                    if (report.skipped() != null && !report.skipped().equals("missing")) {
+                        warn.accept("config.yml was not updated: " + report.skipped() + ".");
+                    }
+                    com.siberanka.twilight.settings.ConfigMaintenance.warnUnknown("config.yml", report, warn);
+                }
+            } catch (RuntimeException failure) {
+                warn.accept("config.yml could not be checked for new or invalid settings (" + failure + "); it is read as it is.");
+            }
+        }
+        return load(file);
     }
 
     static ProxyConfig load(Path file) throws IOException {
@@ -95,7 +131,17 @@ record ProxyConfig(PackSource defaultSource, Map<String, PackSource> servers, bo
                 bedrockSwitch(root.get("bedrock"), "translations"),
                 root.get("bedrock") == null ? 300 : integer(map(root.get("bedrock"), "bedrock")
                         .getOrDefault("loading-protection-seconds", "300"), "bedrock.loading-protection-seconds", 0, 1800),
-                bedrockSwitch(root.get("bedrock"), "custom-blocks"));
+                bedrockSwitch(root.get("bedrock"), "custom-blocks"),
+                bedrockSwitch(root.get("bedrock"), "item-displays"),
+                bedrockSwitch(root.get("bedrock"), "player-heads"),
+                networkSettings(root.get("bedrock-network")));
+    }
+
+    /** The {@code bedrock-network} section; missing keeps every default. */
+    private static com.siberanka.twilight.network.NetworkSettings networkSettings(Object section) {
+        if (section == null) return com.siberanka.twilight.network.NetworkSettings.DEFAULTS;
+        Map<String, Object> values = map(section, "bedrock-network");
+        return com.siberanka.twilight.network.NetworkSettings.parse(values::get);
     }
 
     /** A switch in the {@code bedrock} section; on when missing. */

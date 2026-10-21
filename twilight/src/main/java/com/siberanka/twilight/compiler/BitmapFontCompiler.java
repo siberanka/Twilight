@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2026 siberanka.
- * Licensed under the GNU LGPL v3.0 or later.
+ * Licensed under the Twilight License (PolyForm Noncommercial 1.0.0 with additional terms); see LICENSE.
  */
 package com.siberanka.twilight.compiler;
 
@@ -142,15 +142,17 @@ final class BitmapFontCompiler {
         Map<Integer, Integer> wide = layoutActive ? allocateWideVariants(spacerPage) : Map.of();
         Map<Integer, Integer> shades = layoutActive && shadedCopies ? allocateShades(spacerPage, wide) : Map.of();
 
-        Map<Integer, List<Glyph>> pages = new LinkedHashMap<>();
-        glyphs.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(entry ->
-                pages.computeIfAbsent(entry.getKey() >>> 8, ignored -> new ArrayList<>()).add(entry.getValue()));
+        // 256 code points per page, pages and glyphs in code point order.
+        Map<Integer, List<Glyph>> pages = new TreeMap<>();
+        new TreeMap<>(glyphs).forEach((codePoint, glyph) ->
+                pages.computeIfAbsent(codePoint >>> 8, page -> new ArrayList<>()).add(glyph));
         Map<Integer, int[]> ink = new HashMap<>();
         for (Map.Entry<Integer, List<Glyph>> page : pages.entrySet()) {
             BufferedImage image = compose(page.getValue());
             if (image.getWidth() >= 8192) {
                 notice("glyph pages of 8192x8192 pixels take 256 MiB each in the client and load slowly on phones;"
-                        + " ui.max-glyph-cell: 256 makes them 4096x4096", "glyph_%02X".formatted(page.getKey()));
+                        + " ui.max-glyph-cell: 256 makes them 4096x4096 but moves images drawn far from the line",
+                        "glyph_%02X".formatted(page.getKey()));
             }
             packFiles.put("font/glyph_%02X.png".formatted(page.getKey()), TextureSet.png(image));
             if (layoutActive) measureInk(image, page.getValue(), ink);
@@ -219,8 +221,10 @@ final class BitmapFontCompiler {
         if (providersElement == null || !providersElement.isJsonArray()) return;
         var providers = providersElement.getAsJsonArray();
         // Java uses the first provider that defines a character: read in reverse and overwrite.
-        for (int index = providers.size() - 1; index >= 0; index--) {
-            JsonElement element = providers.get(index);
+        List<JsonElement> lastFirst = new ArrayList<>(providers.size());
+        providers.forEach(lastFirst::add);
+        java.util.Collections.reverse(lastFirst);
+        for (JsonElement element : lastFirst) {
             if (!element.isJsonObject()) {
                 problem("font definitions contain non-object providers", normalized);
                 continue;
@@ -343,7 +347,8 @@ final class BitmapFontCompiler {
             }
         }
         if (image == null && textureAssets.isEmpty()) {
-            problem("bitmap textures are missing", providerKey, font + " -> " + textureIdentifier);
+            // Java skips a bitmap provider whose texture is missing and keeps the font's other providers.
+            notice("bitmap font textures are missing; their glyphs are left out, as on Java", font + " -> " + textureIdentifier);
             return;
         }
         if (image == null && lastFailure != null) {
@@ -356,19 +361,19 @@ final class BitmapFontCompiler {
         List<String> rows = new ArrayList<>();
         for (JsonElement row : chars.getAsJsonArray()) rows.add(row.getAsString());
         if (rows.isEmpty()) return;
-        int columns = rows.getFirst().codePointCount(0, rows.getFirst().length());
-        if (columns < 1 || rows.stream().anyMatch(row -> row.codePointCount(0, row.length()) != columns)) {
+        int columns = gridColumns(rows);
+        if (columns < 1 || rows.stream().anyMatch(row -> row.codePoints().count() != columns)) {
             problem("bitmap providers have inconsistent chars row widths", providerKey, font);
             return;
         }
-        if (image.getWidth() % columns != 0 || image.getHeight() % rows.size() != 0) {
+        if (!fitsGrid(image, columns, rows.size())) {
             problem("bitmap textures are not divisible by their glyph grids", providerKey, textureIdentifier);
             return;
         }
         int declaredHeight = integer(provider, "height", 8);
         int declaredAscent = integer(provider, "ascent", declaredHeight);
-        int cellWidth = image.getWidth() / columns;
-        int cellHeight = image.getHeight() / rows.size();
+        int cellWidth = Math.floorDiv(image.getWidth(), columns);
+        int cellHeight = Math.floorDiv(image.getHeight(), rows.size());
         float scale = declaredHeight / (float) cellHeight;
         if (declaredHeight < 1 && textLayout) {
             // Java's negative-space idiom: a negative height yields a negative advance and
@@ -490,7 +495,7 @@ final class BitmapFontCompiler {
                 layout(font, codePoint, codePoint);
                 continue;
             }
-            if (!isBmpPrivateUse(codePoint) || existing != null) {
+            if (!isBmpPrivateUse(codePoint) || existing != null || clustered(candidate)) {
                 if (textLayout) {
                     alias(font, codePoint, candidate);
                 } else if (!isBmpPrivateUse(codePoint)) {
@@ -518,7 +523,7 @@ final class BitmapFontCompiler {
                 continue;
             }
             Glyph glyph = (Glyph) entry.getValue();
-            if ((vanillaOverride && isBmp(codePoint)) || isBmpPrivateUse(codePoint)) {
+            if (((vanillaOverride && isBmp(codePoint)) || isBmpPrivateUse(codePoint)) && !clustered(glyph)) {
                 glyphs.put(codePoint, glyph);
                 layout(font, codePoint, codePoint);
             } else if (textLayout) {
@@ -535,6 +540,19 @@ final class BitmapFontCompiler {
     private void layout(String font, int codePoint, Object value) {
         if (textLayout) layoutSources.computeIfAbsent(font, ignored -> new TreeMap<>()).put(codePoint, value);
     }
+
+    /**
+     * Large glyphs (menu backgrounds, screen art) go to pages of their own through the title layout. A page is
+     * as large as its largest cell: one 512-pixel glyph among small ones made a whole 8192x8192 page (256 MiB in
+     * the client), and a pack had seven of them. Grouped, the same glyphs fill one or two such pages, which phones
+     * with little memory can still hold. Only with the text layout, which maps them back at runtime.
+     */
+    private boolean clustered(Glyph glyph) {
+        return textLayout && glyph.cellSize() >= CLUSTERED_CELL;
+    }
+
+    /** Cell size from which glyphs are grouped on pages of their own. */
+    static final int CLUSTERED_CELL = 256;
 
     private void alias(String font, int codePoint, Glyph glyph) {
         AliasRequest request = new AliasRequest(font, codePoint, glyph);
@@ -713,8 +731,9 @@ final class BitmapFontCompiler {
                 List<String> rows = new ArrayList<>();
                 provider.getAsJsonArray("chars").forEach(row -> rows.add(row.getAsString()));
                 if (image == null || rows.isEmpty()) continue;
-                int columns = rows.getFirst().codePointCount(0, rows.getFirst().length());
-                int cellWidth = image.getWidth() / columns, cellHeight = image.getHeight() / rows.size();
+                int columns = gridColumns(rows);
+                if (columns < 1) continue;
+                int cellWidth = Math.floorDiv(image.getWidth(), columns), cellHeight = Math.floorDiv(image.getHeight(), rows.size());
                 float scale = integer(provider, "height", 8) / (float) cellHeight;
                 for (int row = 0; row < rows.size(); row++) {
                     int[] codePoints = rows.get(row).codePoints().toArray();
@@ -730,6 +749,16 @@ final class BitmapFontCompiler {
             advances.clear();
         }
         return advances;
+    }
+
+    /** The glyph columns of a bitmap provider: the code points of its first {@code chars} row. */
+    private static int gridColumns(List<String> rows) {
+        return (int) rows.getFirst().codePoints().count();
+    }
+
+    /** Whether a texture divides into equal cells for the grid. */
+    private static boolean fitsGrid(BufferedImage image, int columns, int rowCount) {
+        return Math.floorMod(image.getWidth(), columns) == 0 && Math.floorMod(image.getHeight(), rowCount) == 0;
     }
 
     private TextLayoutTable layoutTable(Map<Integer, Integer> wide, Map<Integer, Integer> shades,

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2026 siberanka.
- * Licensed under the GNU LGPL v3.0 or later.
+ * Licensed under the Twilight License (PolyForm Noncommercial 1.0.0 with additional terms); see LICENSE.
  */
 package com.siberanka.twilight.proxy.velocity;
 
@@ -49,6 +49,10 @@ final class VelocityPlatform implements Platform {
     }
 
     @Override public String version() { return plugin.version(); }
+
+    @Override public boolean sendToServer(String server, byte[] message) {
+        return plugin.proxy().getServer(server).map(found -> found.sendPluginMessage(VelocityPlugin.CHANNEL, message)).orElse(false);
+    }
 
     @Override public java.util.Map<String, java.net.InetSocketAddress> serverAddresses() {
         java.util.Map<String, java.net.InetSocketAddress> addresses = new java.util.LinkedHashMap<>();

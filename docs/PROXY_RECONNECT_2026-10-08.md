@@ -2,7 +2,7 @@
 
 > Türkçe: [aşağıda](#türkçe)
 
-twilight-proxy 1.0.0-pre.12 was tested on Velocity 4.2.0 and BungeeCord 26.1, each with Geyser 2.11.3 on the
+twilight-proxy development build 12 was tested on Velocity 4.2.0 and BungeeCord 26.1, each with Geyser 2.11.3 on the
 proxy, isolated Paper 26.2 backends (`lobby` with Twilight's 2.2 MiB pack, `survival` with generated load-test
 packs of 3 to 152 MiB and up to 6,000 entries, and an `auth` server) and Bedrock 1.26.5203 for Windows. A
 stand-in login plugin reproduced what AuthMeVelocity, LibreLogin and similar plugins do: new connections go to
@@ -11,7 +11,7 @@ lobby afterwards. Production servers were not involved.
 
 ## Results
 
-| Scenario | 1.0.0-pre.11 | 1.0.0-pre.12 |
+| Scenario | development build 11 | development build 12 |
 |---|---|---|
 | Switch to `survival` (40 MiB) with the login plugin sending reconnected players to `auth` | After the download the proxy set `survival` as the first server, the login plugin refused it, and the player waited without a server until Velocity dropped it after 30 s (`ReadTimeoutException`) | The player joins `auth`, logs in, and the login plugin's move to the lobby becomes a move to `survival`: one login, on `survival` 61 s after the transfer |
 | Same with a login plugin that only refuses other servers | The same 30-second hang | The refusal is detected, the player joins the lobby (the login server there), and reaches `survival` after the login, 46 s after the transfer |
@@ -47,7 +47,7 @@ parsing, immutable pack versions, the pack host's fallback memory and its connec
 
 ### Paket yeniden bağlanmaları, giriş eklentileri ve büyük paketler - 8 Ekim 2026
 
-twilight-proxy 1.0.0-pre.12; Velocity 4.2.0 ve BungeeCord 26.1 üzerinde, her birinde proxy'de Geyser 2.11.3,
+twilight-proxy geliştirme derlemesi 12; Velocity 4.2.0 ve BungeeCord 26.1 üzerinde, her birinde proxy'de Geyser 2.11.3,
 yalıtılmış Paper 26.2 arka uçları (Twilight'ın 2,2 MiB'lik paketiyle `lobby`, 3 ila 152 MiB boyutunda ve 6.000'e
 kadar girdili üretilmiş yük testi paketleriyle `survival` ve bir `auth` sunucusu) ve Windows için Bedrock
 1.26.5203 ile test edildi. Yerine geçen bir giriş eklentisi AuthMeVelocity, LibreLogin ve benzeri eklentilerin
@@ -56,7 +56,7 @@ verilmez ve eklenti oyuncuyu sonrasında lobiye gönderir. Üretim sunucuları k
 
 #### Sonuçlar
 
-| Senaryo | 1.0.0-pre.11 | 1.0.0-pre.12 |
+| Senaryo | geliştirme derlemesi 11 | geliştirme derlemesi 12 |
 |---|---|---|
 | Giriş eklentisi yeniden bağlanan oyuncuları `auth`a gönderirken `survival`a (40 MiB) geçiş | İndirmeden sonra proxy `survival`ı ilk sunucu yaptı, giriş eklentisi bunu reddetti ve oyuncu Velocity onu 30 sn sonra düşürene kadar sunucusuz bekledi (`ReadTimeoutException`) | Oyuncu `auth`a katılır, giriş yapar ve giriş eklentisinin lobiye gönderimi `survival`a gönderime dönüşür: tek giriş, aktarımdan 61 sn sonra `survival`da |
 | Yalnızca diğer sunucuları reddeden bir giriş eklentisiyle aynısı | Aynı 30 saniyelik takılma | Ret algılanır, oyuncu lobiye (oradaki giriş sunucusu) katılır ve girişten sonra aktarımdan 46 sn sonra `survival`a ulaşır |

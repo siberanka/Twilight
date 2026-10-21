@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2026 siberanka.
- * Licensed under the GNU LGPL v3.0 or later.
+ * Licensed under the Twilight License (PolyForm Noncommercial 1.0.0 with additional terms); see LICENSE.
  */
 package com.siberanka.twilight;
 
@@ -64,13 +64,27 @@ public final class TwilightPlugin extends JavaPlugin {
     private GeyserDeploymentService deployment;
     private ProviderHookManager providerHooks;
     private AutoCloseable displayBridge;
+    /** Sends Bedrock players the pack deployed when they join; null when Geyser's start-up pack is all there is. */
+    private com.siberanka.twilight.integration.pack.LivePacks livePacks;
     private com.siberanka.twilight.integration.text.GeyserTextLayoutBridge textBridge;
     private com.siberanka.twilight.integration.world.GeyserBiomeBridge biomeBridge;
     private com.siberanka.twilight.integration.display.GeyserRiderNames riderNames;
     private com.siberanka.twilight.integration.proxy.ProxyPackChannel proxyChannel;
+    /** The custom items this server shows in item displays; only they (and model bones) get display models. */
+    private com.siberanka.twilight.integration.display.DisplayedItems displayedItems;
+    private com.siberanka.twilight.integration.heads.PlayerHeads playerHeads;
+    private com.siberanka.twilight.integration.heads.PlayerSkins playerSkins;
+    private com.siberanka.twilight.integration.menus.MenuAudit menuAudit;
+    private volatile Object[] menuTable = {null, -1L};
+    private com.siberanka.twilight.geyser.CustomSkulls customSkulls;
+    /** What the twilight-proxy in front of this server shows (its item displays need the display models). */
+    private volatile com.siberanka.twilight.integration.proxy.ProxyFeatures proxyFeatures;
     private com.siberanka.twilight.integration.text.GeyserLanguageBridge languageBridge;
     private com.siberanka.twilight.integration.pack.GeyserPackHosting packHosting;
     private com.siberanka.twilight.geyser.LoadingGuard loadingGuard;
+    private com.siberanka.twilight.network.BedrockNetwork bedrockNetwork;
+    private volatile com.siberanka.twilight.network.NetworkSettings networkSettings =
+            com.siberanka.twilight.network.NetworkSettings.DEFAULTS;
     private com.siberanka.twilight.geyser.CustomBlocks customBlocks;
     private volatile com.siberanka.twilight.update.UpdateCheck updates;
     private volatile boolean notifyUpdatePlayers = true;
@@ -84,8 +98,10 @@ public final class TwilightPlugin extends JavaPlugin {
     public void onLoad() {
         try {
             saveDefaultConfig();
+            maintainConfig();
             reloadConfig();
             startCustomBlocks();
+            startPlayerHeads();
             if (!getConfig().getBoolean("geyser.retire-stale-files", true)) return;
             Path root = getServer().getWorldContainer().toPath().toAbsolutePath().normalize();
             var service = new GeyserDeploymentService(root, getDataFolder().toPath(), TwilightConfig.read(getConfig(), root));
@@ -106,6 +122,79 @@ public final class TwilightPlugin extends JavaPlugin {
      * Geyser-Spigot registers custom blocks and items when it enables, right after this load phase: the blocks of
      * the deployed pack are handed to it then (a build that changes them needs a restart, like items).
      */
+    /** {@code geyser.player-heads}: player heads show their skins on Bedrock (Geyser custom skulls). */
+    private boolean playerHeadsEnabled() {
+        return getConfig().getBoolean("geyser.player-heads", true);
+    }
+
+    /** Hands the deployed pack's player heads to Geyser-Spigot, which registers skulls when it enables. */
+    private void startPlayerHeads() {
+        if (!playerHeadsEnabled() || getServer().getPluginManager().getPlugin("Geyser-Spigot") == null) return;
+        try {
+            Path root = getServer().getWorldContainer().toPath().toAbsolutePath().normalize();
+            TwilightConfig settings = TwilightConfig.read(getConfig(), root);
+            Path pack;
+            try {
+                pack = settings.sendPackToBedrock()
+                        ? new GeyserDeploymentService(root, getDataFolder().toPath(), settings).resolveGeyserDirectory().resolve("packs/twilight.zip")
+                        : getDataFolder().toPath().resolve(com.siberanka.twilight.deploy.PackExport.PACK);
+            } catch (java.io.IOException noFolder) {
+                pack = getDataFolder().toPath().resolve(com.siberanka.twilight.deploy.PackExport.PACK);
+            }
+            Path served = pack;
+            customSkulls = com.siberanka.twilight.geyser.CustomSkulls.start(this, () -> java.util.List.of(served),
+                    getLogger()::info, (message, failure) -> getLogger().log(Level.WARNING, message, failure));
+        } catch (RuntimeException | LinkageError failure) {
+            getLogger().log(Level.WARNING, "Player head skins are unavailable for this Geyser build; Bedrock shows Steve's head.", failure);
+        }
+    }
+
+    /**
+     * Learns the player heads this server shows and reads the ones its plugins' configurations name (off the server
+     * thread, a little after start so that HeadDatabase has loaded); new heads go into the next build.
+     */
+    private void startHeadLearning() {
+        if (!playerHeadsEnabled()) return;
+        try {
+            playerHeads = com.siberanka.twilight.integration.heads.PlayerHeads.start(this, getDataFolder().toPath().resolve("player-heads.txt"));
+            if (getConfig().getInt("geyser.player-head-skins-of-players", 1024) > 0) {
+                playerSkins = com.siberanka.twilight.integration.heads.PlayerSkins.start(this,
+                        getDataFolder().toPath().resolve("player-skins.txt"));
+            }
+            playerHeads.onNew(added -> {
+                if (itemDisplayModels() || getServer().getPluginManager().getPlugin("Geyser-Spigot") != null
+                        || proxyChannel != null) scheduleBuild(added.size() + " new player head(s)", 1200L);
+            });
+            var tracked = playerHeads;
+            scheduler.delayed(() -> CompletableFuture.runAsync(() -> {
+                try {
+                    var found = com.siberanka.twilight.integration.heads.HeadSources.scan(getDataFolder().toPath().getParent(),
+                            this::headDatabase);
+                    tracked.report(com.siberanka.twilight.integration.heads.HeadSources.heads(found));
+                    getLogger().info("Player heads in plugin configurations: " + found.skins().size() + " skin(s), "
+                            + found.names().size() + " player name(s), " + found.headDatabase().size()
+                            + " HeadDatabase id(s) in " + found.files() + " file(s).");
+                } catch (java.io.IOException | RuntimeException failure) {
+                    getLogger().log(Level.WARNING, "Could not read the plugins' configurations for player heads", failure);
+                }
+            }, worker), 200L);
+        } catch (RuntimeException | LinkageError failure) {
+            getLogger().log(Level.WARNING, "Could not watch player heads; Bedrock keeps Steve's head for heads it has not seen.", failure);
+        }
+    }
+
+    /** The Base64 profile HeadDatabase stores for an id, or null without HeadDatabase. */
+    private String headDatabase(String id) {
+        try {
+            Class<?> api = Class.forName("me.arcaniax.hdb.api.HeadDatabaseAPI");
+            Object instance = api.getConstructor().newInstance();
+            Object value = api.getMethod("getBase64", String.class).invoke(instance, id);
+            return value instanceof String text ? text : null;
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError absent) {
+            return null;
+        }
+    }
+
     private void startCustomBlocks() {
         if (!getConfig().getBoolean("geyser.custom-blocks", true)) return;
         if (getServer().getPluginManager().getPlugin("Geyser-Spigot") == null) return;
@@ -140,9 +229,23 @@ public final class TwilightPlugin extends JavaPlugin {
         });
         loadServices();
         if (getServer().getPluginManager().getPlugin("Geyser-Spigot") != null) {
+            if (config.sendPackToBedrock()) {
+                try {
+                    livePacks = com.siberanka.twilight.integration.pack.LivePacks.start(this, servedPack(),
+                            getDataFolder().toPath().resolve("live-packs"), getLogger());
+                    deployment.liveDisplayVariants(true);
+                } catch (Exception | LinkageError failure) {
+                    getLogger().log(Level.WARNING, "Bedrock players get the Twilight pack Geyser loaded at its start; "
+                            + "a new build reaches them after Geyser reloads.", failure);
+                }
+            }
             try {
-                displayBridge = new com.siberanka.twilight.integration.display.GeyserDisplayBridge(this,
-                        servedPack(), getLogger());
+                var live = livePacks;
+                displayBridge = live == null
+                        ? com.siberanka.twilight.integration.display.GeyserDisplayBridge.forPack(this, servedPack(),
+                                getLogger(), itemDisplayModels())
+                        : new com.siberanka.twilight.integration.display.GeyserDisplayBridge(this, live::index, getLogger(),
+                                itemDisplayModels() || !live.index(null).isEmpty());
             } catch (Exception | LinkageError failure) {
                 getLogger().log(Level.SEVERE, "Live item-display bridge is unavailable; model animation parity is not supported.", failure);
             }
@@ -169,6 +272,8 @@ public final class TwilightPlugin extends JavaPlugin {
                 }
             }
             startPackHost();
+            startBedrockNetwork();
+            warnConnectionGuards();
             try {
                 loadingGuard = com.siberanka.twilight.geyser.LoadingGuard.start(this,
                         getConfig().getInt("geyser.loading-protection-seconds", 300), getLogger()::info);
@@ -177,9 +282,11 @@ public final class TwilightPlugin extends JavaPlugin {
             }
             if (config.javaTextLayout()) {
                 try {
-                    textBridge = com.siberanka.twilight.integration.text.GeyserTextLayoutBridge.create(this,
-                            servedPack(), getLogger(),
-                            config.javaTextSurfaces());
+                    textBridge = livePacks == null
+                            ? com.siberanka.twilight.integration.text.GeyserTextLayoutBridge.create(this,
+                                    servedPack(), getLogger(), config.javaTextSurfaces())
+                            : com.siberanka.twilight.integration.text.GeyserTextLayoutBridge.create(this,
+                                    livePacks.layouts(), getLogger(), config.javaTextSurfaces());
                 } catch (Exception | LinkageError failure) {
                     getLogger().log(Level.SEVERE, "Java text layout is unavailable; Bedrock chest titles of a pack "
                             + "built with the layout will be misplaced. Rebuild with ui.java-text-layout: false.", failure);
@@ -192,6 +299,13 @@ public final class TwilightPlugin extends JavaPlugin {
                 proxyChannel = com.siberanka.twilight.integration.proxy.ProxyPackChannel.start(this, scheduler::delayed,
                         getDataFolder().toPath().resolve(com.siberanka.twilight.deploy.PackExport.PACK),
                         getConfig().getString("proxy.secret", ""));
+                if (proxyChannel != null) {
+                    proxyChannel.onCapabilities(this::proxyCapabilities);
+                    proxyChannel.onDisplayed(keys -> {
+                        var items = displayedItems;
+                        if (items != null) items.report(keys);
+                    });
+                }
             } catch (RuntimeException | LinkageError failure) {
                 getLogger().log(Level.WARNING, "twilight-proxy pack sharing is unavailable.", failure);
             }
@@ -203,7 +317,15 @@ public final class TwilightPlugin extends JavaPlugin {
         registered.setExecutor(command);
         registered.setTabCompleter(command);
         getServer().getServicesManager().register(TwilightApi.class, new Api(), this, ServicePriority.Normal);
-        providerHooks = new ProviderHookManager(this, reason -> scheduleProviderBuild(reason, config.startupDelayTicks()));
+        providerHooks = new ProviderHookManager(this, reason -> {
+            String provider = reason.substring(0, Math.max(0, reason.indexOf(':')));
+            if (packPending.contains(provider)) {
+                // Its other events (items loaded) come before the pack exists; the pack event builds.
+                if (!reason.contains("PackGenerated")) return;
+                packPending.remove(provider);
+            }
+            scheduleProviderBuild(reason, config.startupDelayTicks());
+        });
         getServer().getPluginManager().registerEvents(new AutomationListener(), this);
         for (org.bukkit.plugin.Plugin installed : getServer().getPluginManager().getPlugins()) providerHooks.register(installed);
         configureUpdates();
@@ -214,9 +336,75 @@ public final class TwilightPlugin extends JavaPlugin {
             getLogger().warning("This JVM locale can break Geyser custom-item enum parsing. If Geyser rejects definition mappings, "
                     + "restart with -Duser.language=en -Duser.country=US; keep the generated mapping names unchanged.");
         }
-        if (config.autoBuildOnStartup()) {
-            scheduleBuild("startup", config.startupDelayTicks());
+        try {
+            displayedItems = com.siberanka.twilight.integration.display.DisplayedItems.start(this,
+                    getDataFolder().toPath().resolve("displayed-items.txt"));
+            displayedItems.onNew(this::newDisplayedItems);
+            startHeadLearning();
+            menuAudit = com.siberanka.twilight.integration.menus.MenuAudit.start(this,
+                    getDataFolder().toPath().resolve("reports/menus.json"), this::servedLayoutTable);
+            var tracked = displayedItems;
+            if (displayBridge instanceof com.siberanka.twilight.integration.display.GeyserDisplayBridge bridge) {
+                bridge.onUnshown((session, keys) -> tracked.report(keys));
+            }
+            scheduler.delayed(displayedItems::scanLoaded, 20L);
+        } catch (RuntimeException | LinkageError failure) {
+            getLogger().log(Level.WARNING, "Could not watch item displays; every custom item gets a display model.", failure);
         }
+        if (config.autoBuildOnStartup()) {
+            // Oraxen and Nexo write their pack again at every start, after Twilight's start-up delay: a build before
+            // that reads half of it and changes the Bedrock items twice (a needless restart prompt). Their
+            // "pack generated" event starts the build instead; without it, the start-up build runs a bit later.
+            for (String provider : PACK_AT_START) {
+                // Installed is enough: one that enables after Twilight writes its pack later still.
+                if (getServer().getPluginManager().getPlugin(provider) != null) packPending.add(provider);
+            }
+            if (packPending.isEmpty()) scheduleBuild("startup", config.startupDelayTicks());
+            else {
+                getLogger().info("Start-up build waits for " + String.join(" and ", packPending) + " to write its pack.");
+                scheduler.delayed(() -> {
+                    if (packPending.isEmpty()) return;
+                    getLogger().info(String.join(" and ", packPending) + " wrote no pack within 3 minutes; building with its files as they are.");
+                    packPending.clear();
+                    scheduleBuild("startup", 1L);
+                }, PACK_AT_START_TICKS);
+            }
+        }
+    }
+
+    /** Content plugins that regenerate their pack at every start (asynchronously, after enabling). */
+    private static final java.util.List<String> PACK_AT_START = java.util.List.of("Oraxen", "Nexo");
+    private static final long PACK_AT_START_TICKS = 3600L;
+    private final java.util.Set<String> packPending = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    /**
+     * Items appeared in item displays for the first time: the next build gives them display models. A minute's
+     * delay gathers the items of a busy start or a newly loaded area into one build.
+     */
+    private void newDisplayedItems(java.util.List<String> keys) {
+        var heads = playerHeads;
+        if (heads != null) {
+            java.util.List<String> skins = keys.stream().filter(key -> key.startsWith("head=")).map(key -> key.substring(5)).toList();
+            if (!skins.isEmpty()) heads.report(skins);
+        }
+        boolean seen = displayVariantsSeen();
+        long count = keys.stream().filter(com.siberanka.twilight.integration.display.DisplayedItems::matters)
+                .filter(key -> seen || com.siberanka.twilight.integration.display.DisplayedItems.own(key)).count();
+        if (count == 0 || !itemDisplayModels()) return;
+        scheduleBuild(count + " item(s) or block(s) newly seen in displays", 1200L);
+    }
+
+    /**
+     * {@code geyser.item-display-variants}: {@code seen} (default) gives display models to the items this server
+     * shows in item displays and to model bones; {@code all} to every custom item, at a much longer client
+     * loading time.
+     */
+    private boolean displayVariantsSeen() {
+        String setting = getConfig().getString("geyser.item-display-variants", "seen").strip().toLowerCase(java.util.Locale.ROOT);
+        if (!setting.equals("seen") && !setting.equals("all")) {
+            getLogger().warning("geyser.item-display-variants must be seen or all, not '" + setting + "'; using seen.");
+        }
+        return !setting.equals("all");
     }
 
     @Override
@@ -227,7 +415,13 @@ public final class TwilightPlugin extends JavaPlugin {
             catch (Exception failure) { getLogger().log(Level.WARNING, "Could not close translations", failure); }
         }
         if (proxyChannel != null) proxyChannel.close();
+        if (displayedItems != null) displayedItems.close();
+        if (playerHeads != null) playerHeads.close();
+        if (playerSkins != null) playerSkins.close();
+        if (menuAudit != null) menuAudit.close();
+        if (customSkulls != null) customSkulls.close();
         if (loadingGuard != null) loadingGuard.close();
+        if (bedrockNetwork != null) bedrockNetwork.close();
         if (customBlocks != null) customBlocks.close();
         if (packHosting != null) packHosting.close();
         if (riderNames != null) {
@@ -241,6 +435,10 @@ public final class TwilightPlugin extends JavaPlugin {
         if (textBridge != null) {
             try { textBridge.close(); }
             catch (Exception failure) { getLogger().log(Level.WARNING, "Could not close text layout", failure); }
+        }
+        if (livePacks != null) {
+            try { livePacks.close(); }
+            catch (RuntimeException | LinkageError failure) { getLogger().log(Level.WARNING, "Could not close live packs", failure); }
         }
         if (displayBridge != null) {
             try { displayBridge.close(); }
@@ -277,11 +475,43 @@ public final class TwilightPlugin extends JavaPlugin {
         }
         Set<Path> runtimeWorlds = Bukkit.getWorlds().stream().map(World::getWorldFolder).map(java.io.File::toPath)
                 .collect(Collectors.toUnmodifiableSet());
-        BukkitItemCollector.CollectionResult runtimeCollection = BukkitItemCollector.collect();
-        List<CustomItemDescriptor> liveItems = modelBones(runtimeCollection.items(), itemDisplayModels());
+        BukkitItemCollector.CollectionResult runtimeCollection = collectRuntimeItems();
+        if (skipUnchanged && buildRequested && config.strict() && !runtimeCollection.issues().isEmpty()
+                && java.nio.file.Files.isRegularFile(servedPack())) {
+            // An automatic build can come before a provider has loaded its items (ItemsAdder answers with errors
+            // until then). Strict builds keep the served pack either way; the provider's load event starts the next
+            // build, and /twilight convert still reports the failure in full.
+            for (String issue : runtimeCollection.issues()) operationLog.warn("provider-api", issue);
+            operationLog.info("operation-complete", "deferred until the provider reports its items");
+            operationRunning.set(false);
+            getLogger().info("Automatic build waits until a content plugin lists its items (" + runtimeCollection.issues().getFirst()
+                    + "); its next load or reload starts the build, and /twilight convert shows the details.");
+            return;
+        }
+        // Decided once per build: the proxy's statement can change while the build runs.
+        boolean displays = itemDisplayModels();
+        java.util.Set<String> shownItems = !displays || !displayVariantsSeen() ? null
+                : displayedItems == null ? null : displayedItems.keys().stream()
+                        .filter(com.siberanka.twilight.integration.display.DisplayedItems::matters)
+                        .collect(java.util.stream.Collectors.toUnmodifiableSet());
+        var heads = playerHeads;
+        java.util.Set<String> headSkins = heads == null || !playerHeadsEnabled() ? java.util.Set.of() : heads.skins();
+        java.util.Set<String> headNames = heads == null || !playerHeadsEnabled() ? java.util.Set.of() : heads.names();
+        var joined = playerSkins;
+        java.util.Set<String> joinedSkins = joined == null || !playerHeadsEnabled() ? java.util.Set.of()
+                : joined.recent(Math.clamp(getConfig().getInt("geyser.player-head-skins-of-players", 1024), 0,
+                        com.siberanka.twilight.geyser.CustomSkulls.MAX));
+        java.util.Set<String> shownOwn = !displays || displayedItems == null ? java.util.Set.of()
+                : displayedItems.keys().stream().filter(com.siberanka.twilight.integration.display.DisplayedItems::own)
+                        .collect(java.util.stream.Collectors.toUnmodifiableSet());
+        List<CustomItemDescriptor> liveItems = modelBones(runtimeCollection.items(), displays);
         String minecraftVersion = Bukkit.getMinecraftVersion();
         operationLog.info("runtime-items", liveItems.size());
         for (String issue : runtimeCollection.issues()) operationLog.warn("provider-api", issue);
+        for (String notice : runtimeCollection.notices()) {
+            operationLog.warn("runtime-items", notice);
+            if (reportedRuntimeNotices.add(notice)) getLogger().warning(notice);
+        }
         operationLog.info("runtime-worlds", runtimeWorlds);
         send(sender, (buildRequested ? "Build" : "Scan") + " started off the server thread.");
         CompletableFuture.supplyAsync(() -> {
@@ -300,7 +530,14 @@ public final class TwilightPlugin extends JavaPlugin {
                 List<ContentSource> sources = new SourceDiscovery(serverRoot, config).discover(worlds);
                 operationLog.info("source-discovery", sources);
                 WorldInputs world = buildRequested ? worldInputs(operationLog) : WorldInputs.NONE;
-                String inputFingerprint = SourceFingerprint.compute(sources, liveItems, config) + world.fingerprint();
+                // Build options that change the pack without changing its sources.
+                String inputFingerprint = SourceFingerprint.compute(sources, liveItems, config) + world.fingerprint()
+                        + "|displays=" + displays + "|shown=" + (shownItems == null ? "all"
+                                : Integer.toHexString(new java.util.TreeSet<>(shownItems).hashCode()))
+                        + "|own=" + Integer.toHexString(new java.util.TreeSet<>(shownOwn).hashCode())
+                        + "|heads=" + Integer.toHexString(java.util.Objects.hash(headSkins, headNames)) + "|pocket=" + pocketContainerLayout()
+                        + "|blocks=" + getConfig().getBoolean("geyser.custom-blocks", true)
+                        + "|cell=" + getConfig().getInt("ui.max-glyph-cell", 512);
                 operationLog.info("input-fingerprint", inputFingerprint);
                 ContentReport report = new ContentInspector(config).inspect(sources);
                 operationLog.info("content-report", report);
@@ -320,7 +557,9 @@ public final class TwilightPlugin extends JavaPlugin {
                     try {
                         build = new BedrockPackCompiler(getDataFolder().toPath(), config, minecraftVersion)
                                 .withServerBiomes(world.biomes(), world.current())
-                                .withNameplatePlugin(world.nameplates()).withItemDisplays(itemDisplayModels())
+                                .withNameplatePlugin(world.nameplates()).withItemDisplays(displays).withDisplayedItems(shownItems).withDisplayedOwnModels(shownOwn)
+                                .withPlayerHeads(headSkins, headNames, getDataFolder().toPath().resolve("cache/skins"), playerHeadsEnabled())
+                                .withPlayerSkins(joinedSkins)
                                 .withMaxGlyphCell(getConfig().getInt("ui.max-glyph-cell", 512))
                                 .withPocketContainerLayout(pocketContainerLayout())
                                 .withCustomBlocks(getConfig().getBoolean("geyser.custom-blocks", true))
@@ -333,7 +572,9 @@ public final class TwilightPlugin extends JavaPlugin {
                                 + "stay strict. Details: " + operationLog.path());
                         build = new BedrockPackCompiler(getDataFolder().toPath(), config.withStrict(false), minecraftVersion)
                                 .withServerBiomes(world.biomes(), world.current())
-                                .withNameplatePlugin(world.nameplates()).withItemDisplays(itemDisplayModels())
+                                .withNameplatePlugin(world.nameplates()).withItemDisplays(displays).withDisplayedItems(shownItems).withDisplayedOwnModels(shownOwn)
+                                .withPlayerHeads(headSkins, headNames, getDataFolder().toPath().resolve("cache/skins"), playerHeadsEnabled())
+                                .withPlayerSkins(joinedSkins)
                                 .withMaxGlyphCell(getConfig().getInt("ui.max-glyph-cell", 512))
                                 .withPocketContainerLayout(pocketContainerLayout())
                                 .withCustomBlocks(getConfig().getBoolean("geyser.custom-blocks", true))
@@ -473,7 +714,43 @@ public final class TwilightPlugin extends JavaPlugin {
         String setting = getConfig().getString("geyser.item-display-models", "auto").strip().toLowerCase(java.util.Locale.ROOT);
         if (setting.equals("on") || setting.equals("true")) return true;
         if (setting.equals("off") || setting.equals("false")) return false;
-        return getServer().getPluginManager().getPlugin("Geyser-Spigot") != null && localGeyser();
+        if (getServer().getPluginManager().getPlugin("Geyser-Spigot") != null && localGeyser()) return true;
+        var features = proxyFeatures();
+        return features != null && features.itemDisplays(System.currentTimeMillis());
+    }
+
+    private com.siberanka.twilight.integration.proxy.ProxyFeatures proxyFeatures() {
+        var features = proxyFeatures;
+        if (features == null) {
+            features = com.siberanka.twilight.integration.proxy.ProxyFeatures.load(getDataFolder().toPath().resolve("proxy-features.properties"));
+            proxyFeatures = features;
+        }
+        return features;
+    }
+
+    /**
+     * twilight-proxy said what its Bedrock runtime shows. When it starts or stops showing item displays, the pack
+     * is built again with or without their models (auto mode).
+     */
+    private void proxyCapabilities(com.siberanka.twilight.protocol.PackChannel.Capabilities capabilities) {
+        var features = proxyFeatures();
+        var update = features.accept(capabilities, System.currentTimeMillis());
+        if (update.save()) {
+            java.util.concurrent.CompletableFuture.runAsync(() -> {
+                try {
+                    features.save();
+                } catch (java.io.IOException failure) {
+                    getLogger().warning("Could not save what twilight-proxy shows: " + failure.getMessage());
+                }
+            });
+        }
+        if (!update.itemDisplaysChanged()) return;
+        String setting = getConfig().getString("geyser.item-display-models", "auto").strip().toLowerCase(java.util.Locale.ROOT);
+        if (!setting.equals("auto")) return;
+        boolean shows = features.itemDisplays(System.currentTimeMillis());
+        getLogger().info(shows ? "twilight-proxy shows Java item displays (furniture, model bones): the pack gets their models."
+                : "twilight-proxy no longer shows Java item displays: the pack leaves their models out.");
+        scheduleBuild("a change in what twilight-proxy shows", 20L);
     }
 
     private boolean localGeyser() {
@@ -587,20 +864,147 @@ public final class TwilightPlugin extends JavaPlugin {
         });
     }
 
+    /** The layout table of the pack Bedrock players get, read again when the pack changes. */
+    private com.siberanka.twilight.text.TextLayoutTable servedLayoutTable() {
+        java.nio.file.Path pack = servedPack();
+        try {
+            long modified = java.nio.file.Files.isRegularFile(pack) ? java.nio.file.Files.getLastModifiedTime(pack).toMillis() : -1;
+            Object[] cached = menuTable;
+            if ((long) cached[1] == modified) return (com.siberanka.twilight.text.TextLayoutTable) cached[0];
+            var layout = modified < 0 ? null : com.siberanka.twilight.integration.text.GeyserTextLayoutBridge.readLayout(pack);
+            var table = layout == null ? null : layout.table();
+            menuTable = new Object[]{table, modified};
+            return table;
+        } catch (java.io.IOException | RuntimeException unreadable) {
+            return null;
+        }
+    }
+
+    /** {@code /twilight menus [reset]}: the menus players opened and how Bedrock shows their titles. */
+    void menus(CommandSender sender, boolean reset) {
+        var audit = menuAudit;
+        if (audit == null) {
+            send(sender, "Menu analysis is unavailable on this server.");
+            return;
+        }
+        if (reset) {
+            audit.reset();
+            send(sender, "Menu analysis restarted: open the menus to analyse them again.");
+            return;
+        }
+        CompletableFuture.supplyAsync(() -> {
+            try {
+                return audit.report();
+            } catch (java.io.IOException failure) {
+                return java.util.List.of("Could not write the menu report: " + failure.getMessage());
+            }
+        }, worker).thenAccept(lines -> scheduler.execute(() -> lines.forEach(line -> send(sender, line))));
+    }
+
     void reloadTwilight(CommandSender sender) {
         if (operationRunning.get()) {
             send(sender, "Wait for the active Twilight operation before reloading.");
             return;
         }
         try (OperationLog log = OperationLog.create(getDataFolder().toPath(), "reload")) {
+            maintainConfig();
             loadServices();
             configureUpdates();
+            readNetworkSettings();
             log.info("configuration", "reloaded; vanilla-override=" + config.vanillaOverride());
             send(sender, "Twilight configuration reloaded. Vanilla overrides: " + config.vanillaOverride());
         } catch (Exception failure) {
             getLogger().log(Level.SEVERE, "Twilight configuration reload failed", failure);
             send(sender, "Configuration reload failed: " + rootMessage(failure));
         }
+    }
+
+    /**
+     * Twilight's network layer for Bedrock players on this server's Geyser: held-back updates of entities they
+     * cannot see, a budget per connection and adaptive compression ({@code bedrock-network}).
+     */
+    /**
+     * Plugins that refuse connections which did not come through their proxy also refuse Geyser's own connection
+     * on this server, unless they are told about Geyser: Bedrock players then see "Connection failed. Please try
+     * again or contact an administrator." Said once at start, with the setting that fixes it.
+     */
+    private void warnConnectionGuards() {
+        if (getServer().getPluginManager().getPlugin("TCPShield") == null) return;
+        java.nio.file.Path file = getDataFolder().toPath().getParent().resolve("TCPShield").resolve("config.yml");
+        try {
+            if (!java.nio.file.Files.isRegularFile(file) || java.nio.file.Files.size(file) > 65_536) return;
+            var tcpShield = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(file.toFile());
+            if (tcpShield.getBoolean("only-allow-proxy-connections", true) && !tcpShield.getBoolean("enable-geyser-support", false)) {
+                getLogger().warning("TCPShield refuses connections that did not come through TCPShield, and Geyser's own"
+                        + " connection on this server is one of them: Bedrock players get \"Connection failed. Please try"
+                        + " again or contact an administrator.\" Set enable-geyser-support: true in plugins/TCPShield/config.yml"
+                        + " (Floodgate is required) and restart.");
+            }
+        } catch (java.io.IOException | RuntimeException unreadable) {
+            // Only a hint.
+        }
+    }
+
+    private void startBedrockNetwork() {
+        if (!readNetworkSettings()) return;
+        var settings = networkSettings;
+        if (!settings.enabled()) return;
+        // The server's own network threads (spigot.yml settings.netty-threads) size the workers.
+        int netty = com.siberanka.twilight.network.Threads.nettyThreads(serverRoot.resolve("spigot.yml"));
+        int threads = com.siberanka.twilight.network.Threads.network(settings.threads(), netty);
+        try {
+            bedrockNetwork = com.siberanka.twilight.network.BedrockNetwork.start(this, () -> networkSettings, threads,
+                    getLogger()::info, (message, failure) -> getLogger().log(Level.WARNING, message, failure));
+            getLogger().info("Bedrock network layer active: updates of entities a Bedrock player cannot see are held back"
+                    + " and limits follow each connection (" + threads + " line-of-sight thread(s)).");
+        } catch (RuntimeException | LinkageError failure) {
+            getLogger().log(Level.WARNING, "The Bedrock network layer is unavailable for this Geyser build; packets go unchanged.", failure);
+        }
+    }
+
+    /**
+     * Brings {@code config.yml} up to date before it is read: settings of a newer version are added with their
+     * defaults and explanations, invalid values are set back to their defaults one by one, and a file that is not
+     * readable YAML is restored from the last version that worked. A copy of the old file is kept in
+     * {@code config-backups/} first; values that are fine are never changed.
+     */
+    private void maintainConfig() {
+        java.nio.file.Path file = getDataFolder().toPath().resolve("config.yml");
+        try (var defaults = getResource("config.yml")) {
+            if (defaults == null) return;
+            String text = new String(defaults.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            java.nio.file.Path root = getServer().getWorldContainer().toPath().toAbsolutePath().normalize();
+            var report = com.siberanka.twilight.settings.ConfigMaintenance.run(file, text,
+                    new com.siberanka.twilight.config.BackendConfigCheck(root),
+                    com.siberanka.twilight.config.BackendConfigCheck.FREE_FORM, getLogger()::info, getLogger()::warning,
+                    java.time.LocalDateTime.now());
+            if (report.skipped() != null && !report.skipped().equals("missing")) {
+                getLogger().warning("config.yml was not updated: " + report.skipped() + ".");
+            }
+            com.siberanka.twilight.settings.ConfigMaintenance.warnUnknown("config.yml", report, getLogger()::warning);
+        } catch (java.io.IOException | RuntimeException failure) {
+            getLogger().log(Level.WARNING, "config.yml could not be checked for new or invalid settings; it is read as it is.", failure);
+        }
+    }
+
+    /** Reads {@code bedrock-network}; an invalid section keeps the previous settings. */
+    private boolean readNetworkSettings() {
+        try {
+            networkSettings = com.siberanka.twilight.network.NetworkSettings.parse(key -> getConfig().get("bedrock-network." + key));
+            return true;
+        } catch (IllegalArgumentException invalid) {
+            getLogger().severe(invalid.getMessage() + "; the previous bedrock-network settings stay.");
+            return false;
+        }
+    }
+
+    void network(CommandSender sender) {
+        var network = bedrockNetwork;
+        if (network == null) {
+            send(sender, "The Bedrock network layer is not running on this server (no Geyser here, or bedrock-network.enabled: false).");
+            return;
+        }
+        network.report().forEach(line -> send(sender, line));
     }
 
     void sendStatus(CommandSender sender) {
@@ -699,6 +1103,13 @@ public final class TwilightPlugin extends JavaPlugin {
     }
 
     private void reloadGeyser(OperationLog operationLog, DeploymentResult deploymentResult) throws Exception {
+        var live = livePacks;
+        if (live != null && deploymentResult.success()) {
+            // Players who join from now on get this pack (and its display variants); nobody is disconnected.
+            live.prepare();
+            if (languageBridge != null) languageBridge.refresh();
+            operationLog.info("live-pack", "Bedrock players get the new pack when they join");
+        }
         if (deploymentResult.restartRequired()) {
             operationLog.warn("geyser-restart-required", deploymentResult.message());
             pendRestart();
@@ -706,6 +1117,10 @@ public final class TwilightPlugin extends JavaPlugin {
         }
         if (!config.reloadAfterDeploy()) {
             operationLog.info("geyser-reload", "disabled by configuration");
+            return;
+        }
+        if (live != null) {
+            operationLog.info("geyser-reload", "not needed: the pack is offered to each joining player");
             return;
         }
         operationLog.info("geyser-reload", "dispatching console command: geyser reload");
@@ -725,21 +1140,49 @@ public final class TwilightPlugin extends JavaPlugin {
     private void scheduleProviderBuild(String reason, long delayTicks) {
         if (!config.syncProviderChanges()) return;
         scheduleBuild(reason, delayTicks);
+        // Providers can still be writing their pack when they announce it (ItemsAdder 5 replaces generated.zip
+        // after its compressed event). One later look sees the finished files; unchanged inputs skip the build.
+        long settle = providerSettle.incrementAndGet();
+        scheduler.delayed(() -> {
+            if (settle == providerSettle.get()) scheduleBuild(reason + ", settled", delayTicks, true);
+        }, PROVIDER_SETTLE_TICKS);
     }
 
+    /** Ticks after a provider's last event at which its files are looked at again. */
+    private static final long PROVIDER_SETTLE_TICKS = 900L;
+    private final java.util.concurrent.atomic.AtomicLong providerSettle = new java.util.concurrent.atomic.AtomicLong();
+
     private void scheduleBuild(String reason, long delayTicks) {
+        scheduleBuild(reason, delayTicks, false);
+    }
+
+    private void scheduleBuild(String reason, long delayTicks, boolean deferred) {
         if (!automaticBuildPending.compareAndSet(false, true)) return;
-        getLogger().info("Scheduled automatic Twilight conversion after " + reason);
+        // A build that waits for the running one is announced once, not on every retry.
+        if (!deferred) getLogger().info("Scheduled automatic Twilight conversion after " + reason);
         scheduler.delayed(() -> {
             if (operationRunning.get()) {
                 automaticBuildPending.set(false);
-                scheduleBuild(reason + " (deferred)", config.startupDelayTicks());
+                scheduleBuild(reason, config.startupDelayTicks(), true);
                 return;
             }
             automaticBuildPending.set(false);
             scan(Bukkit.getConsoleSender(), true, true);
         }, delayTicks);
     }
+
+    /** Runtime items; another plugin's broken state never stops the build (the packs still describe the items). */
+    private BukkitItemCollector.CollectionResult collectRuntimeItems() {
+        try {
+            return BukkitItemCollector.collect();
+        } catch (RuntimeException | LinkageError failure) {
+            getLogger().log(Level.WARNING, "Runtime items could not be read; this build uses the packs only", failure);
+            return new BukkitItemCollector.CollectionResult(List.of(), List.of(),
+                    List.of("runtime items could not be read: " + rootMessage(failure)));
+        }
+    }
+
+    private final Set<String> reportedRuntimeNotices = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     private static String rootMessage(Throwable throwable) {
         Throwable current = rootCause(throwable);
@@ -761,13 +1204,15 @@ public final class TwilightPlugin extends JavaPlugin {
     private final class AutomationListener implements Listener {
         @EventHandler
         public void onServerLoaded(ServerLoadEvent event) {
-            if (config.autoBuildOnStartup()) scheduleBuild("server loaded", config.startupDelayTicks());
+            if (config.autoBuildOnStartup() && packPending.isEmpty()) scheduleBuild("server loaded", config.startupDelayTicks());
         }
 
         @EventHandler
         public void onPluginEnabled(PluginEnableEvent event) {
             int hooks = providerHooks.register(event.getPlugin());
-            if (hooks > 0) scheduleProviderBuild(event.getPlugin().getName() + " enabled", config.startupDelayTicks());
+            if (hooks > 0 && !packPending.contains(event.getPlugin().getName())) {
+                scheduleProviderBuild(event.getPlugin().getName() + " enabled", config.startupDelayTicks());
+            }
         }
 
         @EventHandler(priority = org.bukkit.event.EventPriority.MONITOR)

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2026 siberanka.
- * Licensed under the GNU LGPL v3.0 or later.
+ * Licensed under the Twilight License (PolyForm Noncommercial 1.0.0 with additional terms); see LICENSE.
  */
 package com.siberanka.twilight.proxy;
 
@@ -42,6 +42,14 @@ public interface Platform {
     /** The address of every backend server in the proxy's server list (name -> address). */
     default java.util.Map<String, java.net.InetSocketAddress> serverAddresses() {
         return java.util.Map.of();
+    }
+
+    /**
+     * Sends a plugin message on Twilight's channel to backend {@code server} through a player connected there;
+     * false when nobody is connected to it (or the server is unknown).
+     */
+    default boolean sendToServer(String server, byte[] message) {
+        return false;
     }
 
     /** Players online on the proxy, or -1 when unknown. */

@@ -2,10 +2,10 @@
 
 > Türkçe: [aşağıda](#türkçe)
 
-A network running Twilight 1.0.0-pre.13 (Java 25, Geyser 2.11.3 build 1249, Floodgate build 141,
+A network running Twilight development build 13 (Java 25, Geyser 2.11.3 build 1249, Floodgate build 141,
 GeyserReversion 1.0.6) reported failed conversions on its backends, twilight-proxy not seeing the
 proxy's Geyser, a possible item registry conflict between backends and an empty `login-servers`
-list. Each point was reproduced on isolated local servers before it was fixed in 1.0.0-pre.15.
+list. Each point was reproduced on isolated local servers before it was fixed in development build 15.
 Production servers were not modified.
 
 ## 1. Conversions failed with `java.time.Instant#seconds`
@@ -19,7 +19,7 @@ Gson, which is why the test servers did not show it.
 `ContentReportWriter.java:22`.
 
 **Fix.** The report is built field by field without reflection, and a report that cannot be written
-only logs a warning; it never stops a build again. On the same server 1.0.0-pre.15 writes the report
+only logs a warning; it never stops a build again. On the same server development build 15 writes the report
 and passes scan and build. A unit test writes the report with Gson 2.11 on Java 25.
 
 ## 2. "Geyser is not installed on this proxy" while Geyser runs
@@ -30,7 +30,7 @@ exist yet, the failure was silenced and reported as "not installed": no packs pe
 reconnects and no pack host.
 
 **Reproduced** on Velocity 4.2.0 with Geyser build 1248 by making twilight-proxy load before Geyser:
-pre.14 logged "Geyser is not installed on this proxy" and `/twilightproxy` "Geyser absent" while
+build 14 logged "Geyser is not installed on this proxy" and `/twilightproxy` "Geyser absent" while
 Geyser started two seconds later.
 
 **Fix.**
@@ -43,26 +43,26 @@ Geyser started two seconds later.
 - The pack host starts as soon as Geyser is attached.
 - `/twilightproxy` shows "Geyser attached" or "Geyser not attached (reason)".
 
-With the same load order pre.15 attached at once. BungeeCord, where Geyser creates its API earlier,
+With the same load order build 15 attached at once. BungeeCord, where Geyser creates its API earlier,
 attached as before. Four tests cover a late Geyser, an incompatible one, an absent one, and the
 attempt when a player joins.
 
-**Follow-up (1.0.0-pre.16).** The message came from FlameCord, a closed Waterfall fork that could not
+**Follow-up (development build 16).** The message came from FlameCord, a closed Waterfall fork that could not
 be obtained. The tests used Waterfall 1.21 build 615 instead, the open project FlameCord is built on:
 
-- pre.13 and pre.16 both found Geyser there.
+- Builds 13 and 16 both found Geyser there.
 - On BungeeCord and Waterfall, Geyser creates its API while plugins load, before twilight-proxy
   starts.
 - On FlameCord the remaining explanation is that the proxy hides Geyser's classes from other plugins.
 
-Since pre.16 twilight-proxy asks the proxy whether a Geyser plugin is installed. It then reports
+Since build 16 twilight-proxy asks the proxy whether a Geyser plugin is installed. It then reports
 "Geyser-BungeeCord ... is installed, but its API is not visible to twilight-proxy" with the exact
 error and keeps trying, instead of "not installed". The backend's "Geyser unavailable: No local Geyser
 plugin data directory was found" in `/twilight status` was misleading too. It now reads "Geyser is not
 on this server (normal when it runs on the proxy)", says whether the pack is shared with twilight-proxy,
 and is also logged at start.
 
-**Root cause (1.0.0-pre.17).** With pre.16 the network's log named the error:
+**Root cause (development build 17).** With build 16 the network's log named the error:
 
 > loader constraint violation when resolving `EventBus.subscribe(...)` returning
 > `org.geysermc.event.subscribe.OwnedSubscriber`
@@ -76,19 +76,19 @@ Reproduced locally in two setups, both with Floodgate 2.2.5 build 141 loaded bef
 - Waterfall 1.21 build 615 with Geyser-BungeeCord made to load after Floodgate;
 - Velocity 4.2.0, which loads Floodgate first by itself (alphabetical order, no dependency between them).
 
-pre.16 failed with the same message in both. Every earlier version is affected the same way on such
+Build 16 failed with the same message in both. Every earlier version is affected the same way on such
 proxies, and Twilight on a backend could be hit in the same way on a server that loads Floodgate first.
 
 **Fix.** Twilight and twilight-proxy no longer refer to Geyser's event library at all:
 
 - They subscribe through reflection, with the method and `PostOrder` taken from the class loader that
   defined Geyser's event bus.
-- A test scans every compiled class and fails if any refers to `org.geysermc.event`. The pre.16 classes
+- A test scans every compiled class and fails if any refers to `org.geysermc.event`. The build 16 classes
   would fail it.
 - An attach failure is now logged with its full stack trace and with the jar each side took the
   library from.
 
-**Verified with pre.17.**
+**Verified with build 17.**
 
 | Setup | Result |
 |---|---|
@@ -180,7 +180,7 @@ AuthMeBungee and LibreLogin files and an unrelated plugin that is not read.
 - Login server detection reads a few keys of a few files and writes nothing.
 - No change affects forwarding secrets, LeaderOS signatures or backend access.
 
-## 6. Broken item icons after updating (1.0.0-pre.18)
+## 6. Broken item icons after updating (development build 18)
 
 After updating without other changes, custom item icons looked broken. Two things lead there:
 
@@ -188,7 +188,7 @@ After updating without other changes, custom item icons looked broken. Two thing
   identifiers. Geyser loads every `.json` under `custom_mappings`, recursively, and every pack in `packs`.
 - Geyser registers custom items only when it starts, and nothing told the admins that it had to.
 
-1.0.0-pre.18 handles both on proxies and single servers:
+Development build 18 handles both on proxies and single servers:
 
 - **Stale files.** Twilight files that the current setup does not own are moved to `retired/<time>/`,
   never deleted, before Geyser loads them: Twilight's load phase on a server, the attach on a proxy.
@@ -233,7 +233,7 @@ After updating without other changes, custom item icons looked broken. Two thing
 
 ### Saha raporu düzeltmeleri - 9 Ekim 2026
 
-Twilight 1.0.0-pre.13 çalıştıran bir ağ (Java 25, Geyser 2.11.3 build 1249, Floodgate build 141,
+Twilight geliştirme derlemesi 13 çalıştıran bir ağ (Java 25, Geyser 2.11.3 build 1249, Floodgate build 141,
 GeyserReversion 1.0.6) dört sorun bildirdi:
 
 - arka uçlarında dönüştürmelerin başarısız olduğunu;
@@ -241,7 +241,7 @@ GeyserReversion 1.0.6) dört sorun bildirdi:
 - arka uçlar arasında olası bir eşya kayıt çakışmasını;
 - boş bir `login-servers` listesini.
 
-Her madde, 1.0.0-pre.15'te düzeltilmeden önce yalıtılmış yerel sunucularda yeniden üretildi. Üretim
+Her madde, geliştirme derlemesi 15'te düzeltilmeden önce yalıtılmış yerel sunucularda yeniden üretildi. Üretim
 sunucuları değiştirilmedi.
 
 #### 1. Dönüştürmeler `java.time.Instant#seconds` ile başarısız oluyordu
@@ -255,7 +255,7 @@ sunucularında görülmemesinin nedeni budur.
 `ContentReportWriter.java:22` konumunda aynı hata görüldü.
 
 **Düzeltme.** Rapor yansıma olmadan alan alan oluşturulur. Yazılamayan bir rapor yalnızca uyarı yazar;
-artık bir derlemeyi asla durdurmaz. Aynı sunucuda 1.0.0-pre.15 raporu yazar, taramayı ve derlemeyi geçer.
+artık bir derlemeyi asla durdurmaz. Aynı sunucuda geliştirme derlemesi 15 raporu yazar, taramayı ve derlemeyi geçer.
 Bir birim testi raporu Java 25 üzerinde Gson 2.11 ile yazar.
 
 #### 2. Geyser çalışırken "Geyser is not installed on this proxy"
@@ -266,7 +266,7 @@ Hata susturuldu ve "kurulu değil" olarak bildirildi. Sonuçta sunucu başına p
 sunucusu yoktu.
 
 **Yeniden üretildi.** Velocity 4.2.0 ve Geyser build 1248 ile twilight-proxy, Geyser'dan önce yüklenecek
-şekilde ayarlandı. pre.14 "Geyser is not installed on this proxy", `/twilightproxy` ise "Geyser absent"
+şekilde ayarlandı. Derleme 14 "Geyser is not installed on this proxy", `/twilightproxy` ise "Geyser absent"
 yazdı; oysa Geyser iki saniye sonra başladı.
 
 **Düzeltme.**
@@ -279,25 +279,25 @@ yazdı; oysa Geyser iki saniye sonra başladı.
 - Paket sunucusu Geyser'a bağlanılır bağlanılmaz başlar.
 - `/twilightproxy` "Geyser attached" veya "Geyser not attached (neden)" gösterir.
 
-Aynı yükleme sırasıyla pre.15 hemen bağlandı. Geyser'ın API'sini daha erken oluşturduğu BungeeCord'da
+Aynı yükleme sırasıyla derleme 15 hemen bağlandı. Geyser'ın API'sini daha erken oluşturduğu BungeeCord'da
 önceki gibi bağlandı. Dört test geç başlayan, uyumsuz ve hiç olmayan bir Geyser'ı ve oyuncu katıldığındaki
 denemeyi kapsar.
 
-**Ek (1.0.0-pre.16).** Mesaj, temin edilemeyen kapalı kaynaklı bir Waterfall türevi olan FlameCord'dan
+**Ek (geliştirme derlemesi 16).** Mesaj, temin edilemeyen kapalı kaynaklı bir Waterfall türevi olan FlameCord'dan
 geliyordu. Testlerde bunun yerine FlameCord'un temel aldığı açık proje Waterfall 1.21 build 615 kullanıldı:
 
-- pre.13 de pre.16 da orada Geyser'ı buldu.
+- Derleme 13 de derleme 16 da orada Geyser'ı buldu.
 - BungeeCord ve Waterfall'da Geyser, API'sini eklentiler yüklenirken, twilight-proxy başlamadan önce oluşturur.
 - FlameCord için geriye kalan açıklama, proxy'nin Geyser'ın sınıflarını diğer eklentilerden gizlemesidir.
 
-pre.16'dan beri twilight-proxy proxy'ye bir Geyser eklentisi kurulu olup olmadığını sorar. Kuruluysa "not
+Derleme 16'dan beri twilight-proxy proxy'ye bir Geyser eklentisi kurulu olup olmadığını sorar. Kuruluysa "not
 installed" yerine "Geyser-BungeeCord ... is installed, but its API is not visible to twilight-proxy" ifadesini
 tam hatayla birlikte bildirir ve denemeye devam eder. Arka uçta `/twilight status` içindeki "Geyser unavailable:
 No local Geyser plugin data directory was found" ifadesi de yanıltıcıydı. Artık "Geyser is not on this server
 (normal when it runs on the proxy)" der, paketin twilight-proxy ile paylaşılıp paylaşılmadığını söyler ve bu
 satır açılışta da günlüğe yazılır.
 
-**Kök neden (1.0.0-pre.17).** pre.16 ile ağın günlüğü hatayı adıyla verdi:
+**Kök neden (geliştirme derlemesi 17).** Derleme 16 ile ağın günlüğü hatayı adıyla verdi:
 
 > `org.geysermc.event.subscribe.OwnedSubscriber` döndüren `EventBus.subscribe(...)` çözülürken
 > loader constraint violation
@@ -311,7 +311,7 @@ Yerelde iki kurulumda yeniden üretildi; ikisinde de Floodgate 2.2.5 build 141, 
 - Floodgate'ten sonra yüklenecek şekilde ayarlanan Geyser-BungeeCord ile Waterfall 1.21 build 615;
 - Floodgate'i kendiliğinden önce yükleyen Velocity 4.2.0 (alfabetik sıra, aralarında bağımlılık yok).
 
-pre.16 ikisinde de aynı mesajla başarısız oldu. Önceki bütün sürümler bu tür proxy'lerde aynı şekilde
+Derleme 16 ikisinde de aynı mesajla başarısız oldu. Önceki bütün sürümler bu tür proxy'lerde aynı şekilde
 etkilenir. Arka uçtaki Twilight da Floodgate'i önce yükleyen bir sunucuda aynı şekilde etkilenebilirdi.
 
 **Düzeltme.** Twilight ve twilight-proxy artık Geyser'ın olay kütüphanesine hiç başvurmaz:
@@ -319,11 +319,11 @@ etkilenir. Arka uçtaki Twilight da Floodgate'i önce yükleyen bir sunucuda ayn
 - Olaylara yansıma ile abone olurlar; yöntem ve `PostOrder`, Geyser'ın olay veri yolunu tanımlayan sınıf
   yükleyicisinden alınır.
 - Bir test derlenen her sınıfı tarar ve herhangi biri `org.geysermc.event` paketine başvurursa başarısız
-  olur. pre.16 sınıfları bu testten geçemezdi.
+  olur. derleme 16 sınıfları bu testten geçemezdi.
 - Bir bağlanma hatası artık tam yığın iziyle ve her tarafın kütüphaneyi hangi JAR'dan aldığıyla günlüğe
   yazılır.
 
-**pre.17 ile doğrulandı.**
+**Derleme 17 ile doğrulandı.**
 
 | Kurulum | Sonuç |
 |---|---|
@@ -417,7 +417,7 @@ AuthMeBungee ve LibreLogin dosyalarını ve okunmayan ilgisiz bir eklentiyi kaps
 - Giriş sunucusu algılama birkaç dosyanın birkaç anahtarını okur ve hiçbir şey yazmaz.
 - Hiçbir değişiklik yönlendirme anahtarlarını, LeaderOS imzalarını veya arka uç erişimini etkilemez.
 
-#### 6. Güncellemeden sonra bozuk eşya simgeleri (1.0.0-pre.18)
+#### 6. Güncellemeden sonra bozuk eşya simgeleri (geliştirme derlemesi 18)
 
 Başka bir değişiklik yapmadan güncelledikten sonra özel eşya simgeleri bozuk göründü. Buna iki şey yol açar:
 
@@ -427,7 +427,7 @@ Başka bir değişiklik yapmadan güncelledikten sonra özel eşya simgeleri boz
 - Geyser özel eşyaları yalnızca açılışta kaydeder ve yöneticilere yeniden başlatmaları gerektiğini hiçbir şey
   söylemiyordu.
 
-1.0.0-pre.18 ikisini de proxy'lerde ve tek sunucularda ele alır:
+Geliştirme derlemesi 18 ikisini de proxy'lerde ve tek sunucularda ele alır:
 
 - **Eski dosyalar.** Mevcut kurulumun sahip olmadığı Twilight dosyaları, Geyser onları yüklemeden önce
   `retired/<zaman>/` klasörüne taşınır, asla silinmez: sunucuda Twilight'ın yükleme aşamasında, proxy'de

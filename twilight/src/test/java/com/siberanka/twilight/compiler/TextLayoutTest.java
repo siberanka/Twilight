@@ -57,6 +57,13 @@ class TextLayoutTest {
         String title = "\u4E03".repeat(8) + "\u1F03";
         assertExact(table, title);
         assertEquals(-8, javaInk(table, title).getFirst()[0], "image starts at the GUI edge, eight units left of the title");
+
+        // Offset tags a plugin left unreplaced move like the offset characters they stand for.
+        String expected = TextLayout.layout(table, title).texts().getFirst();
+        for (String tag : List.of(":offset_-8:", "%img_offset_-8%", "<shift:-8>", "%nexo_shift_-8%", "<SHIFT:-4><shift:-4>")) {
+            assertEquals(expected, TextLayout.layout(table, tag + "\u1F03").texts().getFirst(), tag);
+        }
+        assertEquals("a:offset_x:b", TextLayout.layout(table, "a:offset_x:b").texts().getFirst().replaceAll("[\uE000-\uF8FF]", ""), "not a tag");
     }
 
     @Test

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2026 siberanka.
- * Licensed under the GNU LGPL v3.0 or later.
+ * Licensed under the Twilight License (PolyForm Noncommercial 1.0.0 with additional terms); see LICENSE.
  */
 package com.siberanka.twilight.protocol;
 
@@ -26,6 +26,11 @@ import java.util.List;
  * BungeeGuard token), plus a timestamp; requests carry a random nonce. A client can neither read
  * the messages (the proxy consumes them) nor forge or replay them. Messages are small and fixed in
  * shape; anything else is rejected before it is parsed further.
+ *
+ * <p>The proxy answers every announcement with the features its Bedrock runtime offers ({@link #CAPABILITIES}),
+ * so that a backend builds only what that runtime uses, and reports the items it saw in Java item displays without
+ * a model in the pack ({@link #DISPLAYED}), so that the next build adds them. Backends that predate a message type
+ * ignore it.
  */
 public final class PackChannel {
     /** Plugin-message channel, lowercase namespace:path as modern servers require. */
@@ -34,6 +39,13 @@ public final class PackChannel {
     public static final byte ANNOUNCE = 1;
     public static final byte REQUEST = 2;
     public static final byte CHUNK = 3;
+    public static final byte CAPABILITIES = 4;
+    public static final byte DISPLAYED = 5;
+    /** Keys per {@link #DISPLAYED} message and the longest key. */
+    public static final int MAX_DISPLAYED = 64;
+    public static final int MAX_DISPLAYED_KEY = 400;
+    /** Capability flag: the proxy's Geyser shows Java item displays (furniture, model bones) with the pack's models. */
+    public static final int ITEM_DISPLAYS = 1;
     /** Pack bytes per chunk message; well below every platform's plugin-message limit. */
     public static final int CHUNK_BYTES = 30_000;
     /** No valid message is larger; bigger payloads are dropped unread. */
@@ -77,6 +89,16 @@ public final class PackChannel {
 
     public record Chunk(byte[] nonce, int index, int total, byte[] data) {}
 
+    /** Items the proxy saw in Java item displays that the server's pack has no model for. */
+    public record Displayed(long time, List<String> keys) {}
+
+    /** The features of the proxy's Bedrock runtime, as {@link #ITEM_DISPLAYS} and future flags. */
+    public record Capabilities(long time, int flags) {
+        public boolean has(int flag) {
+            return (flags & flag) == flag;
+        }
+    }
+
     public static byte[] announce(Key key, long time, byte[] sha256, long size) {
         return sign(key, ANNOUNCE, out -> {
             out.writeLong(time);
@@ -101,6 +123,33 @@ public final class PackChannel {
             out.writeInt(total);
             out.writeShort(length);
             out.write(data, 0, length);
+        });
+    }
+
+    /** At most {@link #MAX_DISPLAYED} keys of printable ASCII, each at most {@link #MAX_DISPLAYED_KEY} bytes. */
+    public static byte[] displayed(Key key, long time, List<String> keys) {
+        if (keys.isEmpty() || keys.size() > MAX_DISPLAYED) throw new IllegalArgumentException("key count");
+        return sign(key, DISPLAYED, out -> {
+            out.writeLong(time);
+            out.writeShort(keys.size());
+            for (String value : keys) {
+                byte[] bytes = value.getBytes(StandardCharsets.US_ASCII);
+                if (bytes.length == 0 || bytes.length > MAX_DISPLAYED_KEY || !printable(bytes)) throw new IllegalArgumentException("key");
+                out.writeShort(bytes.length);
+                out.write(bytes);
+            }
+        });
+    }
+
+    private static boolean printable(byte[] bytes) {
+        for (byte b : bytes) if (b < 0x21 || b > 0x7e) return false;
+        return true;
+    }
+
+    public static byte[] capabilities(Key key, long time, int flags) {
+        return sign(key, CAPABILITIES, out -> {
+            out.writeLong(time);
+            out.writeInt(flags);
         });
     }
 
@@ -145,6 +194,29 @@ public final class PackChannel {
                     byte[] data = new byte[length];
                     in.get(data);
                     yield new Chunk(nonce, index, total, data);
+                }
+                case DISPLAYED -> {
+                    if (in.remaining() < 8 + 2) yield null;
+                    long time = in.getLong();
+                    int count = Short.toUnsignedInt(in.getShort());
+                    if (count == 0 || count > MAX_DISPLAYED) yield null;
+                    java.util.List<String> seen = new java.util.ArrayList<>(count);
+                    for (int i = 0; i < count; i++) {
+                        if (in.remaining() < 2) yield null;
+                        int length = Short.toUnsignedInt(in.getShort());
+                        if (length == 0 || length > MAX_DISPLAYED_KEY || in.remaining() < length) yield null;
+                        byte[] bytes = new byte[length];
+                        in.get(bytes);
+                        if (!printable(bytes)) yield null;
+                        seen.add(new String(bytes, StandardCharsets.US_ASCII));
+                    }
+                    yield in.remaining() == 0 && fresh(time, now) ? new Displayed(time, List.copyOf(seen)) : null;
+                }
+                case CAPABILITIES -> {
+                    if (in.remaining() != 8 + 4) yield null;
+                    long time = in.getLong();
+                    int flags = in.getInt();
+                    yield fresh(time, now) ? new Capabilities(time, flags) : null;
                 }
                 default -> null;
             };

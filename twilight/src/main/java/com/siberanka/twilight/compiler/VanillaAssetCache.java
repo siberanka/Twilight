@@ -101,6 +101,35 @@ final class VanillaAssetCache implements AutoCloseable {
         return readEntry(logicalPath, MAXIMUM_MODEL_BYTES);
     }
 
+    /** A vanilla texture atlas definition ({@code assets/minecraft/atlases/*.json}). */
+    Optional<byte[]> readAtlas(String logicalPath) throws IOException {
+        String normalized = logicalPath.replace('\\', '/');
+        if (!normalized.startsWith("assets/minecraft/atlases/") || !normalized.endsWith(".json") || normalized.contains("..")) {
+            throw new IOException("Vanilla atlas path is outside the atlases: " + logicalPath);
+        }
+        return readEntry(normalized, MAXIMUM_MODEL_BYTES);
+    }
+
+    /** A vanilla item definition ({@code assets/minecraft/items/}) or block state file ({@code assets/minecraft/blockstates/}). */
+    Optional<byte[]> readDefinition(String logicalPath) throws IOException {
+        String normalized = logicalPath.replace('\\', '/');
+        if (!(normalized.startsWith("assets/minecraft/items/") || normalized.startsWith("assets/minecraft/blockstates/"))
+                || !normalized.endsWith(".json") || normalized.contains("..")) {
+            throw new IOException("Vanilla definition path is outside items and block states: " + logicalPath);
+        }
+        return readEntry(normalized, MAXIMUM_MODEL_BYTES);
+    }
+
+    /** A vanilla equipment asset ({@code assets/minecraft/equipment/}, 1.21.2-1.21.3 {@code models/equipment/}). */
+    Optional<byte[]> readEquipment(String logicalPath) throws IOException {
+        String normalized = logicalPath.replace('\\', '/');
+        if (!(normalized.startsWith("assets/minecraft/equipment/") || normalized.startsWith("assets/minecraft/models/equipment/"))
+                || !normalized.endsWith(".json") || normalized.contains("..")) {
+            throw new IOException("Vanilla equipment path is outside the equipment assets: " + logicalPath);
+        }
+        return readEntry(normalized, MAXIMUM_MODEL_BYTES);
+    }
+
     Optional<byte[]> readModel(String logicalPath) throws IOException {
         String normalized = logicalPath.replace('\\', '/');
         if (!normalized.startsWith("assets/minecraft/models/") || !normalized.endsWith(".json") ||

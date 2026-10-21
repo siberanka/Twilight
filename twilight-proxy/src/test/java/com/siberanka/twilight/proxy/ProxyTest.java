@@ -232,6 +232,26 @@ class ProxyTest {
     }
 
     @Test
+    void answersEveryValidAnnouncementWithTheSignedFeaturesOfItsRuntime() {
+        long now = System.currentTimeMillis();
+        TestPlatform platform = new TestPlatform(root.resolve("features"));
+        AutoTransfers transfers = new AutoTransfers(platform, new PackStore(platform));
+        byte[] announce = PackChannel.announce(KEY, now, new byte[32], 1234);
+        assertNull(transfers.capabilities(announce, PackChannel.ITEM_DISPLAYS), "nothing without a shared secret");
+        transfers.keys(List.of(KEY));
+        byte[] reply = transfers.capabilities(announce, PackChannel.ITEM_DISPLAYS);
+        PackChannel.Capabilities features = assertInstanceOf(PackChannel.Capabilities.class, PackChannel.read(reply, List.of(KEY), now));
+        assertTrue(features.has(PackChannel.ITEM_DISPLAYS));
+        assertNull(transfers.capabilities(reply, PackChannel.ITEM_DISPLAYS), "only announcements are answered");
+        byte[] forged = PackChannel.announce(PackChannel.Key.derive("another-secret-entirely"), now, new byte[32], 1234);
+        assertNull(transfers.capabilities(forged, PackChannel.ITEM_DISPLAYS));
+        assertNull(PackChannel.read(reply, List.of(KEY), now + PackChannel.MAX_AGE_MILLIS + 60_000), "a replayed statement expires");
+        byte[] tampered = reply.clone();
+        tampered[12] ^= 1;
+        assertNull(PackChannel.read(tampered, List.of(KEY), now));
+    }
+
+    @Test
     void receivesAnnouncedPacksOnlyWhenEveryChunkMatches() throws Exception {
         Path pack = zip("source.mcpack", "manifest.json", "{}", "big.bin", randomText(140_000));
         byte[] bytes = Files.readAllBytes(pack);

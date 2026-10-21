@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2026 siberanka.
- * Licensed under the GNU LGPL v3.0 or later.
+ * Licensed under the Twilight License (PolyForm Noncommercial 1.0.0 with additional terms); see LICENSE.
  */
 package com.siberanka.twilight.text;
 
@@ -58,6 +58,11 @@ public final class TextLayout {
      *               {@link TextLayoutTable#shade}); legacy colour codes in the text end it, {@code \u00a7r} restores it
      */
     public record Segment(String text, String font, boolean bold, boolean shaded, boolean shadowless) {
+        /** Offset tags a plugin left unreplaced count as the moves they name ({@link OffsetTags}). */
+        public Segment {
+            text = OffsetTags.encode(text);
+        }
+
         public Segment(String text, String font) {
             this(text, font, false);
         }

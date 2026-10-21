@@ -1,4 +1,4 @@
-/* Copyright (c) 2026 siberanka. Licensed under the GNU LGPL v3.0 or later. */
+/* Copyright (c) 2026 siberanka. Twilight License (PolyForm Noncommercial 1.0.0 + terms), see LICENSE. */
 package com.siberanka.twilight.integration.display;
 
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataMap;

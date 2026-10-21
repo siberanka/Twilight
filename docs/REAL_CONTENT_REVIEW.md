@@ -4,7 +4,7 @@
 
 > The screenshots of this report were retired on 4 October 2026 in favour of current captures; the measurements below remain. Current Java/Bedrock captures are in the [README](../README.md#visual-acceptance-tests).
 
-Twilight 1.0.0-pre.3 was tested with real tools, weapons, emoji, and menu images
+Twilight development build 3 was tested with real tools, weapons, emoji, and menu images
 from the operator's BoxPVP-v2 and Survival-v5 installations. Survival-v3 was not
 present. The operator authorized publication of the reviewed screenshots below.
 Source packs, plugin binaries, configuration, worlds, and raw logs remain private.
@@ -214,7 +214,7 @@ names describe the tested integrations and imply no affiliation.
 > Bu raporun ekran görüntüleri 4 Ekim 2026'da güncel görüntüler lehine kaldırıldı; aşağıdaki ölçümler
 > geçerlidir. Güncel Java/Bedrock görüntüleri [README](../README.md#visual-acceptance-tests) içindedir.
 
-Twilight 1.0.0-pre.3, işletmecinin BoxPVP-v2 ve Survival-v5 kurulumlarındaki gerçek aletler, silahlar,
+Twilight geliştirme derlemesi 3, işletmecinin BoxPVP-v2 ve Survival-v5 kurulumlarındaki gerçek aletler, silahlar,
 emojiler ve menü görselleriyle test edildi. Survival-v3 mevcut değildi. İşletmeci aşağıda incelenen ekran
 görüntülerinin yayımlanmasına izin verdi. Kaynak paketleri, eklenti dosyaları, yapılandırma, dünyalar ve
 ham günlükler özel kalır.

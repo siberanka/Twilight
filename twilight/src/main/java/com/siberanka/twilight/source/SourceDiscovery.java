@@ -83,7 +83,12 @@ public final class SourceDiscovery {
                         // ItemsAdder's working pack folder may keep a stale self-hosted pack.zip from
                         // older versions; its current output lives in output/.
                         && !(provider.equals("itemsadder") && insidePack(path, directory));
-                boolean packDirectory = Files.isDirectory(path) &&
+                // ItemsAdder's contents folder holds content packs and their configurations; a content pack named
+                // "assets" must not make the folder itself look like a resource pack (its configurations,
+                // armour renderings among them, are read as provider data).
+                boolean itemsAdderContents = provider.equals("itemsadder") && path.getParent() != null
+                        && path.getParent().equals(directory) && name.equals("contents");
+                boolean packDirectory = Files.isDirectory(path) && !itemsAdderContents &&
                         (Files.isRegularFile(path.resolve("pack.mcmeta")) || Files.isDirectory(path.resolve("assets")))
                         && !insidePack(path, directory);
                 boolean modelSource = Files.isDirectory(path) && path.getParent() != null &&

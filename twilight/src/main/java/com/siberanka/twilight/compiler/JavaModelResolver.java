@@ -177,6 +177,23 @@ final class JavaModelResolver {
         return qualified(value, fallbackNamespace);
     }
 
+    /**
+     * The model an item definition names. Java reads an identifier without a namespace as {@code minecraft:}, also
+     * in another namespace's item definition (CraftEngine's {@code default:chinese_lantern} names
+     * {@code block/custom/chinese_lantern}, which is {@code minecraft:block/custom/chinese_lantern}). Earlier
+     * versions read it in the definition's namespace; when only such a model exists it is still used, so no pack
+     * that worked before loses its model.
+     */
+    static String itemModel(String identifier, String definitionNamespace, ResourceIndex resources) {
+        String java = qualified(identifier, "minecraft");
+        if (identifier.contains(":") || definitionNamespace == null || definitionNamespace.equals("minecraft") || resources == null) {
+            return java;
+        }
+        if (resources.find(modelPath(java)).isPresent()) return java;
+        String local = definitionNamespace + ":" + identifier;
+        return resources.find(modelPath(local)).isPresent() ? local : java;
+    }
+
     static String modelPath(String identifier) {
         String qualified = qualified(identifier, "minecraft");
         int colon = qualified.indexOf(':');

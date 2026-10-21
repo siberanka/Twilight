@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2026 siberanka.
- * Licensed under the GNU LGPL v3.0 or later.
+ * Licensed under the Twilight License (PolyForm Noncommercial 1.0.0 with additional terms); see LICENSE.
  */
 package com.siberanka.twilight.geyser;
 
@@ -83,7 +83,9 @@ public final class CustomBlocks implements AutoCloseable {
     public static CustomBlocks start(Object owner, Supplier<Collection<Path>> packs, Consumer<String> info,
                                      BiConsumer<String, Throwable> warn) {
         CustomBlocks blocks = new CustomBlocks(owner, packs, info, warn);
-        GeyserEvents.subscribe(blocks.registrar, GeyserDefineCustomBlocksEvent.class, blocks::defineBlocks);
+        // After Geyser's own integrated pack, which overrides every mushroom block state with its six-face model;
+        // the last override of a state wins, so content plugins' mushroom blocks must come later.
+        GeyserEvents.subscribeLast(blocks.registrar, GeyserDefineCustomBlocksEvent.class, blocks::defineBlocks);
         GeyserEvents.subscribe(blocks.registrar, GeyserDefineCustomItemsEvent.class, blocks::defineItems);
         return blocks;
     }

@@ -212,7 +212,7 @@ class BedrockPackCompilerTest {
         }
         try (ZipFile zip = new ZipFile(proxy.outputDirectory().resolve("pack.zip").toFile())) {
             assertNull(zip.getEntry("entity/twilight_display.entity.json"));
-            assertNull(zip.getEntry("twilight/display-index.json"));
+            assertNull(zip.getEntry("twilight/display-index-v2.json"));
             assertTrue(zip.stream().noneMatch(entry -> entry.getName().contains("display.")), "no display geometry or animation");
             assertEquals(1, zip.stream().filter(entry -> entry.getName().startsWith("attachables/")).count(), "held items keep their model");
             for (ZipEntry entry : zip.stream().filter(entry -> entry.getName().endsWith(".json")).toList()) {
@@ -220,6 +220,97 @@ class BedrockPackCompilerTest {
                 if (!entry.getName().equals("manifest.json")) assertFalse(text.contains("\n  "), entry.getName() + " is indented");
                 JsonParser.parseString(text);
             }
+        }
+    }
+
+    /**
+     * Displays show every item and block: flat custom items as Java's extrusion, items without custom data with their
+     * own model (tinted like Java), block states of block displays rotated as their block state file says; flat ones
+     * are marked so that dropped items stay Bedrock's own.
+     */
+    @Test
+    void displaysShowFlatItemsOwnModelsAndBlockStates() throws Exception {
+        Path source = root.resolve("own-source");
+        write(source, "assets/minecraft/models/item/paper.json", """
+                {"parent":"minecraft:item/generated","textures":{"layer0":"minecraft:item/paper"},"overrides":[
+                  {"predicate":{"custom_model_data":5},"model":"demo:item/note"}]}
+                """);
+        write(source, "assets/demo/models/item/note.json", """
+                {"parent":"minecraft:item/generated","textures":{"layer0":"demo:item/note"}}
+                """);
+        png(source.resolve("assets/demo/textures/item/note.png"), Color.ORANGE);
+        write(source, "assets/demo/items/wand.json", """
+                {"model":{"type":"minecraft:condition","property":"minecraft:using_item",
+                  "on_true":{"type":"minecraft:model","model":"demo:item/missing"},
+                  "on_false":{"type":"minecraft:model","model":"demo:item/wand","tints":[{"type":"minecraft:constant","value":-65536}]}}}
+                """);
+        write(source, "assets/demo/models/item/wand.json", """
+                {"parent":"minecraft:item/generated","textures":{"layer0":"demo:item/wand"}}
+                """);
+        png(source.resolve("assets/demo/textures/item/wand.png"), Color.WHITE);
+        write(source, "assets/demo/blockstates/lamp.json", """
+                {"variants":{"facing=north":{"model":"demo:block/lamp"},"facing=east":{"model":"demo:block/lamp","y":90}}}
+                """);
+        write(source, "assets/demo/models/block/lamp.json", cube("demo:block/lamp"));
+        png(source.resolve("assets/demo/textures/block/lamp.png"), Color.YELLOW);
+        ContentSource pack = new ContentSource("test", ContentSource.Kind.RESOURCE_PACK, source, 1);
+        BuildResult result = new BedrockPackCompiler(root.resolve("data-own"), config())
+                .withDisplayedItems(java.util.Set.of("minecraft:paper|cmd=5"))
+                .withDisplayedOwnModels(java.util.Set.of("item=demo:wand", "block=demo:lamp[facing=east]", "block=demo:none"))
+                .build(List.of(pack), List.of());
+        try (ZipFile zip = new ZipFile(result.outputDirectory().resolve("pack.zip").toFile())) {
+            JsonObject index = read(zip, "twilight/display-index-v2.json");
+            assertEquals(1, index.getAsJsonObject("variants").size(), index.toString());
+            assertTrue(index.getAsJsonObject("vanilla").has("demo:wand"));
+            assertTrue(index.getAsJsonObject("blocks").has("block=demo:lamp[facing=east]"));
+            JsonArray flat = index.getAsJsonArray("flat");
+            assertEquals(2, flat.size(), "the paper note and the wand are flat; the lamp is not");
+            int lamp = index.getAsJsonObject("blocks").getAsJsonArray("block=demo:lamp[facing=east]").get(0).getAsInt();
+            assertFalse(flat.contains(new com.google.gson.JsonPrimitive(lamp)));
+            JsonArray transforms = index.getAsJsonArray("transforms");
+            int transform = index.getAsJsonObject("blocks").getAsJsonArray("block=demo:lamp[facing=east]").get(1).getAsInt();
+            JsonArray none = transforms.get(transform).getAsJsonArray();
+            assertEquals(-8, none.get(0).getAsInt(), "block displays draw from the block's corner, undoing the item half turn");
+            assertEquals(8, none.get(2).getAsInt());
+            BufferedImage sheet = ImageIO.read(zip.getInputStream(zip.getEntry("textures/twilight/display_sheet0.png")));
+            boolean red = false;
+            for (int x = 0; x < sheet.getWidth(); x++) red |= sheet.getRGB(x, 0) == 0xFFFF0000;
+            assertTrue(red, "the wand's constant tint is baked into its texture");
+        }
+        JsonObject report = JsonParser.parseString(Files.readString(result.outputDirectory().resolve("build-report.json")))
+                .getAsJsonObject();
+        assertTrue(report.getAsJsonArray("notices").toString().contains("block=demo:none"), report.toString());
+    }
+
+    /**
+     * The player heads a server shows go into the pack for Geyser's custom skulls; a head seen in a display gets a
+     * display model drawn with its skin (here from the skin cache, without downloads).
+     */
+    @Test
+    void packsPlayerHeadsAndDrawsDisplayedHeadsWithTheirSkin() throws Exception {
+        String skin = "4b0b1f7b8a6fa27e5f8fdb4c1d1e44f6a2c1e0d9c3b2a19f8e7d6c5b4a392817";
+        Path cache = root.resolve("skins");
+        Files.createDirectories(cache);
+        BufferedImage image = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
+        image.setRGB(10, 10, 0xFF112233);
+        ImageIO.write(image, "PNG", cache.resolve(skin + ".png").toFile());
+        Path source = root.resolve("head-source");
+        Files.createDirectories(source);
+        ContentSource pack = new ContentSource("test", ContentSource.Kind.RESOURCE_PACK, source, 1);
+        BuildResult result = new BedrockPackCompiler(root.resolve("data-heads"), config())
+                .withDisplayedOwnModels(java.util.Set.of("head=" + skin, "head=" + "0".repeat(64)))
+                .withPlayerHeads(java.util.Set.of(skin), java.util.Set.of("Notch"), cache, false)
+                .withPlayerSkins(new java.util.LinkedHashSet<>(List.of("bbbbbbbbbbbbbbbb", "aaaaaaaaaaaaaaaa")))
+                .build(List.of(pack), List.of());
+        try (ZipFile zip = new ZipFile(result.outputDirectory().resolve("pack.zip").toFile())) {
+            JsonObject heads = read(zip, com.siberanka.twilight.geyser.CustomSkulls.PATH);
+            assertEquals(skin, heads.getAsJsonArray("skins").get(0).getAsString());
+            assertEquals("Notch", heads.getAsJsonArray("names").get(0).getAsString());
+            JsonObject players = read(zip, com.siberanka.twilight.geyser.CustomSkulls.PLAYERS_PATH);
+            assertEquals("bbbbbbbbbbbbbbbb", players.getAsJsonArray("skins").get(0).getAsString(), "most recent first");
+            JsonObject index = read(zip, "twilight/display-index-v2.json");
+            assertTrue(index.getAsJsonObject("heads").has(skin), index.toString());
+            assertEquals(1, index.getAsJsonObject("heads").size(), "a skin that cannot be read gets no model");
         }
     }
 
@@ -534,9 +625,11 @@ class BedrockPackCompilerTest {
             assertEquals(0.5, scale.get(0).getAsDouble(), 1.0e-9);
             assertEquals(0.5, scale.get(1).getAsDouble(), 1.0e-9);
             assertEquals(0.5, scale.get(2).getAsDouble(), 1.0e-9);
-            assertEquals(-4.0, position.get(0).getAsDouble(), 1.0e-9);
-            assertEquals(10.5, position.get(1).getAsDouble(), 1.0e-9);
-            assertEquals(0.5, position.get(2).getAsDouble(), 1.0e-9);
+            // The authored translation as is (no fitting), only carried into the hand frame.
+            double[] offset = firstPersonViewInverse(new double[]{0.5 + 1.5, 4 - 1.5, -2 + 3});
+            assertEquals(offset[0], position.get(0).getAsDouble(), 1.0e-9);
+            assertEquals(12.5 + offset[1], position.get(1).getAsDouble(), 1.0e-9);
+            assertEquals(-offset[2], position.get(2).getAsDouble(), 1.0e-9);
         }
     }
 
@@ -585,7 +678,12 @@ class BedrockPackCompilerTest {
                     .getAsJsonObject("bones").getAsJsonObject("bone");
             JsonObject third = animations.getAsJsonObject("animation.twilight." + safe + ".third_person_right")
                     .getAsJsonObject("bones").getAsJsonObject("bone");
-            assertVector(first.getAsJsonArray("position"), -7.0, 12.492, 2.6);
+            // Java's translation is in its view frame; the hand bone sees that frame turned (firstPersonView).
+            double[] offset = firstPersonViewInverse(new double[]{2.6 + 1.5, 7 - 1.5, -0.008 + 3});
+            JsonArray position = first.getAsJsonArray("position");
+            assertEquals(offset[0], position.get(0).getAsDouble(), 1.0e-9);
+            assertEquals(12.5 + offset[1], position.get(1).getAsDouble(), 1.0e-9);
+            assertEquals(-offset[2], position.get(2).getAsDouble(), 1.0e-9);
             assertVector(first.getAsJsonArray("scale"), 1.6, 1.6, 1.6);
             assertVector(third.getAsJsonArray("position"), 0.0, 13.5, -7.0);
             assertVector(third.getAsJsonArray("scale"), 2.4, 2.4, 2.4);
@@ -679,24 +777,48 @@ class BedrockPackCompilerTest {
     }
 
     @Test
-    void preservesHandleDirectionAtBothEulerSingularities() throws Exception {
-        for (int pitch : new int[]{-90, 90}) {
-            JsonObject animations = compilePoseAnimations("singular_" + (pitch + 90), """
-                    {"firstperson_righthand":{"rotation":[%d,0,0]}}
-                    """.formatted(pitch));
-            JsonArray rotation = poseBone(animations, "first_person_right").getAsJsonArray("rotation");
-            double x = Math.toRadians(rotation.get(0).getAsDouble());
-            double y = Math.toRadians(rotation.get(1).getAsDouble());
-            double z = Math.toRadians(rotation.get(2).getAsDouble());
-            double heightX = Math.cos(z) * Math.sin(y) * Math.sin(x) - Math.sin(z) * Math.cos(x);
-            double heightY = Math.sin(z) * Math.sin(y) * Math.sin(x) + Math.cos(z) * Math.cos(x);
-            double heightZ = Math.cos(y) * Math.sin(x);
-            // A positive/negative quarter-turn sends model Y to -X/+X;
-            // the fixed hand X rotation cannot change that X direction.
-            assertEquals(-Math.signum(pitch), heightX, 1.0e-9, "pitch " + pitch);
-            assertEquals(0, heightY, 1.0e-9);
-            assertEquals(0, heightZ, 1.0e-9);
+    void firstPersonOrientationMatchesJavaIncludingEulerSingularities() throws Exception {
+        int[][] poses = {{0, 0, 0}, {30, 0, 0}, {0, 30, 0}, {0, 0, 30}, {0, -90, 25}, {-90, 0, 0}, {90, 0, 0},
+                {25, -50, 35}};
+        for (int i = 0; i < poses.length; i++) {
+            int[] pose = poses[i];
+            JsonObject animations = compilePoseAnimations("first_basis_" + i, """
+                    {"firstperson_righthand":{"rotation":[%d,%d,%d]}}
+                    """.formatted(pose[0], pose[1], pose[2]));
+            JsonArray exported = poseBone(animations, "first_person_right").getAsJsonArray("rotation");
+            for (double[] axis : new double[][]{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}) {
+                // Java first person: the display rotation (intrinsic XYZ) straight in the view frame.
+                double[] expected = rotateAxis(axis, 2, pose[2]);
+                expected = rotateAxis(expected, 1, pose[1]);
+                expected = rotateAxis(expected, 0, pose[0]);
+                // Bedrock: the bone turns the model with X mirrored (measured), then the hand shows the bone
+                // turned by the first person view.
+                double[] actual = {-axis[0], axis[1], axis[2]};
+                actual = rotateAxis(actual, 0, exported.get(0).getAsDouble());
+                actual = rotateAxis(actual, 1, exported.get(1).getAsDouble());
+                actual = rotateAxis(actual, 2, exported.get(2).getAsDouble());
+                actual[0] = -actual[0];
+                actual = firstPersonView(actual);
+                assertArrayEquals(expected, actual, 1.0e-9, "pose " + i);
+            }
         }
+    }
+
+    /** Bedrock's first person hand frame in Java's view frame, as measured (BedrockPackCompiler.FIRST_PERSON_VIEW). */
+    private static double[] firstPersonView(double[] v) {
+        double[] result = rotateAxis(v, 0, 90);
+        result = rotateAxis(result, 2, -135);
+        result = rotateAxis(result, 1, -25);
+        result = rotateAxis(result, 0, 20);
+        return rotateAxis(result, 2, 15);
+    }
+
+    private static double[] firstPersonViewInverse(double[] v) {
+        double[] result = rotateAxis(v, 2, -15);
+        result = rotateAxis(result, 0, -20);
+        result = rotateAxis(result, 1, 25);
+        result = rotateAxis(result, 2, 135);
+        return rotateAxis(result, 0, -90);
     }
 
     @Test
@@ -1354,6 +1476,170 @@ class BedrockPackCompilerTest {
             JsonObject definitions = read(zip, "sounds/sound_definitions.json").getAsJsonObject("sound_definitions");
             assertTrue(definitions.has("minecraft:custom.new"));
             assertFalse(definitions.has("minecraft:vanilla.same"));
+        }
+    }
+
+    /** Worn custom armour shows its equipment asset on Bedrock instead of nothing; a held one keeps its icon. */
+    @Test
+    void longEquipmentNamesKeepPackPathsShort() throws Exception {
+        Path source = root.resolve("long-armour");
+        String asset = "elder_grove_dryadia:keeper_of_the_grove_nature_gearforge_armorset";
+        String name = asset.substring(asset.indexOf(':') + 1);
+        write(source, "assets/elder_grove_dryadia/models/item/helmet.json",
+                "{\"parent\":\"minecraft:item/generated\",\"textures\":{\"layer0\":\"elder_grove_dryadia:item/helmet\"}}");
+        png(source.resolve("assets/elder_grove_dryadia/textures/item/helmet.png"), Color.ORANGE);
+        write(source, "assets/elder_grove_dryadia/equipment/" + name + ".json",
+                "{\"layers\":{\"humanoid\":[{\"texture\":\"" + asset + "\"}]}}");
+        png(source.resolve("assets/elder_grove_dryadia/textures/entity/equipment/humanoid/" + name + ".png"), Color.RED);
+        BuildResult result = new BedrockPackCompiler(root.resolve("long-armour-data"), config()).build(
+                List.of(new ContentSource("test", ContentSource.Kind.RESOURCE_PACK, source, 1)),
+                List.of(new CustomItemDescriptor("test", "minecraft:chainmail_helmet",
+                        Optional.of("elder_grove_dryadia:item/helmet"), OptionalInt.empty(), "Helmet",
+                        Optional.of(new CustomItemDescriptor.Equipment("head", Optional.of(asset))))));
+        assertTrue(result.problems().isEmpty(), result.problems().toString());
+        try (ZipFile zip = new ZipFile(result.outputDirectory().resolve("pack.zip").toFile())) {
+            assertTrue(zip.stream().anyMatch(e -> e.getName().startsWith("textures/twilight/equipment/")));
+            for (ZipEntry entry : zip.stream().toList()) {
+                assertTrue(entry.getName().length() < 80, entry.getName());
+            }
+        }
+    }
+
+    @Test
+    void wornArmourGetsItsEquipmentAsset() throws Exception {
+        Path source = root.resolve("armour");
+        for (String piece : List.of("helmet", "leggings", "ghost")) {
+            write(source, "assets/demo/items/topaz_" + piece + ".json",
+                    "{\"model\":{\"type\":\"minecraft:model\",\"model\":\"demo:item/topaz_" + piece + "\"}}");
+            write(source, "assets/demo/models/item/topaz_" + piece + ".json",
+                    "{\"parent\":\"minecraft:item/generated\",\"textures\":{\"layer0\":\"demo:item/topaz_" + piece + "\"}}");
+            png(source.resolve("assets/demo/textures/item/topaz_" + piece + ".png"), Color.ORANGE);
+        }
+        write(source, "assets/demo/equipment/topaz.json", """
+                {"layers":{"humanoid":[{"texture":"demo:topaz"},
+                  {"texture":"demo:topaz_overlay","dyeable":{"color_when_undyed":65280}},
+                  {"texture":"demo:topaz_dye_only","dyeable":{}}],
+                 "humanoid_leggings":[{"texture":"demo:topaz"}]}}
+                """);
+        png(source.resolve("assets/demo/textures/entity/equipment/humanoid/topaz.png"), Color.RED);
+        png(source.resolve("assets/demo/textures/entity/equipment/humanoid/topaz_overlay.png"), new Color(255, 255, 255, 128));
+        png(source.resolve("assets/demo/textures/entity/equipment/humanoid/topaz_dye_only.png"), Color.BLUE);
+        png(source.resolve("assets/demo/textures/entity/equipment/humanoid_leggings/topaz.png"), Color.YELLOW);
+        ContentSource pack = new ContentSource("test", ContentSource.Kind.RESOURCE_PACK, source, 1);
+        List<CustomItemDescriptor> live = List.of(
+                new CustomItemDescriptor("test", "minecraft:chainmail_helmet", Optional.of("demo:topaz_helmet"), OptionalInt.empty(),
+                        "Helmet", Optional.of(new CustomItemDescriptor.Equipment("head", Optional.of("demo:topaz")))),
+                new CustomItemDescriptor("test", "minecraft:paper", Optional.of("demo:topaz_leggings"), OptionalInt.empty(),
+                        "Leggings", Optional.of(new CustomItemDescriptor.Equipment("legs", Optional.of("demo:topaz")))),
+                new CustomItemDescriptor("test", "minecraft:paper", Optional.of("demo:topaz_ghost"), OptionalInt.empty(),
+                        "Ghost", Optional.of(new CustomItemDescriptor.Equipment("chest", Optional.of("demo:missing")))));
+        BuildResult result = new BedrockPackCompiler(root.resolve("data"), config()).build(List.of(pack), live);
+        assertTrue(result.problems().isEmpty(), result.problems().toString());
+        String notices = JsonParser.parseString(Files.readString(result.outputDirectory().resolve("build-report.json")))
+                .getAsJsonObject().get("notices").toString();
+        assertTrue(notices.contains("demo:missing"), notices);
+        JsonObject items = JsonParser.parseString(Files.readString(result.outputDirectory()
+                .resolve("custom_mappings/geyser_item_mappings.json"))).getAsJsonObject().getAsJsonObject("items");
+        JsonObject helmet = items.getAsJsonArray("minecraft:chainmail_helmet").get(0).getAsJsonObject();
+        assertEquals("head", helmet.getAsJsonObject("components").getAsJsonObject("minecraft:equippable").get("slot").getAsString());
+        String helmetId = helmet.get("bedrock_identifier").getAsString();
+        String leggingsId = null;
+        for (JsonElement mapping : items.getAsJsonArray("minecraft:paper")) {
+            if (mapping.getAsJsonObject().get("model").getAsString().equals("demo:topaz_leggings")) {
+                leggingsId = mapping.getAsJsonObject().get("bedrock_identifier").getAsString();
+                assertEquals("legs", mapping.getAsJsonObject().getAsJsonObject("components")
+                        .getAsJsonObject("minecraft:equippable").get("slot").getAsString(), "a provider may make paper wearable");
+            }
+        }
+        assertNotNull(leggingsId);
+        try (ZipFile zip = new ZipFile(result.outputDirectory().resolve("pack.zip").toFile())) {
+            JsonObject worn = read(zip, "attachables/" + helmetId.substring(helmetId.indexOf(':') + 1) + ".worn.json")
+                    .getAsJsonObject("minecraft:attachable").getAsJsonObject("description");
+            assertEquals(helmetId + ".worn", worn.get("identifier").getAsString());
+            assertEquals("geometry.humanoid.armor.helmet", worn.getAsJsonObject("geometry").get("default").getAsString());
+            assertTrue(worn.getAsJsonObject("item").get(helmetId).getAsString().contains("slot.armor.head"),
+                    "only worn in its own slot; held, the item keeps its icon");
+            String texture = worn.getAsJsonObject("textures").get("default").getAsString();
+            BufferedImage image = ImageIO.read(zip.getInputStream(zip.getEntry(texture + ".png")));
+            // Red base, the overlay tinted with its undyed green at half alpha; the dye-only layer is left out.
+            Color drawn = new Color(image.getRGB(3, 3), true);
+            assertTrue(Math.abs(drawn.getRed() - 127) <= 3 && Math.abs(drawn.getGreen() - 128) <= 3 && drawn.getBlue() == 0
+                    && drawn.getAlpha() == 255, drawn.toString());
+            JsonObject legs = read(zip, "attachables/" + leggingsId.substring(leggingsId.indexOf(':') + 1) + ".worn.json")
+                    .getAsJsonObject("minecraft:attachable").getAsJsonObject("description");
+            assertEquals("geometry.humanoid.armor.leggings", legs.getAsJsonObject("geometry").get("default").getAsString());
+            BufferedImage leggings = ImageIO.read(zip.getInputStream(zip.getEntry(
+                    legs.getAsJsonObject("textures").get("default").getAsString() + ".png")));
+            assertEquals(Color.YELLOW.getRGB(), leggings.getRGB(0, 0), "leggings draw the humanoid_leggings layer");
+            assertEquals(2, zip.stream().filter(entry -> entry.getName().endsWith(".worn.json")).count());
+        }
+    }
+
+    /** ItemsAdder's armour is dyed leather a Java shader draws by colour; Bedrock gets the colour's own layers. */
+    @Test
+    void itemsAdderArmourIsFoundByItsLeatherColour() throws Exception {
+        Path pack = root.resolve("ia-pack"), contents = root.resolve("ia-contents");
+        write(pack, "assets/minecraft/models/item/leather_helmet.json", """
+                {"parent":"minecraft:item/generated","textures":{"layer0":"minecraft:item/leather_helmet"},"overrides":[
+                  {"predicate":{"custom_model_data":33001},"model":"frost:item/helmet"},
+                  {"predicate":{"custom_model_data":33002},"model":"frost:item/plain"}]}
+                """);
+        write(pack, "assets/frost/models/item/helmet.json", "{\"parent\":\"minecraft:item/generated\",\"textures\":{\"layer0\":\"frost:item/helmet\"}}");
+        write(pack, "assets/frost/models/item/plain.json", "{\"parent\":\"minecraft:item/generated\",\"textures\":{\"layer0\":\"frost:item/helmet\"}}");
+        png(pack.resolve("assets/frost/textures/item/helmet.png"), Color.CYAN);
+        png(pack.resolve("assets/minecraft/textures/item/leather_helmet.png"), Color.GRAY);
+        write(pack, "assets/minecraft/equipment/leather.json", """
+                {"layers":{"humanoid":[{"texture":"minecraft:leather","dyeable":{"color_when_undyed":10511680}}]}}
+                """);
+        // The shader sheet ItemsAdder puts in place of the leather layer: no armour layout.
+        Files.createDirectories(pack.resolve("assets/minecraft/textures/entity/equipment/humanoid"));
+        ImageIO.write(new BufferedImage(2048, 64, BufferedImage.TYPE_INT_ARGB), "PNG",
+                pack.resolve("assets/minecraft/textures/entity/equipment/humanoid/leather.png").toFile());
+        png(pack.resolve("assets/frost/textures/armor/frost_layer_1.png"), Color.BLUE);
+        png(pack.resolve("assets/frost/textures/armor/frost_layer_2.png"), Color.GREEN);
+        write(contents, "frost/configs/armor.yml", """
+                info:
+                  namespace: frost
+                armors_rendering:
+                  frostarmor:
+                    color: '#1cb9e9'
+                    layer_1: armor/frost_layer_1
+                    layer_2: armor/frost_layer_2
+                    use_color: false
+                """);
+        // Tags never construct objects: a file trying it is ignored, as ItemsAdder ignores a file it cannot read.
+        write(contents, "evil/configs/armor.yml", """
+                armors_rendering:
+                  evil: !!javax.script.ScriptEngineManager [!!java.net.URLClassLoader [[!!java.net.URL ["http://127.0.0.1/"]]]]
+                """);
+        List<CustomItemDescriptor> live = List.of(
+                new CustomItemDescriptor("ItemsAdder", "minecraft:leather_helmet", Optional.empty(), OptionalInt.of(33001), "Frost",
+                        Optional.of(new CustomItemDescriptor.Equipment("head", Optional.of("minecraft:leather"), OptionalInt.of(0x1cb9e9)))),
+                new CustomItemDescriptor("ItemsAdder", "minecraft:leather_helmet", Optional.empty(), OptionalInt.of(33002), "Plain",
+                        Optional.of(new CustomItemDescriptor.Equipment("head", Optional.of("minecraft:leather"), OptionalInt.of(0x123456)))));
+        BuildResult result = new BedrockPackCompiler(root.resolve("data"), config()).build(List.of(
+                new ContentSource("itemsadder", ContentSource.Kind.RESOURCE_PACK, pack, 1),
+                new ContentSource("itemsadder", ContentSource.Kind.PROVIDER_DATA, contents, 2)), live);
+        JsonObject items = JsonParser.parseString(Files.readString(result.outputDirectory()
+                .resolve("custom_mappings/geyser_item_mappings.json"))).getAsJsonObject().getAsJsonObject("items");
+        Map<Integer, String> identifiers = new LinkedHashMap<>();
+        for (JsonElement mapping : items.getAsJsonArray("minecraft:leather_helmet")) {
+            identifiers.put(mapping.getAsJsonObject().get("custom_model_data").getAsInt(),
+                    mapping.getAsJsonObject().get("bedrock_identifier").getAsString());
+        }
+        try (ZipFile zip = new ZipFile(result.outputDirectory().resolve("pack.zip").toFile())) {
+            for (var entry : identifiers.entrySet()) {
+                String id = entry.getValue(), name = "attachables/" + id.substring(id.indexOf(':') + 1) + ".worn.json";
+                if (entry.getKey() != 33001) {
+                    // Without the vanilla client there is no leather layer to fall back to: never the shader sheet.
+                    assertNull(zip.getEntry(name));
+                    continue;
+                }
+                JsonObject worn = read(zip, name).getAsJsonObject("minecraft:attachable").getAsJsonObject("description");
+                BufferedImage image = ImageIO.read(zip.getInputStream(zip.getEntry(
+                        worn.getAsJsonObject("textures").get("default").getAsString() + ".png")));
+                assertEquals(Color.BLUE.getRGB(), image.getRGB(0, 0), "the colour's own armour");
+            }
         }
     }
 

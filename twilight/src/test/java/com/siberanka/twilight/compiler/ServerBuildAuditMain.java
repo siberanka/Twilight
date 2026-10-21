@@ -61,7 +61,11 @@ public final class ServerBuildAuditMain {
                 boolean displays = Boolean.parseBoolean(System.getProperty("twilight.audit.itemDisplays", "true"));
                 int maxCell = Integer.getInteger("twilight.audit.maxGlyphCell", 512);
                 BuildResult build = (version.isEmpty() ? new BedrockPackCompiler(data, config) : new BedrockPackCompiler(data, config, version))
-                        .withItemDisplays(displays).withMaxGlyphCell(maxCell).build(sources, List.of());
+                        .withItemDisplays(displays).withMaxGlyphCell(maxCell)
+                        // -Dtwilight.audit.displayedItems=<file>: only the items in that list (as in displayed-items.txt)
+                        // and model bones get display models; "none" for an empty list.
+                        .withDisplayedItems(displayedItems())
+                        .build(sources, runtimeItems(root, displays));
                 result.addProperty("seconds", Math.round((System.nanoTime() - started) / 1e7) / 100.0);
                 result.addProperty("candidates", build.candidates());
                 result.addProperty("converted", build.converted());
@@ -96,5 +100,21 @@ public final class ServerBuildAuditMain {
         Files.createDirectories(output.getParent());
         Files.writeString(output, GSON.toJson(report) + System.lineSeparator(), StandardCharsets.UTF_8);
         System.out.println("Twilight server build audit: " + (failed ? "PROBLEMS" : "CLEAN") + " -> " + output);
+    }
+
+    /**
+     * The items a running server adds through provider APIs that can be read from files: ModelEngine's bones, as
+     * Twilight reads them when its registry is unavailable (left out without display models, as in the plugin).
+     */
+    private static Set<String> displayedItems() throws java.io.IOException {
+        String file = System.getProperty("twilight.audit.displayedItems");
+        if (file == null || file.isBlank()) return null;
+        if (file.equals("none")) return Set.of();
+        return Set.copyOf(Files.readAllLines(Path.of(file)));
+    }
+
+    private static List<com.siberanka.twilight.source.CustomItemDescriptor> runtimeItems(Path root, boolean displays) throws java.io.IOException {
+        if (!displays) return List.of();
+        return com.siberanka.twilight.source.ModelEngineFiles.descriptors(root.resolve("plugins/ModelEngine"));
     }
 }

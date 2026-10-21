@@ -41,6 +41,9 @@ sources:
 geyser:
   directory: auto
   deploy-after-build: true
+  # Bedrock players who join after a build get the new pack (and the models of furniture seen for the first
+  # time) without Geyser reloading. Only where that cannot run (Geyser too old for it) Twilight runs
+  # "geyser reload" after a build, which disconnects Bedrock players; false never does.
   reload-after-deploy: true
   backups-to-keep: 3
   # Let Geyser send the pack to Bedrock players. Every build is also written to
@@ -62,15 +65,32 @@ geyser:
   # for the client; they are answered for it meanwhile. Without it Geyser answers them already and this
   # only logs loading times. Seconds, 0-1800; 0 only logs. Takes effect on restart.
   loading-protection-seconds: 300
-  # Bedrock models for custom items shown in Java item displays (furniture, model bones): a copy of every
-  # 3D item in one entity that the client builds while loading. auto: only when Geyser runs on this server
-  # (Twilight's display bridge uses them; a proxy's Geyser does not); on; off. Changing it needs a rebuild.
+  # Bedrock models for custom items shown in Java item displays (furniture, ModelEngine and BetterModel
+  # bones, NPCs built from them), merged into a few geometries so that clients still load quickly.
+  # auto: when Geyser runs on this server, or when the twilight-proxy in front of it says that it shows
+  # item displays (remembered in proxy-features.properties); on; off.
+  # The pack is rebuilt by itself when that changes.
   item-display-models: auto
+  # Which items get those models. seen: the items this server has shown in item displays (learned as
+  # chunks load, kept in displayed-items.txt; a newly seen item is added by the next build, which Bedrock
+  # players joining afterwards get without a restart) and every
+  # ModelEngine and BetterModel bone; all: every custom item. A client builds every model while loading.
+  item-display-variants: seen
   # Custom blocks of content plugins (ItemsAdder's and CraftEngine's ores and blocks on note blocks, mushroom
   # blocks and tripwire): Bedrock shows them with their own look instead of the vanilla block, and the items
   # that place them show the block in 3D (inventory and dropped), as on Java. Geyser registers blocks when
   # it starts, so a build that changes them needs a restart, like item changes.
   custom-blocks: true
+  # Player heads show their skins on Bedrock (menus, hands, armour stands, holograms) instead of Steve's:
+  # Twilight learns the heads this server shows and reads the ones its plugins' configurations name
+  # (textures, skin URLs, user names, HeadDatabase ids), and Geyser registers them as custom skulls when it
+  # starts, so new heads need a restart, like new items. Heads in displays get a model with their skin,
+  # downloaded from Mojang's texture server.
+  player-heads: true
+  # Also the skins of this many most recent players (0: none): menus often show a player's own head or other
+  # players' heads (head-%player_name%, top lists), which no configuration names. New players never start a
+  # build or ask for a restart; their skins come with the next build and Geyser's next start.
+  player-head-skins-of-players: 1024
 
 ui:
   # Desktop chest screens use Java's container layout: the title is unwrapped,
@@ -112,10 +132,12 @@ ui:
   # names of datapack and plugin content, and overrides such as a hidden
   # inventory label or an image as the ender chest title. Requires Geyser.
   java-translations: true
-  # The largest glyph cell in pixels (512, 256, 128 or 64). A glyph page is 16 cells wide, so one glyph
+  # The largest glyph cell in pixels (512, 256, 128 or 64). A glyph page is 16 cells wide, so a glyph
   # that needs 512 makes its page 8192x8192 (256 MiB in the client), which phones load slowly or not
-  # at all; the build lists such pages. With 256, glyphs Java draws far above or below the line are
-  # moved vertically to fit instead. Changing it requires a rebuild.
+  # at all; the build lists such pages. With the text layout, glyphs of 256 and more share pages of
+  # their own, so few such pages remain. With 256, glyphs Java draws far above or below the line are
+  # moved vertically to fit instead, and menu art no longer lines up with the slots. Changing it
+  # requires a rebuild.
   max-glyph-cell: 512
   # Chest screens on Bedrock's pocket UI profile (the default on phones and tablets). Bedrock shows them
   # as two scrolling columns with the title in a header bar, where a Java menu image ends up behind the
@@ -171,6 +193,42 @@ pack-host:
   max-connections-per-address: 4
   # Reverse proxies whose X-Forwarded-For header is trusted (IP addresses).
   trusted-proxies: []
+
+bedrock-network:
+  # Lighter traffic for Bedrock players on this Geyser: movement and data of entities a player cannot see
+  # (behind them or behind walls) are held back and sent as one update when they come into view or every
+  # few seconds; distant entities get fewer movement updates; each connection has an update budget; and a
+  # struggling connection gets stronger compression. Spawns, removals, chunks, inventories, chat, sounds and
+  # effects always pass unchanged and in order, and a revealed entity always shows the server's latest
+  # state. Every number accepts auto: it then follows the player's round trip and how well the client
+  # keeps up (wider margins for a high ping, fewer updates for a struggling device). /twilight network
+  # shows the result per player. Applied on /twilight reload (enabled and threads on restart).
+  enabled: true
+  # Line-of-sight worker threads for all players; auto = half of netty-threads in spigot.yml (1-4).
+  threads: auto
+  # Hold back entities outside the view (behind the player).
+  culling: true
+  # Other players too (with 1.5 times the distances below).
+  cull-players: true
+  # Degrees of the view counted as visible; auto = 220, wider with ping. 360 turns view culling off.
+  view-angle: auto
+  # Entities closer than this always get every update, wherever they are; auto = 10-24 blocks by ping.
+  behind-distance: auto
+  # Hold back entities behind walls.
+  wall-culling: true
+  # From this distance on; auto = 16-32 blocks by ping.
+  wall-distance: auto
+  # Solid, opaque blocks every line of sight must cross; auto = 3, so one wall, glass, leaves, fences
+  # and doorways never hide anything.
+  wall-thickness: auto
+  # Visible entities beyond this get fewer movement updates; auto = 40 blocks.
+  far-distance: auto
+  # Hidden entities are brought up to date this often anyway (ms); auto = 1000-3000 by connection.
+  hidden-update-ms: auto
+  # Entity movement and data updates per second and player that may wait; auto = 2400 down to 600.
+  packets-per-second: auto
+  # Raise zlib compression (by up to 2 levels above Geyser's) for struggling connections.
+  adaptive-compression: true
 
 update-check:
   # Look for a newer Twilight release on GitHub (on the GitLab mirror when GitHub

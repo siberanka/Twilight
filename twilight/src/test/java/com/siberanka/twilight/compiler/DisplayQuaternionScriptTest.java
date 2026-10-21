@@ -26,14 +26,13 @@ class DisplayQuaternionScriptTest {
     }
 
     private static MolangMath run(double[] a, double[] b, double progress) {
-        Map<String, Double> properties = new HashMap<>();
-        for (int i = 0; i < 4; i++) {
-            properties.put("twilight:a" + (i + 6), a[i]);
-            properties.put("twilight:b" + (i + 6), b[i]);
-        }
         MolangMath math = new MolangMath();
+        for (int i = 0; i < 4; i++) {
+            math.variables.put("v.a" + (i + 6), a[i]);
+            math.variables.put("v.b" + (i + 6), b[i]);
+        }
         math.variables.put("v.p", progress);
-        math.run(DisplayEntityResources.quaternionScript("l", 6), properties);
+        math.run(DisplayEntityResources.quaternionScript("l", 6), Map.of());
         return math;
     }
 

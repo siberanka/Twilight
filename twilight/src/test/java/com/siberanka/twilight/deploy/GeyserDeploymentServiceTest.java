@@ -108,6 +108,25 @@ class GeyserDeploymentServiceTest {
         assertTrue(service.deploy(output).restartRequired());
     }
 
+    @Test
+    void liveDisplayVariantsNeedNoRestartButItemMappingsStillDo() throws Exception {
+        Path geyser = Files.createDirectories(root.resolve("plugins/Geyser-Spigot"));
+        Files.createDirectories(geyser.resolve("packs"));
+        Path data = Files.createDirectories(root.resolve("plugins/Twilight"));
+        Path output = Files.createDirectories(data.resolve("build/current/custom_mappings"));
+        Path pack = output.getParent().resolve("pack.zip");
+        writePack(pack, "first", "{\"twilight:a\":0}");
+        Files.writeString(output.resolve("geyser_item_mappings.json"), "items");
+        new GeyserDeploymentService(root, data, config()).deploy(output.getParent());
+        // A fresh server process: Geyser loaded these files.
+        GeyserDeploymentService service = new GeyserDeploymentService(root, data, config());
+        service.liveDisplayVariants(true);
+        writePack(pack, "first", "{\"twilight:a\":0,\"twilight:b\":1}");
+        assertFalse(service.deploy(output.getParent()).restartRequired(), "sessions take the variants of the pack they load");
+        Files.writeString(output.resolve("geyser_item_mappings.json"), "more items");
+        assertTrue(service.deploy(output.getParent()).restartRequired(), "Geyser registers items only when it starts");
+    }
+
     private static void writePack(Path path, String texture) throws Exception {
         writePack(path, texture, null);
     }
@@ -132,7 +151,7 @@ class GeyserDeploymentServiceTest {
             zip.write(texture.getBytes(StandardCharsets.UTF_8));
             zip.closeEntry();
             if (index != null) {
-                zip.putNextEntry(new ZipEntry("twilight/display-index.json"));
+                zip.putNextEntry(new ZipEntry("twilight/display-index-v2.json"));
                 zip.write(index.getBytes(StandardCharsets.UTF_8));
                 zip.closeEntry();
             }

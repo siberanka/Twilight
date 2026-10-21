@@ -98,7 +98,7 @@ final save and all ten saved player death counters remained zero.
 
 ## Build and remaining limits
 
-The locally built `1.0.0-pre.4-SNAPSHOT` JAR passed 87 tests in 19 suites.
+The locally built development build 4 JAR passed 87 tests in 19 suites.
 Three new regressions cover enlarged ascenders/descenders, every pixel of a
 wide label plus its small neighbor, and a large menu bitmap. Existing model,
 animation, mapping and deployment tests remain in the full build. This round
@@ -222,7 +222,7 @@ sayacının hepsi sıfır kaldı.
 
 #### Derleme ve kalan sınırlar
 
-Yerelde derlenen `1.0.0-pre.4-SNAPSHOT` JAR'ı 19 paketteki 87 testi geçti. Üç yeni regresyon büyütülmüş
+Yerelde derlenen geliştirme derlemesi 4 JAR'ı 19 paketteki 87 testi geçti. Üç yeni regresyon büyütülmüş
 yükselen/alçalan kısımları, geniş bir etiketin ve küçük komşusunun her pikselini ve büyük bir menü
 bitmap'ini kapsar. Mevcut model, animasyon, eşleme ve dağıtım testleri tam derlemede kalır. Bu tur her
 sağlayıcı için yeni bir canlı poz/animasyon matrisi iddia etmez.

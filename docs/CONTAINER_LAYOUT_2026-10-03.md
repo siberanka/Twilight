@@ -7,7 +7,7 @@
 Font-image menus are drawn by Java as part of the container title. Bedrock's
 native chest title wrapped such an image at 90% of the panel width,
 hyphenated it and clipped it, and its slot rows did not keep Java's spacing.
-Twilight 1.0.0-pre.4 now generates a Java-compatible desktop chest layout
+Twilight development build 4 now generates a Java-compatible desktop chest layout
 automatically. A real 176 x 83 menu image from the Survival test content now
 appears in full and lines up with its slots in every chest row count from 1 to 6.
 
@@ -74,7 +74,7 @@ contain the complete per-size data.
 
 ## Reviewed captures
 
-All captures used the release build (`1.0.0-pre.4`), except the vanilla
+All captures used development build 4, except the vanilla
 baseline, which used the same build with the layout disabled.
 
 | Case | Java | Bedrock |
@@ -106,9 +106,9 @@ visible as missing-texture items in the Java menu.
 
 ## Remaining limits
 
-The [text layout review](TEXT_LAYOUT_2026-10-03.md) (1.0.0-pre.5) later removed the
+The [text layout review](TEXT_LAYOUT_2026-10-03.md) (development build 5) later removed the
 one-unit glyph offset and added Java spacing for chest titles; the items below
-describe this 1.0.0-pre.4 checkpoint.
+describe this development build 4 checkpoint.
 
 - Contextual bitmap tint, the one-unit glyph offset, Java space-provider
   advances (including negative spaces) and multi-layer title composition need a
@@ -130,7 +130,7 @@ describe this 1.0.0-pre.4 checkpoint.
 
 Font görselli menüler Java'da konteyner başlığının parçası olarak çizilir. Bedrock'un yerel sandık
 başlığı böyle bir görseli panel genişliğinin %90'ında satır kaydırıyor, kısa çizgiyle bölüyor ve
-kırpıyordu; yuva satırları da Java'nın aralıklarını korumuyordu. Twilight 1.0.0-pre.4 artık Java ile
+kırpıyordu; yuva satırları da Java'nın aralıklarını korumuyordu. Twilight geliştirme derlemesi 4 artık Java ile
 uyumlu bir masaüstü sandık yerleşimini kendiliğinden üretir. Survival test içeriğindeki gerçek bir
 176 x 83 menü görseli artık tamamen görünür ve 1'den 6'ya her sandık satır sayısında yuvalarıyla hizalanır.
 
@@ -190,8 +190,8 @@ boyut başına tüm verileri içerir.
 
 #### İncelenen görüntüler
 
-Yerleşimin kapatıldığı aynı derlemeyi kullanan vanilla temel çizgisi dışında tüm görüntüler sürüm
-derlemesini (`1.0.0-pre.4`) kullandı.
+Yerleşimin kapatıldığı aynı derlemeyi kullanan vanilla temel çizgisi dışında tüm görüntüler
+geliştirme derlemesi 4 ile çekildi.
 
 | Durum | Java | Bedrock |
 | --- | --- | --- |
@@ -221,8 +221,8 @@ istemci dili İngilizce, Bedrock istemci dili Türkçeydi; bu yüzden envanter e
 
 #### Kalan sınırlar
 
-[Yazı yerleşimi incelemesi](TEXT_LAYOUT_2026-10-03.md) (1.0.0-pre.5) daha sonra bir birimlik glif
-kaymasını kaldırdı ve sandık başlıklarına Java aralıklarını ekledi; aşağıdaki maddeler bu 1.0.0-pre.4
+[Yazı yerleşimi incelemesi](TEXT_LAYOUT_2026-10-03.md) (geliştirme derlemesi 5) daha sonra bir birimlik glif
+kaymasını kaldırdı ve sandık başlıklarına Java aralıklarını ekledi; aşağıdaki maddeler bu geliştirme derlemesi 4
 kontrol noktasını anlatır.
 
 - Bağlama göre bitmap renklendirmesi, bir birimlik glif kayması, Java boşluk sağlayıcısı ilerlemeleri

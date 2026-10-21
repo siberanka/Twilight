@@ -2,7 +2,7 @@
 
 > Türkçe: [aşağıda](#türkçe)
 
-Twilight 1.0.0-pre.7 was checked against every resolvable menu of two real servers,
+Twilight development build 7 was checked against every resolvable menu of two real servers,
 an original-art style suite that reproduces the menu techniques found there, complete
 builds of six real servers and a live custom-biome scene. All checks ran on isolated
 copies; production servers were only read. Every screenshot in this repository was
@@ -56,9 +56,9 @@ real servers use; nothing is copied from a server, so all captures are published
 | Negative-height shifts | eight Jobs-style negative-height bitmaps, then the header | exact |
 | Hex text | `&#FFAA00` and legacy colours | exact |
 | Bold text | `&b&l` title | exact |
-| Layered | banner moved back over the header with a `-121` space, then bold text | not reproduced in 1.0.0-pre.7; exact since 1.0.0-pre.8 (one label per layer) |
+| Layered | banner moved back over the header with a `-121` space, then bold text | not reproduced in development build 7; exact since development build 8 (one label per layer) |
 
-The captures of this run were replaced by the 1.0.0-pre.8 captures of the same
+The captures of this run were replaced by the development build 8 captures of the same
 suite, which also covers stacked layers; see
 [stacked images, nameplates and exact biomes](LAYERS_BIOMES_2026-10-04.md).
 The Java client runs in English and the Bedrock client in Turkish, hence
@@ -86,7 +86,7 @@ ItemsAdder folder on a CraftEngine server) or whose settings do not send its pac
 while another provider sends a generated pack only fills gaps. CustomNameplates and
 BetterHUD packs are discovered; Nexo's vanilla asset cache is ignored.
 
-| Server (sources) | pre.6 | pre.7 |
+| Server (sources) | build 6 | build 7 |
 | --- | --- | --- |
 | Survival (CraftEngine, ItemsAdder folder, CustomNameplates, BetterModel, ModelEngine, world datapack) | 837 / 841 | 1,905 / 1,932 |
 | SkyBlock (CraftEngine, ItemsAdder folder, CustomNameplates, BetterModel) | 29 / 52 | 29 / 52 (21 skin-rendered heads noted) |
@@ -129,14 +129,14 @@ grass floor with `/fillbiome` and captured both clients. Twilight logged
 | Bedrock without it (ocean fallback) | 79, 103, 62 |
 
 The mapping uses vanilla Bedrock biomes, so exact custom colours were not reproduced
-in this run. Since 1.0.0-pre.8 custom biomes get free Bedrock biome slots with their
+in this run. Since development build 8 custom biomes get free Bedrock biome slots with their
 exact colours; the captures were replaced by the
-[1.0.0-pre.8 biome captures](LAYERS_BIOMES_2026-10-04.md#custom-biomes).
+[development build 8 biome captures](LAYERS_BIOMES_2026-10-04.md#custom-biomes).
 
 ## Remaining differences
 
 - Layers moved back over an earlier image (a negative space after an image) were not
-  reproduced in 1.0.0-pre.7; 1.0.0-pre.8 draws them with one label per layer.
+  reproduced in development build 7; development build 8 draws them with one label per layer.
 - Bedrock draws text with its own font: some character widths differ, and a
   character missing from its default font switches the whole title to the unicode
   font.
@@ -150,7 +150,7 @@ exact colours; the captures were replaced by the
 
 ### Arayüz kampanyası, sağlayıcı kapsamı ve özel biyomlar - 4 Ekim 2026
 
-Twilight 1.0.0-pre.7; iki gerçek sunucunun çözülebilen her menüsüne, orada bulunan menü tekniklerini
+Twilight geliştirme derlemesi 7; iki gerçek sunucunun çözülebilen her menüsüne, orada bulunan menü tekniklerini
 yeniden üreten özgün görselli bir stil takımına, altı gerçek sunucunun tam derlemelerine ve canlı bir özel
 biyom sahnesine karşı denetlendi. Tüm denetimler yalıtılmış kopyalarda çalıştı; üretim sunucuları yalnızca
 okundu. Bu depodaki her ekran görüntüsü 4 Ekim'de sürüm derlemesiyle çekildi; eski görüntüler kaldırıldı.
@@ -201,9 +201,9 @@ derler; sunucudan hiçbir şey kopyalanmaz, bu yüzden tüm görüntüler yayım
 | Negatif yükseklik kaydırmaları | Jobs tarzı sekiz negatif yükseklikli bitmap, ardından başlık görseli | birebir |
 | Hex yazı | `&#FFAA00` ve eski renkler | birebir |
 | Kalın yazı | `&b&l` başlık | birebir |
-| Katmanlı | `-121` boşlukla başlık görselinin üzerine geri alınan afiş, ardından kalın yazı | 1.0.0-pre.7'de yeniden üretilmedi; 1.0.0-pre.8'den beri birebir (katman başına bir etiket) |
+| Katmanlı | `-121` boşlukla başlık görselinin üzerine geri alınan afiş, ardından kalın yazı | geliştirme derlemesi 7'de yeniden üretilmedi; geliştirme derlemesi 8'den beri birebir (katman başına bir etiket) |
 
-Bu çalıştırmanın görüntüleri, üst üste katmanları da kapsayan aynı takımın 1.0.0-pre.8 görüntüleriyle
+Bu çalıştırmanın görüntüleri, üst üste katmanları da kapsayan aynı takımın geliştirme derlemesi 8 görüntüleriyle
 değiştirildi; [üst üste görseller, ad etiketleri ve birebir biyomlar](LAYERS_BIOMES_2026-10-04.md)
 belgesine bakın. Java istemcisi İngilizce, Bedrock istemcisi Türkçe çalışıyor; "Inventory" ve "Envanter"
 farkı bundandır.
@@ -229,7 +229,7 @@ başka bir sağlayıcı üretilmiş bir paket gönderirken ayarları kendi paket
 yalnızca boşlukları doldurur. CustomNameplates ve BetterHUD paketleri keşfedilir; Nexo'nun vanilla varlık
 önbelleği yok sayılır.
 
-| Sunucu (kaynaklar) | pre.6 | pre.7 |
+| Sunucu (kaynaklar) | derleme 6 | derleme 7 |
 | --- | --- | --- |
 | Survival (CraftEngine, ItemsAdder klasörü, CustomNameplates, BetterModel, ModelEngine, dünya datapack'i) | 837 / 841 | 1.905 / 1.932 |
 | SkyBlock (CraftEngine, ItemsAdder klasörü, CustomNameplates, BetterModel) | 29 / 52 | 29 / 52 (21 kaplamayla çizilen kafa not edildi) |
@@ -268,13 +268,13 @@ istemciyi çekti. Twilight `blossom_vale=minecraft:cherry_grove` kaydını düş
 | Eşlemesiz Bedrock (okyanus yedeği) | 79, 103, 62 |
 
 Eşleme vanilla Bedrock biyomlarını kullandığından bu çalıştırmada birebir özel renkler yeniden üretilmedi.
-1.0.0-pre.8'den beri özel biyomlar birebir renkleriyle boş Bedrock biyom yuvaları alıyor; görüntüler
-[1.0.0-pre.8 biyom görüntüleriyle](LAYERS_BIOMES_2026-10-04.md#custom-biomes) değiştirildi.
+Geliştirme derlemesi 8'den beri özel biyomlar birebir renkleriyle boş Bedrock biyom yuvaları alıyor; görüntüler
+[geliştirme derlemesi 8 biyom görüntüleriyle](LAYERS_BIOMES_2026-10-04.md#custom-biomes) değiştirildi.
 
 #### Kalan farklar
 
-- Önceki bir görselin üzerine geri alınan katmanlar (bir görselden sonra negatif boşluk) 1.0.0-pre.7'de
-  yeniden üretilmedi; 1.0.0-pre.8 bunları katman başına bir etiketle çizer.
+- Önceki bir görselin üzerine geri alınan katmanlar (bir görselden sonra negatif boşluk) geliştirme derlemesi 7'de
+  yeniden üretilmedi; geliştirme derlemesi 8 bunları katman başına bir etiketle çizer.
 - Bedrock yazıyı kendi fontuyla çizer: bazı karakter genişlikleri farklıdır ve varsayılan fontunda olmayan
   bir karakter tüm başlığı unicode fonta geçirir.
 - Bedrock kapatma düğmesini ve envanter etiketini istemcinin dilinde ekler.

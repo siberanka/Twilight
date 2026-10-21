@@ -2,7 +2,7 @@
 
 > Türkçe: [aşağıda](#türkçe)
 
-Two reports from a network with Geyser on the proxy, both fixed in 1.0.0-pre.19:
+Two reports from a network with Geyser on the proxy, both fixed in development build 19:
 
 1. On Survival, Bedrock players were dropped before the resource packs finished loading. It took very
    long, and only on that server.
@@ -46,7 +46,7 @@ removes more than the previous one:
 | Without the display entity | 36 MiB | 89 s | 45 s |
 | Without the display entity, geometries and animations | 31 MiB | 83 s | 13 s |
 | The same with compact JSON | 27 MiB | 72 s | 10 s |
-| **Built by 1.0.0-pre.19** from a local copy of Survival's sources | 27 MiB, 7,559 files, 41 MiB unpacked | 55 s | under 10 s |
+| **Built by development build 19** from a local copy of Survival's sources | 27 MiB, 7,559 files, 41 MiB unpacked | 55 s | under 10 s |
 
 The glyph pages were not the cause. Survival has seven pages of 8192x8192 pixels, each 256 MiB in the
 client's memory. That matters on phones with little memory, but capping them barely changed the loading
@@ -95,7 +95,7 @@ Everything happens on its own:
   backends without Geyser, and with compact JSON. twilight-proxy picks it up as before. The item mappings
   do not change, so Geyser does not need a restart.
 - Existing configuration files keep working. Missing keys use the defaults above.
-- Stale Twilight files in Geyser are still moved out (1.0.0-pre.18).
+- Stale Twilight files in Geyser are still moved out (development build 18).
 
 Recommended:
 
@@ -120,7 +120,7 @@ The loading protection and the proxy text runtime were checked live, as describe
 
 ### Paket yükleme ve proxy glifleri - 10 Ekim 2026
 
-Geyser'ın proxy'de çalıştığı bir ağdan gelen ve 1.0.0-pre.19'da düzeltilen iki bildirim:
+Geyser'ın proxy'de çalıştığı bir ağdan gelen ve geliştirme derlemesi 19'da düzeltilen iki bildirim:
 
 1. Survival'da Bedrock oyuncuları, kaynak paketleri yüklenmeden atılıyordu. Yükleme çok uzun sürüyordu ve
    yalnızca o sunucuda oluyordu.
@@ -164,7 +164,7 @@ Her satır, bir öncekinden daha fazlasını çıkarır:
 | Görüntü varlığı olmadan | 36 MiB | 89 sn | 45 sn |
 | Görüntü varlığı, geometrileri ve animasyonları olmadan | 31 MiB | 83 sn | 13 sn |
 | Aynısı, sıkışık JSON ile | 27 MiB | 72 sn | 10 sn |
-| Survival kaynaklarının yerel bir kopyasından **1.0.0-pre.19 ile derlenmiş** | 27 MiB, 7.559 dosya, açılmış 41 MiB | 55 sn | 10 sn'den az |
+| Survival kaynaklarının yerel bir kopyasından **geliştirme derlemesi 19 ile derlenmiş** | 27 MiB, 7.559 dosya, açılmış 41 MiB | 55 sn | 10 sn'den az |
 
 Sorunun nedeni glif sayfaları değildi. Survival'da 8192x8192 piksellik yedi sayfa var ve her biri istemci
 belleğinde 256 MiB tutuyor. Bu, belleği az olan telefonlarda önemlidir; ama sayfaları sınırlamak yükleme
@@ -215,7 +215,7 @@ Her şey kendiliğinden olur:
   görüntü modelleri olmadan ve sıkışık JSON ile. twilight-proxy onu önceden olduğu gibi alır. Eşya eşlemeleri
   değişmez, bu yüzden Geyser'ın yeniden başlatılması gerekmez.
 - Mevcut yapılandırma dosyaları çalışmaya devam eder. Eksik anahtarlar yukarıdaki varsayılanları kullanır.
-- Geyser'daki eski Twilight dosyaları yine taşınır (1.0.0-pre.18).
+- Geyser'daki eski Twilight dosyaları yine taşınır (geliştirme derlemesi 18).
 
 Öneriler:
 

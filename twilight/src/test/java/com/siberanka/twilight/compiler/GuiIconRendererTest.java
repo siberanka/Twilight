@@ -75,8 +75,8 @@ class GuiIconRendererTest {
             var meshes = java.util.stream.StreamSupport.stream(geometry.getAsJsonArray("bones").spliterator(), false)
                     .map(com.google.gson.JsonElement::getAsJsonObject).filter(b -> b.has("cubes")).toList();
             assertEquals(2, meshes.size());
-            assertEquals("item_0_s", meshes.get(0).get("parent").getAsString());
-            assertEquals("item_1_s", meshes.get(1).get("parent").getAsString());
+            assertEquals("twp0_0s", meshes.get(0).get("parent").getAsString());
+            assertEquals("twp0_1s", meshes.get(1).get("parent").getAsString());
             assertFalse(meshes.get(1).getAsJsonArray("cubes").isEmpty(), "Generated children must not disappear beside mesh children");
             var animation = zip.stream().filter(e -> e.getName().endsWith(".animation.json")).findFirst().orElseThrow();
             var definitions = JsonParser.parseString(new String(zip.getInputStream(animation).readAllBytes(), java.nio.charset.StandardCharsets.UTF_8))

@@ -1,4 +1,4 @@
-/* Copyright (c) 2026 siberanka. Licensed under the GNU LGPL v3.0 or later. */
+/* Copyright (c) 2026 siberanka. Twilight License (PolyForm Noncommercial 1.0.0 + terms), see LICENSE. */
 package com.siberanka.twilight.integration.world;
 
 import com.google.gson.JsonParser;
@@ -99,7 +99,7 @@ public final class GeyserBiomeBridge implements AutoCloseable {
         }
         var translators = Registries.JAVA_PACKET_TRANSLATORS.get();
         PacketTranslator<? extends Packet> existing = translators.get(ClientboundChunksBiomesPacket.class);
-        if (existing != updates) {
+        if (!com.siberanka.twilight.geyser.TranslatorChain.installed(existing, updates)) {
             originalUpdates = existing;
             translators.put(ClientboundChunksBiomesPacket.class, updates);
         }
@@ -108,7 +108,7 @@ public final class GeyserBiomeBridge implements AutoCloseable {
             logger.warning("Geyser has no registry-data translator; custom biomes keep Geyser's fallback.");
             return;
         }
-        if (current != wrapper) {
+        if (!com.siberanka.twilight.geyser.TranslatorChain.installed(current, wrapper)) {
             original = current;
             translators.put(ClientboundRegistryDataPacket.class, wrapper);
         }
@@ -253,7 +253,11 @@ public final class GeyserBiomeBridge implements AutoCloseable {
     }
 
     /** Biome-only chunk updates (fillbiome, seasons plugins): the player gets the whole chunks again. */
-    private final class BiomeUpdates extends PacketTranslator<ClientboundChunksBiomesPacket> {
+    private final class BiomeUpdates extends PacketTranslator<ClientboundChunksBiomesPacket> implements com.siberanka.twilight.geyser.TranslatorChain.Link {
+        @Override public Object next() {
+            return originalUpdates;
+        }
+
         @SuppressWarnings("unchecked")
         @Override public void translate(GeyserSession session, ClientboundChunksBiomesPacket packet) {
             if (originalUpdates != null) ((PacketTranslator<ClientboundChunksBiomesPacket>) originalUpdates).translate(session, packet);
@@ -274,7 +278,11 @@ public final class GeyserBiomeBridge implements AutoCloseable {
         }
     }
 
-    private final class Wrapper extends PacketTranslator<ClientboundRegistryDataPacket> {
+    private final class Wrapper extends PacketTranslator<ClientboundRegistryDataPacket> implements com.siberanka.twilight.geyser.TranslatorChain.Link {
+        @Override public Object next() {
+            return original;
+        }
+
         @SuppressWarnings("unchecked")
         @Override public void translate(GeyserSession session, ClientboundRegistryDataPacket packet) {
             BiomeMatcher current = matcher;

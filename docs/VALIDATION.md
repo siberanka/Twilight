@@ -54,7 +54,7 @@ Visual acceptance begins only after structural validation passes. Use a disposab
 
 No private pack, third-party plugin binary, world, credential, or raw server log may enter the public repository or release artifact. Publish screenshots only with explicit operator authorization and after reviewing every image for private data. The [2026-09-27 review](REAL_CONTENT_REVIEW.md) contains authorized test captures, not redistributable source packs.
 
-The unreleased 1.0.0-pre.3 local build passed 65 tests across 16 suites. Regressions cover independent pose bases, left-hand mirroring, Euler singularities, rotated cuboid corners, default/rotated UVs, first animation-frame selection, tall static textures, rejected GUI/spacing providers, pack overlays, display interpolation and visibility, and restart state across repeated deployment, configuration reload, and rollback. Passing these checks does not imply full client visual parity.
+Local development build 3 passed 65 tests across 16 suites. Regressions cover independent pose bases, left-hand mirroring, Euler singularities, rotated cuboid corners, default/rotated UVs, first animation-frame selection, tall static textures, rejected GUI/spacing providers, pack overlays, display interpolation and visibility, and restart state across repeated deployment, configuration reload, and rollback. Passing these checks does not imply full client visual parity.
 
 ---
 
@@ -128,7 +128,7 @@ herkese açık depoya veya sürüm dosyasına giremez. Ekran görüntülerini ya
 ve her görüntüyü özel veriler için inceledikten sonra yayımlayın. [2026-09-27 incelemesi](REAL_CONTENT_REVIEW.md)
 yeniden dağıtılabilir kaynak paketleri değil, izin verilmiş test görüntülerini içerir.
 
-Yayımlanmamış 1.0.0-pre.3 yerel derlemesi 16 paketteki 65 testi geçti. Regresyonlar bağımsız
+Yerel geliştirme derlemesi 3, 16 paketteki 65 testi geçti. Regresyonlar bağımsız
 poz tabanlarını, sol el aynalamasını, Euler tekilliklerini, döndürülmüş küboid köşelerini,
 varsayılan/döndürülmüş UV'leri, ilk animasyon karesi seçimini, uzun durağan dokuları, reddedilen
 arayüz/boşluk sağlayıcılarını, paket katmanlarını, görüntü ara değerlemesini ve görünürlüğünü ve

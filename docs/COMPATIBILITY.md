@@ -24,9 +24,10 @@ Java 21 is the minimum bytecode level. Local builds use Java 25.
 | Platform | Status |
 |---|---|
 | Velocity 4.2.0 with Geyser 2.11.3 | Tested live: `auto`, file and switching packs, modern forwarding secret |
+| Paper 26.3 with Geyser-Spigot 2.12.0, Floodgate and CraftEngine 26.9.2 | Tested live: items, tools, bows, crossbows, rods, spears, custom blocks and ores, block items, furniture, dropped items, first and third person (Geyser 2.12.0 builds before b1262 did not show custom items) |
 | BungeeCord 26.1 with Geyser 2.11.3 | Tested live: `auto`, file and switching packs, explicit secret |
-| Waterfall 1.21 (build 615) with Floodgate loaded first | Tested live: Geyser attach, item mappings, stale-file retirement, and the start of the proxy's text runtime (1.0.0-pre.17 to beta.1) |
-| FlameCord | Reported from a production network (Geyser attach and item mappings, 1.0.0-pre.16 and pre.17); not tested locally |
+| Waterfall 1.21 (build 615) with Floodgate loaded first | Tested live: Geyser attach, item mappings, stale-file retirement, and the start of the proxy's text runtime |
+| FlameCord | Reported from a production network (Geyser attach and item mappings); not tested locally |
 | Velocity 3.x, older BungeeCord | Uses only long-standing API (`order` subscriptions, `ServerConnectEvent` with a fallback for proxies without `Reason`); not tested live |
 | Download links | Implemented and unit-checked; not tested against a live host |
 | Login plugins (AuthMe with AuthMeVelocity/AuthMeBungee, LibreLogin, nLogin, JPremium) | Tested on Velocity with a stand-in that forces a login server and refuses other servers before the login: the reconnected player logs in once and reaches its server; the real plugins were not installed |
@@ -36,11 +37,12 @@ Java 21 is the minimum bytecode level. Local builds use Java 25.
 | Packs up to 152 MiB and 6,000 entries | Tested live through Geyser (172 s) and through the pack host (123 s) |
 
 Per-server packs need a reconnect when the pack changes, because Bedrock loads packs only when it
-connects. Since 1.0.0-pre.19, twilight-proxy runs the text layout (custom glyphs, moved characters,
+connects. twilight-proxy runs the text layout (custom glyphs, moved characters,
 named fonts, spacing), the packs' translations and the loading protection in the proxy's Geyser, with
-each player's pack ([field report](FIELD_REPORT_2026-10-10.md)). Custom biome colours, the rule that hides
-the name of ridden entities, and item-display models (furniture, model bones) still need Geyser on the
-same server as Twilight. See the [proxy test](PROXY_2026-10-05.md).
+each player's pack ([field report](FIELD_REPORT_2026-10-10.md)). It also shows item
+displays (furniture, ModelEngine, BetterModel and MythicMobs mobs and NPCs, also when plugins send them
+only as packets) and applies the rule that hides the name of ridden entities. Custom biome colours still
+need Geyser on the same server as Twilight. See the [proxy test](PROXY_2026-10-05.md).
 
 ## Pack hosting
 
@@ -66,8 +68,8 @@ and Geyser item mappings) for a proxy Geyser or another plugin that sends the pa
 | ItemsAdder contents/data/cache/generated packs/API | Implemented | The generated output pack (what Java players download) outranks authored roots and data/cache, which fill gaps. A leftover folder without the plugin, or a pack the settings do not send while another provider sends one, only fills gaps. First-load, load-data, and pack-compressed events are observed. |
 | CraftEngine resources/cache/generated packs/API | Implemented | `generated/resource_pack.zip` (which also merges CustomNameplates and BetterModel output) outranks the working folders when CraftEngine sends it. `loadedItems`, reload, and pack-generation events are supported; richer component mapping remains in progress. |
 | CustomNameplates and BetterHUD packs | Implemented | Discovered as resource packs; their font images take part in the text layout. Layered boss bar backgrounds and shifted text match Java; ridden players hide their own Bedrock name and the name tag box is hidden (`ui.nametag-background: auto`). Hex gradients use Bedrock's 28 text colours. |
-| Nexo/Oraxen packs/API | Implemented | Standard item assets implemented; Nexo's vanilla asset cache is ignored and its delivery settings are read. Oraxen array registries and item-load/pack events are supported, while version-specific API failures fall back to files and are logged. Nexo was verified from files; no test server runs the plugin. |
-| BetterModel/ModelEngine generated packs | Partial | Static geometry and a development live item-display bridge are implemented. Sampled BetterModel/ModelEngine poses and stationary MythicMobs models verified; full animations remain in progress. |
+| Nexo/Oraxen packs/API | Implemented | Standard item assets implemented; Nexo's vanilla asset cache is ignored and its delivery settings are read. Oraxen array registries and item-load/pack events are supported, while version-specific API failures fall back to files and are logged. Nexo was verified from files; no test server runs the plugin. Oraxen 1.220 is verified live on Leaf 26.3 and 1.21.4: items, display-entity furniture, custom blocks and worn equipment. |
+| BetterModel/ModelEngine generated packs | Partial | Models follow every Java item display (pose, interpolation, display context) on a backend's Geyser and on the proxy's Geyser, including models sent only as packets. Bones get display models without Bedrock items. Verified live with BetterModel and ModelEngine MythicMobs mobs through Velocity; phone performance with many animated models is not measured. |
 | Standalone `.bbmodel` sources | Discovered | Source discovery does not imply independent rig/animation conversion; generated Java item assets are currently required. |
 | RealisticSeasons pack layers and seasons | Implemented | Pack is indexed as a seasonal layer. Its seasonal biomes are read from the server registry; the current season's looks get exact Bedrock biome slots first, a season change rebuilds the pack, and biome updates reach Bedrock players without a rejoin. RealisticSeasons' data and packets are not changed. |
 | World datapacks | Implemented | `server.properties` `level-name`, Bukkit worlds, dimensions, ZIP/folder datapacks. Custom biomes keep their exact colours and climate in 25 redefined Bedrock biomes; further looks use the closest vanilla biome or slot (`world.bedrock-biome-matching`). |
@@ -102,7 +104,7 @@ Open release gates:
 - Exact GUI rendering for complex 3D models rather than source-texture fallback icons.
 - Animated `.mcmeta` to Bedrock flipbook conversion (only the first authored frame currently exports).
 - Full visual hand-pose parity, especially first-person framing and complex provider models; see the [real-content review](REAL_CONTENT_REVIEW.md).
-- Live acceptance of every provider/version state matrix, including fishing lines, 3D bow/crossbow state transitions, shields, tridents/spears, armor, and elytra.
+- Live acceptance of every provider/version state matrix, including fishing lines, 3D bow/crossbow state transitions, shields, tridents/spears and elytra (worn armour is verified with ItemsAdder, CraftEngine and Oraxen on 26.3 and 1.21.4).
 - Component-rich runtime definitions and creative/recipe presentation for every provider version.
 
 ## Other custom content
@@ -117,14 +119,16 @@ Apart from pack links configured in twilight-proxy, the only other outgoing conn
 
 Layered Java `sounds.json` files are merged with `replace` semantics and converted to `sounds/sound_definitions.json`. File and event references, OGG assets, weight, volume, pitch, streaming, and compatible attenuation distances are preserved. Unqualified Java file references correctly resolve through `minecraft`; emitted paths retain a namespace segment to avoid Bedrock file collisions. Explicit vanilla sound dependencies are fetched through the version's SHA-1-verified Mojang asset index. With `vanilla-override` disabled, definitions identical to vanilla are skipped and changed vanilla events reject strict publication.
 
-Desktop chest screens use a generated Java container layout by default (`ui.java-container-layout`). Titles are unwrapped and unclipped, title and inventory labels use Java's positions and drawing order, and chest, player-inventory and hotbar rows keep Java's spacing for 1 to 6 chest rows. Partial UI definitions are merged into Bedrock's vanilla UI. Since 1.0.1-pre.2 the pocket UI profile (phones, tablets) uses the same layout (`ui.pocket-container-layout: java`); Bedrock's own pocket screens put the title in a header bar and menu art behind the slots. Measured with the pocket profile on Windows: two real Survival menus land exactly on Java's position, and chat, action bar, boss bars, sidebar, titles and nameplates match as on desktop. Other containers keep the vanilla Bedrock layout. See the [container layout review](CONTAINER_LAYOUT_2026-10-03.md).
+Desktop chest screens use a generated Java container layout by default (`ui.java-container-layout`). Titles are unwrapped and unclipped, title and inventory labels use Java's positions and drawing order, and chest, player-inventory and hotbar rows keep Java's spacing for 1 to 6 chest rows. Partial UI definitions are merged into Bedrock's vanilla UI. The pocket UI profile (phones, tablets) uses the same layout (`ui.pocket-container-layout: java`); Bedrock's own pocket screens put the title in a header bar and menu art behind the slots. Measured with the pocket profile on Windows: two real Survival menus land exactly on Java's position, and chat, action bar, boss bars, sidebar, titles and nameplates match as on desktop. Other containers keep the vanilla Bedrock layout. See the [container layout review](CONTAINER_LAYOUT_2026-10-03.md).
 
 Text is laid out for Bedrock players with Java font metrics by default (`ui.java-text-layout`). Font definitions from all packs are combined like Java; space providers, negative-height bitmaps, off-screen spacing bitmaps and empty TrueType glyphs become exact advances through invisible spacer glyphs; glyph bearings are corrected; characters that Java remaps in `minecraft:default` or named fonts receive private-use aliases instead of replacing Bedrock's glyphs. Chest titles use the Java container origin (see the [text layout review](TEXT_LAYOUT_2026-10-03.md)). With `ui.java-text-surfaces` (default), chat, the action bar, titles, boss bars, scoreboards, entity names, text displays and other container titles are laid out too: left-aligned lines keep Java's relative positions, centred lines are padded to Java's integer centring. Measured offsets were zero on every tested surface; see the [text surface review](TEXT_SURFACES_2026-10-04.md). Item names and lore are not rewritten, because Geyser hashes item data and returns complete items in creative mode. Container titles without a colour use pre-darkened glyph copies, because Java draws them at `0x404040` and Bedrock never tints resource-pack glyphs (`ui.java-glyph-tint`). Resource-pack translations are merged like Java and used for Java text and Bedrock's inventory label (`ui.java-translations`). Text and images moved back over earlier ones are drawn with one label per layer (up to four) in chest titles, the action bar and boss bars (`ui.java-text-layers`); see [stacked images, nameplates and exact biomes](LAYERS_BIOMES_2026-10-04.md). A glyph directly after text differs by a unit. See the [UI campaign](UI_CAMPAIGN_2026-10-04.md): 104 real menus, every window and 97 title bands exact. Boss bars whose sprites a pack redraws (`boss_bar/<colour>_background`, `_progress`, `notched_*`) are drawn with those sprites in Java's order; long boss bar names that are not layered are shown whole, and CustomNameplates' default boss bar fits Bedrock's 256-character name limit (see [custom boss bars, CustomNameplates' boss bar and an animated model](BOSSBARS_MODELS_2026-10-05.md)). Several boss bars stack about one unit further apart per bar on Bedrock.
+
+Offset tags that a content plugin left unreplaced in laid-out text (ItemsAdder's `:offset_N:` and `%img_offset_N%`, Nexo's and Oraxen's `%nexo_shift_N%` / `%oraxen_shift_N%`, the `<shift:N>` of CraftEngine, Nexo and Oraxen) move the layout by N units like the offset characters they stand for. With the layout, glyphs that need cells of 256 pixels or more share pages of their own, so a large menu image no longer makes the page of the small glyphs around it 8192 square (a large survival server's font textures fell from about 1.9 GiB to about 0.7 GiB).
 
 Compiler diagnostics reject supplementary-plane code points without the layout, out-of-cell baseline controls and corrupt source PNG data. Protected packs whose PNG chunk or zlib checksums are broken are decoded like Java. Content Java rejects or shows broken (malformed font files, unreadable TrueType fonts, sound files, textures or models present in no pack, screen-sized overlay glyphs, vanilla sound events changed without `vanilla-override`) is converted the way Java shows it and reported as a notice in `build-report.json`; it does not stop a strict build. Complete builds of seven production servers passed strict publication with the default configuration. Runtime font limitations are separate: Bedrock does not tint bitmap glyphs with the text colour (titles without a colour use darkened copies; other explicit colours keep the image undarkened), and high-resolution or fractionally scaled glyph textures are reduced to GUI units. Item names and lore keep their raw characters. The latest paired tests cover six metric probes, 36 real glyphs and six additional UI/HUD images. Large images rendering in chat do not establish interactive menu or dynamic HUD parity. Atlas pages can reach 8192 square (256 MiB raw RGBA per page); constrained-device acceptance remains unverified.
 
 Custom blocks on note blocks, mushroom blocks and tripwire (ItemsAdder's `REAL_NOTE` blocks, CraftEngine's
-blocks) are converted since 1.0.1-pre.3: each Java state with a custom model becomes a Bedrock block (full cubes
+blocks) are converted: each Java state with a custom model becomes a Bedrock block (full cubes
 with a texture per face and Java's rotation, other shapes with a block geometry), registered with Geyser at
 start, and the items drawn like a block show it in 3D in the inventory and when dropped. Tested live on Paper
 26.2 with Geyser-Spigot and Survival's ItemsAdder and CraftEngine content: ores, rotated CraftEngine drawers,
@@ -179,9 +183,10 @@ En düşük bytecode düzeyi Java 21'dir. Yerel derlemeler Java 25 kullanır.
 | Platform | Durum |
 |---|---|
 | Geyser 2.11.3 ile Velocity 4.2.0 | Canlı test edildi: `auto`, dosya ve paket geçişi, modern yönlendirme gizli anahtarı |
+| Geyser-Spigot 2.12.0, Floodgate ve CraftEngine 26.9.2 ile Paper 26.3 | Canlı test edildi: eşyalar, aletler, yaylar, arbaletler, oltalar, mızraklar, özel bloklar ve madenler, blok eşyaları, mobilyalar, düşen eşyalar, birinci ve üçüncü şahıs (b1262'den önceki Geyser 2.12.0 derlemeleri özel eşyaları göstermiyordu) |
 | Geyser 2.11.3 ile BungeeCord 26.1 | Canlı test edildi: `auto`, dosya ve paket geçişi, açık gizli anahtar |
-| Önce Floodgate'i yükleyen Waterfall 1.21 (derleme 615) | Canlı test edildi: Geyser'a bağlanma, eşya eşlemeleri, eski dosyaların taşınması ve proxy'deki yazı çalışma zamanının başlaması (1.0.0-pre.17'den beta.1'e) |
-| FlameCord | Bir üretim ağından bildirildi (Geyser'a bağlanma ve eşya eşlemeleri, 1.0.0-pre.16 ve pre.17); yerelde test edilmedi |
+| Önce Floodgate'i yükleyen Waterfall 1.21 (derleme 615) | Canlı test edildi: Geyser'a bağlanma, eşya eşlemeleri, eski dosyaların taşınması ve proxy'deki yazı çalışma zamanının başlaması |
+| FlameCord | Bir üretim ağından bildirildi (Geyser'a bağlanma ve eşya eşlemeleri); yerelde test edilmedi |
 | Velocity 3.x, eski BungeeCord | Yalnızca uzun süredir var olan API'yi kullanır (`order` abonelikleri, `Reason` olmayan proxy'ler için yedekli `ServerConnectEvent`); canlı test edilmedi |
 | İndirme bağlantıları | Uygulandı ve birim testlerle denetlendi; canlı bir sunucuya karşı test edilmedi |
 | Giriş eklentileri (AuthMeVelocity/AuthMeBungee ile AuthMe, LibreLogin, nLogin, JPremium) | Velocity'de bir giriş sunucusunu zorlayan ve girişten önce diğer sunucuları reddeden bir yerine geçen eklentiyle test edildi: yeniden bağlanan oyuncu bir kez giriş yapar ve sunucusuna ulaşır; gerçek eklentiler kurulmadı |
@@ -191,11 +196,12 @@ En düşük bytecode düzeyi Java 21'dir. Yerel derlemeler Java 25 kullanır.
 | 152 MiB'e ve 6.000 girdiye kadar paketler | Geyser üzerinden (172 sn) ve paket sunucusu üzerinden (123 sn) canlı test edildi |
 
 Sunucu başına paketler, paket değiştiğinde yeniden bağlanma gerektirir, çünkü Bedrock paketleri yalnızca
-bağlanırken yükler. 1.0.0-pre.19'dan beri twilight-proxy yazı yerleşimini (özel glifler, taşınan karakterler,
+bağlanırken yükler. twilight-proxy yazı yerleşimini (özel glifler, taşınan karakterler,
 adlandırılmış fontlar, boşluklar), paketlerin çevirilerini ve yükleme korumasını proxy'deki Geyser'da, her
-oyuncunun paketiyle çalıştırır ([saha raporu](FIELD_REPORT_2026-10-10.md)). Özel biyom renkleri, binilen
-varlıkların adını gizleyen kural ve eşya görüntüsü modelleri (mobilyalar, model kemikleri) hâlâ Geyser'ın
-Twilight ile aynı sunucuda olmasını gerektirir. [Proxy testine](PROXY_2026-10-05.md) bakın.
+oyuncunun paketiyle çalıştırır ([saha raporu](FIELD_REPORT_2026-10-10.md)). Eşya
+görüntülerini de gösterir (mobilyalar, ModelEngine, BetterModel ve MythicMobs mobları ve NPC'leri; eklentiler
+onları yalnızca paket olarak gönderse de) ve binilen varlıkların adını gizleyen kuralı uygular. Özel biyom
+renkleri hâlâ Geyser'ın Twilight ile aynı sunucuda olmasını gerektirir. [Proxy testine](PROXY_2026-10-05.md) bakın.
 
 #### Paket sunucusu
 
@@ -221,8 +227,8 @@ Geyser eşya eşlemeleri) dışa aktarılır.
 | ItemsAdder contents/data/cache/üretilmiş paketler/API | Uygulandı | Üretilen çıktı paketi (Java oyuncularının indirdiği) yazarın kök dizinlerinin ve data/cache'in önüne geçer; onlar boşlukları doldurur. Eklentisi olmayan kalıntı bir klasör veya başka bir sağlayıcı paket gönderirken ayarların göndermediği bir paket yalnızca boşlukları doldurur. İlk yükleme, veri yükleme ve paket sıkıştırma olayları izlenir. |
 | CraftEngine resources/cache/üretilmiş paketler/API | Uygulandı | CraftEngine gönderdiğinde `generated/resource_pack.zip` (CustomNameplates ve BetterModel çıktısını da birleştirir) çalışma klasörlerinin önüne geçer. `loadedItems`, yeniden yükleme ve paket üretim olayları desteklenir; daha zengin bileşen eşlemesi sürüyor. |
 | CustomNameplates ve BetterHUD paketleri | Uygulandı | Kaynak paketi olarak keşfedilir; font görselleri yazı yerleşimine katılır. Katmanlı boss çubuğu arka planları ve kaydırılmış yazı Java ile eşleşir; binilen oyuncular kendi Bedrock adlarını gizler ve ad etiketi kutusu gizlenir (`ui.nametag-background: auto`). Hex gradyanlar Bedrock'un 28 yazı rengini kullanır. |
-| Nexo/Oraxen paketleri/API | Uygulandı | Standart eşya varlıkları uygulandı; Nexo'nun vanilla varlık önbelleği yok sayılır ve teslim ayarları okunur. Oraxen dizi kayıtları ve eşya yükleme/paket olayları desteklenir; sürüme özgü API hataları dosyalara geri düşer ve günlüğe yazılır. Nexo dosyalardan doğrulandı; hiçbir test sunucusu eklentiyi çalıştırmıyor. |
-| BetterModel/ModelEngine üretilmiş paketleri | Kısmi | Durağan geometri ve geliştirme aşamasında canlı eşya görüntüsü köprüsü uygulandı. Örneklenen BetterModel/ModelEngine pozları ve sabit MythicMobs modelleri doğrulandı; tam animasyonlar sürüyor. |
+| Nexo/Oraxen paketleri/API | Uygulandı | Standart eşya varlıkları uygulandı; Nexo'nun vanilla varlık önbelleği yok sayılır ve teslim ayarları okunur. Oraxen dizi kayıtları ve eşya yükleme/paket olayları desteklenir; sürüme özgü API hataları dosyalara geri düşer ve günlüğe yazılır. Nexo dosyalardan doğrulandı; hiçbir test sunucusu eklentiyi çalıştırmıyor. Oraxen 1.220, Leaf 26.3 ve 1.21.4 üzerinde canlı doğrulandı: eşyalar, görüntü varlığı mobilyalar, özel bloklar ve giyilen ekipman. |
+| BetterModel/ModelEngine üretilmiş paketleri | Kısmi | Modeller her Java eşya görüntüsünü (poz, ara geçiş, görüntü bağlamı) arka ucun Geyser'ında ve proxy'nin Geyser'ında izler; yalnızca paket olarak gönderilen modeller de dahil. Kemikler Bedrock eşyası olmadan görüntü modeli alır. BetterModel ve ModelEngine MythicMobs moblarıyla Velocity üzerinden canlı doğrulandı; çok sayıda animasyonlu modelle telefon başarımı ölçülmedi. |
 | Bağımsız `.bbmodel` kaynakları | Keşfedildi | Kaynak keşfi bağımsız iskelet/animasyon dönüşümü anlamına gelmez; şu an üretilmiş Java eşya varlıkları gereklidir. |
 | RealisticSeasons paket katmanları ve mevsimler | Uygulandı | Paket mevsimsel katman olarak dizinlenir. Mevsimsel biyomları sunucu kayıt defterinden okunur; geçerli mevsimin görünümleri önce birebir Bedrock biyom yuvaları alır, mevsim değişikliği paketi yeniden derler ve biyom güncellemeleri Bedrock oyuncularına yeniden katılmadan ulaşır. RealisticSeasons'ın verileri ve paketleri değiştirilmez. |
 | Dünya datapack'leri | Uygulandı | `server.properties` `level-name`, Bukkit dünyaları, boyutlar, ZIP/klasör datapack'leri. Özel biyomlar birebir renklerini ve iklimlerini yeniden tanımlanmış 25 Bedrock biyomunda korur; fazlası en yakın vanilla biyomu veya yuvayı kullanır (`world.bedrock-biome-matching`). |
@@ -264,8 +270,9 @@ Açık sürüm kapıları:
   dışa aktarılır).
 - Özellikle birinci şahıs çerçeveleme ve karmaşık sağlayıcı modellerinde tam görsel el pozu eşdeğerliği;
   [gerçek içerik incelemesine](REAL_CONTENT_REVIEW.md) bakın.
-- Olta ipleri, 3B yay/arbalet durum geçişleri, kalkanlar, üç dişli mızraklar/mızraklar, zırh ve elytra
-  dahil her sağlayıcı/sürüm durum matrisinin canlı kabulü.
+- Olta ipleri, 3B yay/arbalet durum geçişleri, kalkanlar, üç dişli mızraklar/mızraklar ve elytra dahil her
+  sağlayıcı/sürüm durum matrisinin canlı kabulü (giyilen zırhlar ItemsAdder, CraftEngine ve Oraxen ile 26.3 ve
+  1.21.4 üzerinde doğrulandı).
 - Her sağlayıcı sürümü için bileşen zengini çalışma zamanı tanımları ve yaratıcı/tarif sunumu.
 
 #### Diğer özel içerik
@@ -309,7 +316,7 @@ Masaüstü sandık ekranları varsayılan olarak üretilmiş bir Java konteyner 
 (`ui.java-container-layout`). Başlıklar kaydırılmaz ve kırpılmaz, başlık ve envanter etiketleri Java'nın
 konumlarını ve çizim sırasını kullanır, sandık, oyuncu envanteri ve kısayol çubuğu satırları 1 ile 6 sandık
 satırı için Java'nın aralığını korur. Kısmi arayüz tanımları Bedrock'un vanilla arayüzüyle birleştirilir.
-1.0.1-pre.2'den beri pocket arayüz profili (telefonlar, tabletler) aynı yerleşimi kullanır
+Pocket arayüz profili (telefonlar, tabletler) aynı yerleşimi kullanır
 (`ui.pocket-container-layout: java`); Bedrock'un kendi pocket ekranları başlığı bir başlık çubuğuna, menü
 görsellerini yuvaların arkasına koyar. Windows'ta pocket profiliyle ölçüldü: iki gerçek Survival menüsü tam Java'nın
 konumuna oturur; sohbet, aksiyon çubuğu, boss çubukları, yan panel, başlıklar ve isim plakaları masaüstündeki gibi
@@ -341,6 +348,14 @@ Bedrock'un 256 karakterlik ad sınırına sığar ([özel boss çubukları, Cust
 bir model](BOSSBARS_MODELS_2026-10-05.md) belgesine bakın). Birden çok boss çubuğu Bedrock'ta çubuk başına yaklaşık
 bir birim daha aralıklı dizilir.
 
+Bir içerik eklentisinin yerleştirilen yazıda değiştirmeden bıraktığı kaydırma etiketleri (ItemsAdder'ın
+`:offset_N:` ve `%img_offset_N%`, Nexo'nun ve Oraxen'in `%nexo_shift_N%` / `%oraxen_shift_N%` etiketleri,
+CraftEngine, Nexo ve Oraxen'in `<shift:N>` etiketi) yerleşimi, temsil ettikleri kaydırma karakterleri gibi N
+birim kaydırır. Yerleşimle 256 piksel veya daha büyük hücre gerektiren glifler kendi
+sayfalarını paylaşır; böylece büyük bir menü görseli çevresindeki küçük gliflerin sayfasını artık 8192 kare
+yapmaz (büyük bir survival sunucusunun font dokuları yaklaşık 1,9 GiB'tan yaklaşık
+0,7 GiB'a indi).
+
 Derleyici tanıları yerleşim olmadan tamamlayıcı düzlem kod noktalarını, hücre dışı taban çizgisi
 denetimlerini ve bozuk kaynak PNG verisini reddeder. PNG parça veya zlib sağlama toplamları bozuk korumalı
 paketler Java gibi çözülür. Java'nın reddettiği veya bozuk gösterdiği içerik (bozuk font dosyaları,
@@ -357,7 +372,7 @@ kanıtlamaz. Atlas sayfaları 8192 kareye (sayfa başına 256 MiB ham RGBA) ula�
 doğrulanmadı.
 
 Nota bloğu, mantar bloğu ve tuzak teli üzerindeki özel bloklar (ItemsAdder'ın `REAL_NOTE` blokları, CraftEngine'in
-blokları) 1.0.1-pre.3'ten beri dönüştürülür: özel modeli olan her Java durumu bir Bedrock bloğu olur (yüz başına
+blokları) dönüştürülür: özel modeli olan her Java durumu bir Bedrock bloğu olur (yüz başına
 doku ve Java döndürmesiyle tam küpler, diğer şekiller blok geometrisiyle), açılışta Geyser'a kaydedilir ve bir blok
 gibi çizilen eşyalar onu envanterde ve yere düştüğünde 3B gösterir. Paper 26.2 ve Geyser-Spigot üzerinde Survival'ın
 ItemsAdder ve CraftEngine içeriğiyle canlı test edildi: madenler, döndürülmüş CraftEngine çekmeceleri, mantar bloğu

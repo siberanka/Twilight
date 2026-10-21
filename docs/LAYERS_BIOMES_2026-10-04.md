@@ -2,7 +2,7 @@
 
 > Türkçe: [aşağıda](#türkçe)
 
-Twilight 1.0.0-pre.8 closes the gaps left by the [UI campaign](UI_CAMPAIGN_2026-10-04.md):
+Twilight development build 8 closes the gaps left by the [UI campaign](UI_CAMPAIGN_2026-10-04.md):
 images and text that Java draws back over earlier images, nameplate plugins, custom
 biome colours and seasonal biomes. Every capture below is original art or a vanilla
 scene, taken on the isolated test server (Paper 26.2, Geyser 2.11.3, Java 26.2 and
@@ -100,8 +100,8 @@ worst; every other custom biome shows as the closest vanilla biome or slot.
 
 | Floor of a datapack biome (mean RGB) | Java | Bedrock |
 | --- | --- | --- |
-| 1.0.0-pre.7 (closest vanilla biome) | 112, 129, 65 | 102, 123, 54 |
-| 1.0.0-pre.8 (exact slot) | 111, 128, 64 | 110, 127, 64 |
+| Development build 7 (closest vanilla biome) | 112, 129, 65 | 102, 123, 54 |
+| Development build 8 (exact slot) | 111, 128, 64 | 110, 127, 64 |
 
 <table>
   <tr><td width="60%"><img src="images/acceptance/2026-10-04-layers/biome.png" alt="Grass of a custom datapack biome on Java and Bedrock in the same colour" width="100%"></td>
@@ -184,7 +184,7 @@ runtime layers.
 
 ### Üst üste görseller, ad etiketleri ve birebir biyomlar - 4 Ekim 2026
 
-Twilight 1.0.0-pre.8, [arayüz kampanyasının](UI_CAMPAIGN_2026-10-04.md) bıraktığı boşlukları kapatır:
+Twilight geliştirme derlemesi 8, [arayüz kampanyasının](UI_CAMPAIGN_2026-10-04.md) bıraktığı boşlukları kapatır:
 Java'nın önceki görsellerin üzerine geri çizdiği görseller ve yazılar, ad etiketi eklentileri, özel biyom
 renkleri ve mevsimsel biyomlar. Aşağıdaki her görüntü özgün görsel veya vanilla bir sahnedir ve yalıtılmış
 test sunucusunda çekildi (Paper 26.2, Geyser 2.11.3, arayüz ölçeği 2'de Java 26.2 ve Bedrock 1.26.5203.0
@@ -259,8 +259,8 @@ en yakın vanilla biyom veya yuva olarak görünür.
 
 | Datapack biyomunun zemini (ortalama RGB) | Java | Bedrock |
 | --- | --- | --- |
-| 1.0.0-pre.7 (en yakın vanilla biyom) | 112, 129, 65 | 102, 123, 54 |
-| 1.0.0-pre.8 (birebir yuva) | 111, 128, 64 | 110, 127, 64 |
+| Geliştirme derlemesi 7 (en yakın vanilla biyom) | 112, 129, 65 | 102, 123, 54 |
+| Geliştirme derlemesi 8 (birebir yuva) | 111, 128, 64 | 110, 127, 64 |
 
 Java biyomları yerinde değiştirir (`/fillbiome`, mevsim eklentileri) ve bunu Geyser'ın çevirmediği bir
 paketle yapar; bu yüzden Bedrock chunk yeniden yüklenene kadar eski biyomları koruyordu. Twilight artık bu

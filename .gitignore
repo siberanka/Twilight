@@ -135,3 +135,6 @@ test-material/
 
 # Editor workspace settings
 .vscode/
+
+# IDE build output
+bin/

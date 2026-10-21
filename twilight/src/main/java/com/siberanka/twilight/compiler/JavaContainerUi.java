@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2026 siberanka.
- * Licensed under the GNU LGPL v3.0 or later.
+ * Licensed under the Twilight License (PolyForm Noncommercial 1.0.0 with additional terms); see LICENSE.
  */
 package com.siberanka.twilight.compiler;
 
@@ -71,6 +71,8 @@ final class JavaContainerUi {
     /** Java's default container title colour, 0x404040. */
     static final double JAVA_TITLE_CHANNEL = 64 / 255.0;
     private static final String OFFSET_VARIABLE = "$twilight_java_title_offset";
+    /** Where Java draws the title, for plain titles shown without spacers. */
+    private static final String PLAIN_OFFSET_VARIABLE = "$twilight_plain_title_offset";
     private static final String HOTBAR_VARIABLE = "$twilight_hotbar_offset";
     private static final String LABEL_OFFSET_VARIABLE = "$twilight_inventory_label_offset";
     private static final String LABEL_LAYER_VARIABLE = "$twilight_inventory_label_layer";
@@ -127,12 +129,38 @@ final class JavaContainerUi {
         for (int index = 0; index < 3; index++) colour.add(channel);
         label.add("color", colour);
         LayerLabels.Source title = LayerLabels.Source.variable("$container_title", LayerLabels.CHEST_EMPTY);
+        // With the text layout a title is either plain (Bedrock's own text, shown at Java's position by its own
+        // label: no spacers, so no device can push it away) or laid out after the plain block (the labels left of
+        // Java's origin show it). See TextLayoutTable.PLAIN_TITLE_BYTES.
+        LayerLabels.Source laidOut = textLayout ? title.skipping(TextLayoutTable.PLAIN_TITLE_BYTES) : title;
         int block = LayerEncoding.BLOCK_BYTES.get(TextLayoutTable.CHEST_LAYERS);
-        if (layers) LayerLabels.showBlock(label, title, 0, block);
+        if (layers) LayerLabels.showBlock(label, laidOut, 0, block);
+        else if (textLayout) LayerLabels.showAll(label, laidOut);
         root.add("chest_label", label);
 
         JsonObject small = topHalf(SMALL_CHEST_PANEL, SMALL_CHEST_GRID, origin, lift);
         JsonObject large = topHalf(LARGE_CHEST_PANEL, LARGE_CHEST_GRID, origin, lift);
+        JsonArray smallChanges = new JsonArray(), largeChanges = new JsonArray();
+        if (textLayout) {
+            JsonObject plain = new JsonObject();
+            plain.addProperty("type", "label");
+            plain.addProperty("anchor_from", "top_left");
+            plain.addProperty("anchor_to", "top_left");
+            plain.addProperty("offset", PLAIN_OFFSET_VARIABLE);
+            plain.add("size", array("default", "default"));
+            plain.addProperty("layer", TITLE_LAYER);
+            plain.add("color", colour.deepCopy());
+            LayerLabels.showStart(plain, title, TextLayoutTable.PLAIN_TITLE_BYTES);
+            root.add("twilight_plain_title", plain);
+            JsonObject reference = new JsonObject();
+            reference.add("twilight_plain_title@chest.twilight_plain_title", new JsonObject());
+            JsonArray controls = new JsonArray();
+            controls.add(reference);
+            smallChanges.addAll(LayerLabels.insertBack(controls));
+            largeChanges.addAll(LayerLabels.insertBack(controls.deepCopy()));
+            small.add(PLAIN_OFFSET_VARIABLE, titleOffset(SMALL_CHEST_GRID, 0, 0));
+            large.add(PLAIN_OFFSET_VARIABLE, titleOffset(LARGE_CHEST_GRID, 0, 0));
+        }
         if (layers) {
             // One panel at the title label's position, drawn on the title's layer; its labels follow in order.
             JsonObject template = new JsonObject();
@@ -146,15 +174,19 @@ final class JavaContainerUi {
             panel.addProperty("anchor_to", "top_left");
             panel.addProperty("offset", OFFSET_VARIABLE);
             panel.addProperty("layer", TITLE_LAYER);
-            panel.add("controls", LayerLabels.layerLabels("twilight_title", template, title, block));
+            panel.add("controls", LayerLabels.layerLabels("twilight_title", template, laidOut, block));
             root.add("twilight_title_layers", panel);
             JsonObject reference = new JsonObject();
             reference.add("twilight_title_layers@chest.twilight_title_layers", new JsonObject());
             JsonArray controls = new JsonArray();
             controls.add(reference);
             // Inserted first: the lower layers are drawn before the vanilla label with the top layer.
-            small.add("modifications", LayerLabels.insertFront(controls));
-            large.add("modifications", LayerLabels.insertFront(controls.deepCopy()));
+            smallChanges.addAll(LayerLabels.insertFront(controls));
+            largeChanges.addAll(LayerLabels.insertFront(controls.deepCopy()));
+        }
+        if (!smallChanges.isEmpty()) {
+            small.add("modifications", smallChanges);
+            large.add("modifications", largeChanges);
         }
         root.add("small_chest_panel_top_half", small);
         root.add("large_chest_panel_top_half", large);

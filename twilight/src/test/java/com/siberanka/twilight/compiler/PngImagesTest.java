@@ -63,6 +63,22 @@ class PngImagesTest {
     }
 
     @Test
+    void validGrayscalePngsKeepTheirStoredValues() throws Exception {
+        // ImageIO reads gray as linear and brightens it on getRGB; Java's renderer uses the stored values.
+        Random random = new Random(11);
+        for (int[] format : new int[][]{{0, 1}, {0, 2}, {0, 4}, {0, 8}, {0, 16}, {4, 8}, {4, 16}}) {
+            int[][] pixels = new int[4][5];
+            for (int[] row : pixels) for (int x = 0; x < row.length; x++) row[x] = random.nextInt();
+            byte[] png = encode(pixels, format[0], format[1], false, null, null, false);
+            BufferedImage image = PngImages.read(png);
+            for (int y = 0; y < pixels.length; y++) for (int x = 0; x < pixels[y].length; x++) {
+                assertEquals(expected(pixels[y][x], format[0], format[1], null, null), image.getRGB(x, y),
+                        "type " + format[0] + " depth " + format[1] + " at " + x + "," + y);
+            }
+        }
+    }
+
+    @Test
     void validImagesStillUseImageIoAndGarbageIsRejected() throws Exception {
         BufferedImage source = new BufferedImage(3, 2, BufferedImage.TYPE_INT_ARGB);
         source.setRGB(1, 1, 0x80FF0000);

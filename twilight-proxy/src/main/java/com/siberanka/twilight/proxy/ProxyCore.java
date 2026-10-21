@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2026 siberanka.
- * Licensed under the GNU LGPL v3.0 or later.
+ * Licensed under the Twilight License (PolyForm Noncommercial 1.0.0 with additional terms); see LICENSE.
  */
 package com.siberanka.twilight.proxy;
 
@@ -134,6 +134,8 @@ public final class ProxyCore implements TwilightProxyApi {
         try {
             Sessions bridge = geyser;
             if (bridge != null) bridge.prepare(pack.path());
+            ProxyRuntime bedrock = runtime;
+            if (bedrock != null) bedrock.prepare(pack.path());
             var running = host;
             if (running != null) running.snapshot(pack.path(), pack.sha256());
         } catch (IOException | RuntimeException | LinkageError failure) {
@@ -149,6 +151,7 @@ public final class ProxyCore implements TwilightProxyApi {
         enabled = true;
         attachGeyser(0);
         platform.repeat(this::sweep, 5);
+        platform.repeat(this::reportSightings, 5);
         TwilightProxyApi.Holder.set(this);
     }
 
@@ -258,7 +261,11 @@ public final class ProxyCore implements TwilightProxyApi {
      * servers' packs once this core runs.
      */
     private static volatile com.siberanka.twilight.geyser.CustomBlocks earlyBlocks;
+    /** Player heads subscribed in the load phase, for the same reason as {@link #earlyBlocks}. */
+    private static volatile com.siberanka.twilight.geyser.CustomSkulls earlySkulls;
     private static volatile java.util.function.Supplier<java.util.Collection<Path>> earlyPacks;
+    /** The item-display bridge subscribed in the load phase, for the same reason as {@link #earlyBlocks}. */
+    private static volatile ProxyRuntime.EarlyDisplays earlyDisplays;
 
     /**
      * Subscribes to Geyser's custom block and item definition from the proxy's plugin load phase, when Geyser is
@@ -290,9 +297,26 @@ public final class ProxyCore implements TwilightProxyApi {
             return;
         }
         if (settings != null && !servers.isEmpty()) prepareMappingsEarly(dataDirectory, settings, servers, info, warn);
+        if (settings == null || settings.itemDisplays()) {
+            try {
+                ProxyRuntime.EarlyDisplays displays = new ProxyRuntime.EarlyDisplays();
+                displays.bridge = new com.siberanka.twilight.integration.display.GeyserDisplayBridge(owner, displays,
+                        ProxyRuntime.logger(info, warn), true);
+                earlyDisplays = displays;
+            } catch (RuntimeException | LinkageError unavailable) {
+                // The runtime subscribes when it starts.
+            }
+        }
+        earlyPacks = () -> cachedPacks(dataDirectory);
+        if (settings == null || settings.playerHeads()) {
+            try {
+                earlySkulls = com.siberanka.twilight.geyser.CustomSkulls.start(owner, () -> earlyPacks.get(), info, warn);
+            } catch (RuntimeException | LinkageError unavailable) {
+                // The core subscribes when it attaches.
+            }
+        }
         if (settings != null && !settings.customBlocks()) return;
         try {
-            earlyPacks = () -> cachedPacks(dataDirectory);
             earlyBlocks = com.siberanka.twilight.geyser.CustomBlocks.start(owner, () -> earlyPacks.get(), info, warn);
         } catch (RuntimeException | LinkageError unavailable) {
             // The core subscribes when it attaches.
@@ -388,8 +412,14 @@ public final class ProxyCore implements TwilightProxyApi {
         if (!realGeyser || runtime != null || current == null) return;
         try {
             com.siberanka.twilight.geyser.CustomBlocks early = earlyBlocks;
-            if (early != null) earlyPacks = store::currentPacks;
-            runtime = ProxyRuntime.start(owner, current, platform, this::sessionPack, store::currentPacks, early);
+            if (early != null || earlySkulls != null) earlyPacks = store::currentPacks;
+            ProxyRuntime started = ProxyRuntime.start(owner, current, platform, this::sessionPack, store::currentPacks,
+                    early, earlyDisplays, earlySkulls);
+            runtime = started;
+            // The display variants of the packs already known are read off the proxy's threads.
+            java.util.concurrent.CompletableFuture.runAsync(() -> {
+                for (String server : platform.serverNames()) store.pack(server).ifPresent(pack -> started.prepare(pack.path()));
+            });
         } catch (RuntimeException | LinkageError failure) {
             platform.warn("Twilight's text layout and loading protection are unavailable for this Geyser build: "
                     + Sessions.describe(failure), failure);
@@ -713,8 +743,11 @@ public final class ProxyCore implements TwilightProxyApi {
 
     @Override public synchronized boolean reload() {
         try {
-            ProxyConfig next = ProxyConfig.load(platform.dataDirectory().resolve("config.yml"));
+            ProxyConfig next = ProxyConfig.loadMaintained(platform.dataDirectory().resolve("config.yml"),
+                    platform::info, message -> platform.warn(message, null));
             config = next;
+            ProxyRuntime bedrockRuntime = runtime;
+            if (bedrockRuntime != null) bedrockRuntime.networkSettings(next.network());
             store.reload(next, platform.serverNames());
             List<PackChannel.Key> keys = new ArrayList<>();
             for (String secret : ProxySecrets.discover(platform.proxyRoot(), platform.velocity(), next.secret())) {
@@ -783,11 +816,46 @@ public final class ProxyCore implements TwilightProxyApi {
 
     // --- Plugin messages from backends -------------------------------------------------------
 
-    /** A message on {@link PackChannel#CHANNEL} that came from backend {@code server}; returns a reply or null. */
-    public byte[] serverMessage(String server, byte[] message) {
-        if (message == null || message.length > PackChannel.MAX_MESSAGE) return null;
+    /**
+     * A message on {@link PackChannel#CHANNEL} that came from backend {@code server}; returns the replies to send
+     * back to it (a pack request, the features of this proxy's Bedrock runtime), possibly none.
+     */
+    public java.util.List<byte[]> serverMessage(String server, byte[] message) {
+        if (message == null || message.length > PackChannel.MAX_MESSAGE) return java.util.List.of();
         ProxyConfig current = config;
-        return current == null ? null : transfers.onMessage(server, message, current.maxPackBytes());
+        if (current == null) return java.util.List.of();
+        java.util.List<byte[]> replies = new ArrayList<>(2);
+        byte[] request = transfers.onMessage(server, message, current.maxPackBytes());
+        if (request != null) replies.add(request);
+        byte[] features = transfers.capabilities(message, capabilities());
+        if (features != null) replies.add(features);
+        return replies;
+    }
+
+    /**
+     * The signed statement of what this proxy's runtime shows, sent to a server a few seconds after a player
+     * reaches it: a backend that has not built a pack yet has nothing to announce, and would not learn it otherwise.
+     * Null without a shared secret.
+     */
+    public byte[] capabilitiesStatement() {
+        return transfers.capabilities(capabilities());
+    }
+
+    /** Tells the backends which items their players saw in item displays without a model (signed). */
+    private void reportSightings() {
+        ProxyRuntime running = runtime;
+        if (running == null) return;
+        try {
+            running.sightings().flush(transfers.keys(), platform::sendToServer);
+        } catch (RuntimeException failure) {
+            platform.warn("Could not report item display sightings to the servers: " + failure.getMessage(), null);
+        }
+    }
+
+    /** What this proxy's Bedrock runtime shows, so the backends build only what it uses. */
+    int capabilities() {
+        ProxyRuntime running = runtime;
+        return running != null && running.showsItemDisplays() ? PackChannel.ITEM_DISPLAYS : 0;
     }
 
     // --- Bedrock sessions --------------------------------------------------------------------
@@ -1031,6 +1099,13 @@ public final class ProxyCore implements TwilightProxyApi {
     }
 
     private volatile long lastRefresh = System.currentTimeMillis();
+
+    /** {@code /twilightproxy network}: the Bedrock network layer per player. */
+    public String networkText() {
+        ProxyRuntime running = runtime;
+        if (running == null) return "Twilight's Bedrock runtime is not running on this proxy (no Geyser here).";
+        return String.join("\n", running.networkReport());
+    }
 
     public String statusText() {
         StringBuilder out = new StringBuilder("twilight-proxy: ")
