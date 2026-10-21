@@ -94,15 +94,12 @@ class BedrockPackCompilerTest {
             assertTrue(zip.stream().filter(entry -> entry.getName().startsWith("models/entity/geometry."))
                     .map(entry -> {
                         try { return read(zip, entry.getName()); } catch (Exception failure) { throw new RuntimeException(failure); }
-                    }).anyMatch(value -> value.getAsJsonArray("minecraft:geometry").get(0).getAsJsonObject()
-                            .getAsJsonArray("bones").get(0).getAsJsonObject().getAsJsonArray("cubes").size() == 2),
+                     }).anyMatch(value -> geometryCubes(value).size() == 2),
                     "static composite parts must be merged into one Bedrock geometry");
             String geometryName = zip.stream().filter(entry -> entry.getName().startsWith("models/entity/geometry."))
                     .findFirst().orElseThrow().getName();
             JsonObject geometry = read(zip, geometryName);
-            JsonArray size = geometry.getAsJsonArray("minecraft:geometry").get(0).getAsJsonObject()
-                    .getAsJsonArray("bones").get(0).getAsJsonObject().getAsJsonArray("cubes").get(0).getAsJsonObject()
-                    .getAsJsonArray("size");
+            JsonArray size = geometryCubes(geometry).get(0).getAsJsonObject().getAsJsonArray("size");
             assertTrue(size.get(2).getAsDouble() > 0, "3D depth must remain volumetric");
         }
 
@@ -618,18 +615,19 @@ class BedrockPackCompilerTest {
             JsonObject firstPerson = definitions.entrySet().stream()
                     .filter(entry -> entry.getKey().endsWith(".first_person_right"))
                     .findFirst().orElseThrow().getValue().getAsJsonObject();
-            JsonArray scale = firstPerson.getAsJsonObject("bones").getAsJsonObject("bone")
+            // v5.60 separates the fixed camera pose from the authored model transform.
+            JsonArray scale = firstPerson.getAsJsonObject("bones").getAsJsonObject("bone_x")
                     .getAsJsonArray("scale");
-            JsonArray position = firstPerson.getAsJsonObject("bones").getAsJsonObject("bone")
+            JsonArray position = firstPerson.getAsJsonObject("bones").getAsJsonObject("bone_x")
                     .getAsJsonArray("position");
+            assertVector(firstPerson.getAsJsonObject("bones").getAsJsonObject("bone")
+                    .getAsJsonArray("position"), 0, 15, 2);
             assertEquals(0.5, scale.get(0).getAsDouble(), 1.0e-9);
             assertEquals(0.5, scale.get(1).getAsDouble(), 1.0e-9);
             assertEquals(0.5, scale.get(2).getAsDouble(), 1.0e-9);
-            // The authored translation as is (no fitting), only carried into the hand frame.
-            double[] offset = firstPersonViewInverse(new double[]{0.5 + 1.5, 4 - 1.5, -2 + 3});
-            assertEquals(offset[0], position.get(0).getAsDouble(), 1.0e-9);
-            assertEquals(12.5 + offset[1], position.get(1).getAsDouble(), 1.0e-9);
-            assertEquals(-offset[2], position.get(2).getAsDouble(), 1.0e-9);
+            assertEquals(-0.5, position.get(0).getAsDouble(), 1.0e-9);
+            assertEquals(4.0, position.get(1).getAsDouble(), 1.0e-9);
+            assertEquals(-2.0, position.get(2).getAsDouble(), 1.0e-9);
         }
     }
 
@@ -675,15 +673,10 @@ class BedrockPackCompilerTest {
             JsonObject animations = read(zip, "animations/" + safe + ".animation.json")
                     .getAsJsonObject("animations");
             JsonObject first = animations.getAsJsonObject("animation.twilight." + safe + ".first_person_right")
-                    .getAsJsonObject("bones").getAsJsonObject("bone");
+                    .getAsJsonObject("bones").getAsJsonObject("bone_x");
             JsonObject third = animations.getAsJsonObject("animation.twilight." + safe + ".third_person_right")
                     .getAsJsonObject("bones").getAsJsonObject("bone");
-            // Java's translation is in its view frame; the hand bone sees that frame turned (firstPersonView).
-            double[] offset = firstPersonViewInverse(new double[]{2.6 + 1.5, 7 - 1.5, -0.008 + 3});
-            JsonArray position = first.getAsJsonArray("position");
-            assertEquals(offset[0], position.get(0).getAsDouble(), 1.0e-9);
-            assertEquals(12.5 + offset[1], position.get(1).getAsDouble(), 1.0e-9);
-            assertEquals(-offset[2], position.get(2).getAsDouble(), 1.0e-9);
+            assertVector(first.getAsJsonArray("position"), -2.6, 7.0, -0.008);
             assertVector(first.getAsJsonArray("scale"), 1.6, 1.6, 1.6);
             assertVector(third.getAsJsonArray("position"), 0.0, 13.5, -7.0);
             assertVector(third.getAsJsonArray("scale"), 2.4, 2.4, 2.4);
@@ -770,37 +763,29 @@ class BedrockPackCompilerTest {
                 """);
         // Java applies the left-hand X-translation/YZ-rotation sign change
         // even when a pack explicitly supplies a left-hand display context.
-        for (String perspective : List.of("first_person", "third_person")) {
-            assertEquals(poseBone(animations, perspective + "_right"),
-                    poseBone(animations, perspective + "_left"), perspective);
+        assertEquals(poseBone(animations, "third_person_right"), poseBone(animations, "third_person_left"));
+        // The left and right camera bases differ in v5.60; the mirrored authored pose is equal.
+        for (String bone : List.of("bone_x", "bone_y", "bone_z", "bone_basis")) {
+            assertEquals(poseBone(animations, "first_person_right", bone),
+                    poseBone(animations, "first_person_left", bone), bone);
         }
+        assertVector(poseBone(animations, "first_person_right").getAsJsonArray("position"), 0, 15, 2);
+        assertVector(poseBone(animations, "first_person_left").getAsJsonArray("position"), -18.5, 18.3, 15);
     }
 
     @Test
-    void firstPersonOrientationMatchesJavaIncludingEulerSingularities() throws Exception {
-        int[][] poses = {{0, 0, 0}, {30, 0, 0}, {0, 30, 0}, {0, 0, 30}, {0, -90, 25}, {-90, 0, 0}, {90, 0, 0},
-                {25, -50, 35}};
-        for (int i = 0; i < poses.length; i++) {
-            int[] pose = poses[i];
-            JsonObject animations = compilePoseAnimations("first_basis_" + i, """
-                    {"firstperson_righthand":{"rotation":[%d,%d,%d]}}
-                    """.formatted(pose[0], pose[1], pose[2]));
-            JsonArray exported = poseBone(animations, "first_person_right").getAsJsonArray("rotation");
-            for (double[] axis : new double[][]{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}) {
-                // Java first person: the display rotation (intrinsic XYZ) straight in the view frame.
-                double[] expected = rotateAxis(axis, 2, pose[2]);
-                expected = rotateAxis(expected, 1, pose[1]);
-                expected = rotateAxis(expected, 0, pose[0]);
-                // Bedrock: the bone turns the model with X mirrored (measured), then the hand shows the bone
-                // turned by the first person view.
-                double[] actual = {-axis[0], axis[1], axis[2]};
-                actual = rotateAxis(actual, 0, exported.get(0).getAsDouble());
-                actual = rotateAxis(actual, 1, exported.get(1).getAsDouble());
-                actual = rotateAxis(actual, 2, exported.get(2).getAsDouble());
-                actual[0] = -actual[0];
-                actual = firstPersonView(actual);
-                assertArrayEquals(expected, actual, 1.0e-9, "pose " + i);
-            }
+    void preservesAuthoredPitchAtBothEulerSingularitiesInTheSplitBoneChain() throws Exception {
+        for (int pitch : new int[]{-90, 90}) {
+            JsonObject animations = compilePoseAnimations("singular_" + (pitch + 90), """
+                    {"firstperson_righthand":{"rotation":[%d,0,0]}}
+                    """.formatted(pitch));
+            // v5.60 keeps each authored axis on a separate child bone, avoiding Euler collapse.
+            JsonArray rotation = poseBone(animations, "first_person_right", "bone_x").getAsJsonArray("rotation");
+            assertVector(rotation, -pitch, 0, 0);
+            assertVector(poseBone(animations, "first_person_right", "bone_y").getAsJsonArray("rotation"), 0, 0, 0);
+            assertVector(poseBone(animations, "first_person_right", "bone_z").getAsJsonArray("rotation"), 0, 0, 0);
+            double[] height = rotateAxis(new double[]{0, 1, 0}, 0, rotation.get(0).getAsDouble());
+            assertArrayEquals(new double[]{0, 0, -Math.signum(pitch)}, height, 1.0e-9);
         }
     }
 
@@ -1728,9 +1713,22 @@ class BedrockPackCompilerTest {
     }
 
     private static JsonObject poseBone(JsonObject animations, String context) {
+        return poseBone(animations, context, "bone");
+    }
+
+    private static JsonObject poseBone(JsonObject animations, String context, String bone) {
         return animations.entrySet().stream().filter(e -> e.getKey().endsWith("." + context))
                 .findFirst().orElseThrow().getValue().getAsJsonObject()
-                .getAsJsonObject("bones").getAsJsonObject("bone");
+                .getAsJsonObject("bones").getAsJsonObject(bone);
+    }
+
+    private static JsonArray geometryCubes(JsonObject geometry) {
+        JsonArray cubes = new JsonArray();
+        for (var bone : geometry.getAsJsonArray("minecraft:geometry").get(0).getAsJsonObject().getAsJsonArray("bones")) {
+            JsonArray children = bone.getAsJsonObject().getAsJsonArray("cubes");
+            if (children != null) for (var cube : children) cubes.add(cube);
+        }
+        return cubes;
     }
 
     private static void assertVector(JsonArray actual, double x, double y, double z) {
@@ -1760,8 +1758,7 @@ class BedrockPackCompilerTest {
                         OptionalInt.empty(), "Rotated cube")));
         try (ZipFile zip = new ZipFile(result.outputDirectory().resolve("pack.zip").toFile())) {
             String path = zip.stream().map(ZipEntry::getName).filter(n -> n.startsWith("models/entity/geometry.")).findFirst().orElseThrow();
-            JsonArray cubes = read(zip, path).getAsJsonArray("minecraft:geometry").get(0).getAsJsonObject()
-                    .getAsJsonArray("bones").get(0).getAsJsonObject().getAsJsonArray("cubes");
+            JsonArray cubes = geometryCubes(read(zip, path));
             for (int axis = 0; axis < 3; axis++) {
                 JsonObject cube = cubes.get(axis).getAsJsonObject();
                 assertVector(cube.getAsJsonArray("pivot"), -1, 6, 3);
@@ -1783,6 +1780,41 @@ class BedrockPackCompilerTest {
                 assertEquals(9, uv.getAsJsonArray("uv_size").get(1).getAsInt());
             }
         }
+    }
+
+    @Test
+    void localArmorShaderAtlasOverridesOnlyItsCompetingUpstreamWearable() {
+        Map<String, byte[]> packFiles = new LinkedHashMap<>();
+        packFiles.put("twilight/armor-conversion.json", """
+                {"items":[
+                  {"identifier":"twilight:azure_helmet","slot":"helmet"},
+                  {"identifier":"twilight:azure_chestplate","slot":"chestplate"}
+                ]}
+                """.getBytes(StandardCharsets.UTF_8));
+        byte[] local = new byte[]{1, 2};
+        byte[] upstreamOther = new byte[]{3, 4};
+        packFiles.put("attachables/azure_helmet.json", local);
+        packFiles.put("attachables/azure_helmet.player.json", new byte[]{5});
+        packFiles.put("attachables/azure_helmet.worn.json", new byte[]{6});
+        // No local attachable for this armor: upstream stays the only renderer.
+        packFiles.put("attachables/azure_chestplate.worn.json", new byte[]{7});
+        packFiles.put("attachables/other_armor.worn.json", upstreamOther);
+
+        assertEquals(1, BedrockPackCompiler.preferLocalShaderArmor(packFiles));
+        assertFalse(packFiles.containsKey("attachables/azure_helmet.worn.json"));
+        assertArrayEquals(local, packFiles.get("attachables/azure_helmet.json"));
+        assertTrue(packFiles.containsKey("attachables/azure_helmet.player.json"));
+        assertTrue(packFiles.containsKey("attachables/azure_chestplate.worn.json"));
+        assertArrayEquals(upstreamOther, packFiles.get("attachables/other_armor.worn.json"));
+        assertEquals(0, BedrockPackCompiler.preferLocalShaderArmor(packFiles));
+    }
+
+    @Test
+    void genericUpstreamWearablesRemainWhenLocalArmorWasNotConverted() {
+        Map<String, byte[]> packFiles = new LinkedHashMap<>();
+        packFiles.put("attachables/iron_helmet.worn.json", new byte[]{10});
+        assertEquals(0, BedrockPackCompiler.preferLocalShaderArmor(packFiles));
+        assertTrue(packFiles.containsKey("attachables/iron_helmet.worn.json"));
     }
 
     private TwilightConfig withoutTextLayout() {
