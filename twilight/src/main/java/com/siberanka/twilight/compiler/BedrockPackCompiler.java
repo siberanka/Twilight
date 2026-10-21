@@ -520,6 +520,7 @@ public final class BedrockPackCompiler {
         BowIdleStringUvRepair.apply(packFiles);
         Crossbow3DProjectileAlignmentRepair.apply(packFiles);
         AnimatedAtlasVisibilityRepair.apply(packFiles);
+        AnimatedDisplaySheetUvRepair.apply(packFiles);
         ElytraVanillaWearablePackRepair.apply(packFiles, resources);
         ElytraWornBindingRepair.apply(packFiles);
         // Final pass: Geyser's default for custom items is allow_offhand=true.
