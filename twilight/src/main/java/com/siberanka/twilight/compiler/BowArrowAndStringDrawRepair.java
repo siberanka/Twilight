@@ -9,6 +9,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+/**
+ * Restores projectile translation after the depth pass while preserving its
+ * facing. A stationary string ribbon already encodes its draw in the texture;
+ * mirroring its U coordinates reverses that motion and misplaces idle as well.
+ */
 public final class BowArrowAndStringDrawRepair {
    private static final String PREV = "twilight/3d-bow-draw-depth-repair.json";
    private static final String MARKER = "twilight/3d-bow-arrow-string-repair.json";
@@ -58,15 +63,24 @@ public final class BowArrowAndStringDrawRepair {
             }
 
             LinkedHashSet identifiers30 = new LinkedHashSet<>();
+            LinkedHashSet<String> legacyIdentifiers = new LinkedHashSet<>();
             if (packFiles0.containsKey("twilight/3d-bow-arrow-string-repair.json")) {
                try {
                   var jsonObject32 = obj(BedrockAnimationBridge.Json.read((byte[])packFiles0.get("twilight/3d-bow-arrow-string-repair.json")));
-                  if (number(jsonObject32.get("version")) == 1.0) {
+                  double version = number(jsonObject32.get("version"));
+                  if (version == 1.0 || version == 2.0) {
                      for (Object entry39 : list(jsonObject32.get("applied_identifiers"))) {
                         String text41 = str(entry39);
                         if (text41 != null) {
-                           identifiers30.add(text41);
+                           if (version == 1.0) legacyIdentifiers.add(text41);
+                           else identifiers30.add(text41);
                         }
+                     }
+                  }
+                  if (version == 2.0) {
+                     for (Object identifier : list(jsonObject32.get("pending_legacy_identifiers"))) {
+                        String text = str(identifier);
+                        if (text != null) legacyIdentifiers.add(text);
                      }
                   }
                } catch (Exception error28) {
@@ -77,6 +91,7 @@ public final class BowArrowAndStringDrawRepair {
 
             for (String text40 : identifiers3) {
                if (!identifiers30.contains(text40)) {
+                  boolean legacy = legacyIdentifiers.contains(text40);
                   String suffix42 = text40.substring(text40.indexOf(58) + 1);
                   if (hasBasis(packFiles0, suffix42)) {
                      String[] segments43 = new String[4];
@@ -121,6 +136,12 @@ public final class BowArrowAndStringDrawRepair {
                                  && sameVec(list(mapping16.get("rotation")), list(mapping18.get("rotation")))) {
                                  double value22 = number(value20.get(2)) - number(value19.get(2));
                                  double value24 = number(value21.get(2)) - number(value19.get(2));
+                                 // v1 already restored the projectile's negative-Z draw. Only its
+                                 // string UVs need migration; never reverse the arrow a third time.
+                                 if (legacy) {
+                                    value22 = -value22;
+                                    value24 = -value24;
+                                 }
                                  if (!(Math.abs(value22) > 1.0E-4) && !(Math.abs(value24) > 1.0E-4)) {
                                     var value26 = list(mapping16.get("size"));
                                     if (vec(value26)
@@ -164,6 +185,7 @@ public final class BowArrowAndStringDrawRepair {
 
                         if (flag12 && arrayListInteger44.size() >= 2 && arrayListInteger45.size() == 1) {
                            for (int number49 : arrayListInteger44) {
+                              if (legacy) continue;
                               Map mapping52 = (Map)values11[1].get(number49);
 
                               for (int number54 = 2; number54 <= 3; number54++) {
@@ -176,6 +198,10 @@ public final class BowArrowAndStringDrawRepair {
                            }
 
                            for (int number50 : arrayListInteger45) {
+                              // The converted UVs already draw the string backwards, in step
+                              // with the arrow. v1 flipped U and made it move toward the tip.
+                              // Retain the converted UVs on fresh builds; undo only a known v1.
+                              if (!legacy) continue;
                               for (int number53 = 1; number53 <= 3; number53++) {
                                  var jsonObject55 = obj(((Map)values11[number53].get(number50)).get("uv"));
 
@@ -206,8 +232,12 @@ public final class BowArrowAndStringDrawRepair {
 
             if (number33 > 0) {
                LinkedHashMap lookup37 = new LinkedHashMap<>();
-               lookup37.put("version", 1);
+               lookup37.put("version", 2);
                lookup37.put("applied_identifiers", new ArrayList<>(identifiers30));
+               legacyIdentifiers.removeAll(identifiers30);
+               if (!legacyIdentifiers.isEmpty()) {
+                  lookup37.put("pending_legacy_identifiers", new ArrayList<>(legacyIdentifiers));
+               }
                packFiles0.put("twilight/3d-bow-arrow-string-repair.json", BedrockAnimationBridge.Json.bytes(lookup37));
                number33++;
             }

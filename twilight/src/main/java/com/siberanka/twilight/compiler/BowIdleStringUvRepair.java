@@ -14,8 +14,17 @@ public final class BowIdleStringUvRepair {
    private BowIdleStringUvRepair() {
    }
 
+   /**
+    * Align idle with the corrected draw UVs, including packs previously processed by v1.
+    * The ribbon stays stationary: its texture supplies the entire drawback.
+    */
    public static int apply(Map<String, byte[]> packFiles0) {
-      if (packFiles0 != null && !packFiles0.isEmpty() && !packFiles0.containsKey("twilight/3d-bow-idle-string-uv-repair.json")) {
+      int uvFiles = applyIdleUvs(packFiles0);
+      return uvFiles + Bow3DStringDepthRepair.apply(packFiles0);
+   }
+
+   private static int applyIdleUvs(Map<String, byte[]> packFiles0) {
+      if (packFiles0 != null && !packFiles0.isEmpty()) {
          byte[] resourceBytes1 = (byte[])packFiles0.get("twilight/geyser_item_mappings.json");
          if (resourceBytes1 == null) {
             return 0;
@@ -140,8 +149,8 @@ public final class BowIdleStringUvRepair {
 
          if (!entries25.isEmpty()) {
             LinkedHashMap lookup27 = new LinkedHashMap<>();
-            lookup27.put("version", 1);
-            lookup27.put("correction", "reverse_uv_u_stationary_bowstring");
+            lookup27.put("version", 2);
+            lookup27.put("correction", "align_idle_uv_u_with_draw_bowstring");
             lookup27.put("applied_identifiers", entries25);
             packFiles0.put("twilight/3d-bow-idle-string-uv-repair.json", BedrockAnimationBridge.Json.bytes(lookup27));
             number24++;
