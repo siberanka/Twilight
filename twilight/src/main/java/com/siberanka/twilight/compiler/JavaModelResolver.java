@@ -16,6 +16,8 @@ import java.util.Map;
 final class JavaModelResolver {
     private final ResourceIndex resources;
     private final VanillaAssetCache vanilla;
+    /** One note per model whose malformed faces were repaired, in first-seen order. */
+    private final Map<String, String> repairs = java.util.Collections.synchronizedMap(new LinkedHashMap<>());
 
     JavaModelResolver(ResourceIndex resources) {
         this(resources, null);
@@ -116,8 +118,16 @@ final class JavaModelResolver {
         }
         Map<String, String> resolvedTextures = new LinkedHashMap<>();
         for (String key : textures.keySet()) resolvedTextures.put(key, resolveTexture(key, textures, "minecraft"));
-        return new ResolvedJavaModel(qualified(identifier, "minecraft"), elements, Map.copyOf(resolvedTextures),
+        String modelId = qualified(identifier, "minecraft");
+        ModelFaceRepair.Result repaired = ModelFaceRepair.repair(elements, textures, resolvedTextures);
+        if (repaired.repaired() > 0) repairs.putIfAbsent(modelId, ModelFaceRepair.note(modelId, repaired));
+        return new ResolvedJavaModel(modelId, elements, Map.copyOf(resolvedTextures),
                 display, handheld, frontLight);
+    }
+
+    /** Notes for the models whose faces were repaired while resolving, one line per model. */
+    List<String> repairNotes() {
+        synchronized (repairs) { return List.copyOf(repairs.values()); }
     }
 
     private static ResolvedJavaModel merge(List<ResolvedJavaModel> models) {

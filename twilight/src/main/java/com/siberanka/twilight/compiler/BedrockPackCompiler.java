@@ -401,6 +401,8 @@ public final class BedrockPackCompiler {
         problems.addAll(sounds.problems());
         notices.addAll(fonts.notices());
         notices.addAll(sounds.notices());
+        List<String> modelRepairs = resolver.repairNotes();
+        for (String repair : modelRepairs) notices.add("model-repaired | " + repair);
         LanguageCompiler.Result languages = LanguageCompiler.compile(resources, packFiles);
         languages.problems().forEach(problem -> notices.add("language file is malformed and ignored, as on Java: " + problem));
         if (vanillaAssets != null) {
@@ -526,7 +528,7 @@ public final class BedrockPackCompiler {
                 fonts.vanillaFallbackTextures(),
                 fonts.namedFonts(), fonts.namedGlyphs(),
                 sounds.definitions(), sounds.files(), sounds.vanillaFallbackFiles(),
-                candidates.size() - converted, List.copyOf(problems), sha256(current.resolve("pack.zip")));
+                candidates.size() - converted, List.copyOf(problems), sha256(current.resolve("pack.zip")), modelRepairs);
     }
 
     private JsonObject manifest(Map<String, byte[]> contentWithoutManifest) throws IOException {
@@ -593,7 +595,10 @@ public final class BedrockPackCompiler {
             }
         }
         if (textures.isEmpty()) textures.addAll(flatLayers(model));
-        if (textures.isEmpty()) throw new IOException("3D model has no face textures");
+        if (textures.isEmpty()) {
+            String faces = ModelFaceRepair.unrepaired(model.elements(), 3);
+            throw new IOException("3D model has no face textures" + (faces.isEmpty() ? "" : " (" + faces + ")"));
+        }
         return textures;
     }
 

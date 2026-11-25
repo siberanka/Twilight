@@ -614,6 +614,9 @@ public final class TwilightPlugin extends JavaPlugin {
                         new TwilightOperationFailedEvent(operation, operationLog.path(), root)));
             } else {
                 ContentReport report = outcome.report();
+                if (outcome.build() != null) {
+                    for (String repair : outcome.build().modelRepairs()) operationLog.warn("model-repaired", repair);
+                }
                 operationLog.info("operation-complete", "success");
                 send(sender, "Scan passed: " + report.sources() + " sources, " + report.entries() + " files, " +
                         report.itemDefinitions() + " current items, " + report.legacyItemModels() + " legacy item roots, " +

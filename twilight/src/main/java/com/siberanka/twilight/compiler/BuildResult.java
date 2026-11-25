@@ -7,4 +7,9 @@ public record BuildResult(Path outputDirectory, int candidates, int converted, i
                           int glyphs, int fontPages, int vanillaFallbackTextures,
                           int namedFonts, int namedGlyphs,
                           int soundDefinitions, int soundFiles, int vanillaFallbackSounds,
-                          int skipped, List<String> problems, String packSha256) {}
+                          int skipped, List<String> problems, String packSha256,
+                          List<String> modelRepairs) {
+    public BuildResult {
+        modelRepairs = List.copyOf(modelRepairs);
+    }
+}
