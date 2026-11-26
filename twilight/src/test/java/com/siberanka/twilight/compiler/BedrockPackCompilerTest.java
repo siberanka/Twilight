@@ -1727,6 +1727,22 @@ class BedrockPackCompilerTest {
         }
     }
 
+    /** Folded wings, spread in flight and the sneak, sleep and swim poses come from the vanilla elytra animations. */
+    @Test
+    void wornElytraAttachableKeepsTheFlightAnimations() throws Exception {
+        BuildResult result = buildWings("elytra-flight", false, new String[][]{{"flame_elytra", "flame", "minecraft:elytra"}});
+        try (ZipFile zip = new ZipFile(result.outputDirectory().resolve("pack.zip").toFile())) {
+            JsonObject worn = read(zip, zip.stream().map(ZipEntry::getName).filter(name -> name.endsWith(".worn.json")).findFirst().orElseThrow())
+                    .getAsJsonObject("minecraft:attachable").getAsJsonObject("description");
+            JsonObject animations = worn.getAsJsonObject("animations");
+            assertEquals("animation.elytra.gliding", animations.get("gliding").getAsString());
+            assertEquals("animation.elytra.default", animations.get("default").getAsString());
+            assertEquals("controller.animation.elytra.default", animations.get("default_controller").getAsString());
+            assertEquals("default_controller", worn.getAsJsonObject("scripts").getAsJsonArray("animate").get(0).getAsString());
+            assertNull(zip.getEntry("attachables/twilight_vanilla_elytra.json"), "the override is opt-in");
+        }
+    }
+
     /** ItemsAdder's armour is dyed leather a Java shader draws by colour; Bedrock gets the colour's own layers. */
     @Test
     void itemsAdderArmourIsFoundByItsLeatherColour() throws Exception {

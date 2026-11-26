@@ -102,7 +102,7 @@ public final class BedrockPackCompiler {
     }
 
     private boolean itemDisplays = true;
-    private boolean elytraOverride = true;
+    private boolean elytraOverride = false;
     /** Keys of the items shown in Java item displays ({@code DisplayedItems}); null gives every item a variant. */
     private Set<String> displayedItems;
 

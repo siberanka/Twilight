@@ -82,10 +82,12 @@ geyser:
   # it starts, so a build that changes them needs a restart, like item changes.
   custom-blocks: true
   # Custom elytras on Bedrock. Geyser sends every glider in the chest slot to Bedrock as the vanilla elytra (the
-  # client only glides with it), so a custom elytra's wings can only be drawn by redrawing the vanilla elytra:
-  # when all custom elytras wear the same wings, Bedrock shows them on every worn elytra, vanilla ones too. With
-  # several different wings the elytras stay vanilla on Bedrock. Set false to keep vanilla wings on Bedrock.
-  elytra-override: true
+  # client only glides with it). Other players' custom elytras are drawn with their own wings regardless; a
+  # player's own custom elytra stays vanilla-looking to them. elytra-override redraws the vanilla elytra itself
+  # with the custom wings, for servers whose only elytra is one custom skin: every worn elytra then shows those
+  # wings on Bedrock, vanilla ones too, so leave it off on servers with vanilla elytras. Needs one distinct
+  # wings texture among the custom elytras.
+  elytra-override: false
   # Player heads show their skins on Bedrock (menus, hands, armour stands, holograms) instead of Steve's:
   # Twilight learns the heads this server shows and reads the ones its plugins' configurations name
   # (textures, skin URLs, user names, HeadDatabase ids), and Geyser registers them as custom skulls when it

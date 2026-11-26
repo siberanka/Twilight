@@ -69,6 +69,7 @@ public final class TwilightPlugin extends JavaPlugin {
     private com.siberanka.twilight.integration.text.GeyserTextLayoutBridge textBridge;
     private com.siberanka.twilight.integration.world.GeyserBiomeBridge biomeBridge;
     private com.siberanka.twilight.integration.display.GeyserRiderNames riderNames;
+    private com.siberanka.twilight.integration.display.GeyserWornElytra wornElytra;
     private com.siberanka.twilight.integration.proxy.ProxyPackChannel proxyChannel;
     /** The custom items this server shows in item displays; only they (and model bones) get display models. */
     private com.siberanka.twilight.integration.display.DisplayedItems displayedItems;
@@ -262,6 +263,11 @@ public final class TwilightPlugin extends JavaPlugin {
             } catch (Exception | LinkageError failure) {
                 getLogger().log(Level.WARNING, "Java's rider name rule is unavailable for this Geyser build.", failure);
             }
+            try {
+                wornElytra = com.siberanka.twilight.integration.display.GeyserWornElytra.create(this, getLogger());
+            } catch (Exception | LinkageError failure) {
+                getLogger().log(Level.WARNING, "Custom elytras on other players are unavailable for this Geyser build.", failure);
+            }
             if (config.bedrockBiomeMatching()) {
                 try {
                     var resender = new com.siberanka.twilight.integration.world.ChunkResender(this);
@@ -428,6 +434,10 @@ public final class TwilightPlugin extends JavaPlugin {
             try { riderNames.close(); }
             catch (Exception failure) { getLogger().log(Level.WARNING, "Could not close the rider name rule", failure); }
         }
+        if (wornElytra != null) {
+            try { wornElytra.close(); }
+            catch (Exception failure) { getLogger().log(Level.WARNING, "Could not close the custom elytra bridge", failure); }
+        }
         if (biomeBridge != null) {
             try { biomeBridge.close(); }
             catch (Exception failure) { getLogger().log(Level.WARNING, "Could not close biome matching", failure); }
@@ -560,7 +570,7 @@ public final class TwilightPlugin extends JavaPlugin {
                                 .withNameplatePlugin(world.nameplates()).withItemDisplays(displays).withDisplayedItems(shownItems).withDisplayedOwnModels(shownOwn)
                                 .withPlayerHeads(headSkins, headNames, getDataFolder().toPath().resolve("cache/skins"), playerHeadsEnabled())
                                 .withPlayerSkins(joinedSkins)
-                                .withElytraOverride(getConfig().getBoolean("geyser.elytra-override", true))
+                                .withElytraOverride(getConfig().getBoolean("geyser.elytra-override", false))
                                 .withMaxGlyphCell(getConfig().getInt("ui.max-glyph-cell", 512))
                                 .withPocketContainerLayout(pocketContainerLayout())
                                 .withCustomBlocks(getConfig().getBoolean("geyser.custom-blocks", true))
@@ -576,7 +586,7 @@ public final class TwilightPlugin extends JavaPlugin {
                                 .withNameplatePlugin(world.nameplates()).withItemDisplays(displays).withDisplayedItems(shownItems).withDisplayedOwnModels(shownOwn)
                                 .withPlayerHeads(headSkins, headNames, getDataFolder().toPath().resolve("cache/skins"), playerHeadsEnabled())
                                 .withPlayerSkins(joinedSkins)
-                                .withElytraOverride(getConfig().getBoolean("geyser.elytra-override", true))
+                                .withElytraOverride(getConfig().getBoolean("geyser.elytra-override", false))
                                 .withMaxGlyphCell(getConfig().getInt("ui.max-glyph-cell", 512))
                                 .withPocketContainerLayout(pocketContainerLayout())
                                 .withCustomBlocks(getConfig().getBoolean("geyser.custom-blocks", true))
