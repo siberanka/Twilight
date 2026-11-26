@@ -9,6 +9,7 @@ import com.siberanka.twilight.geyser.LoadingGuard;
 import com.siberanka.twilight.integration.display.DisplayIndex;
 import com.siberanka.twilight.integration.display.GeyserDisplayBridge;
 import com.siberanka.twilight.integration.display.GeyserRiderNames;
+import com.siberanka.twilight.integration.display.GeyserWornElytra;
 import com.siberanka.twilight.integration.text.GeyserLanguageBridge;
 import com.siberanka.twilight.integration.text.GeyserTextLayoutBridge;
 import org.geysermc.geyser.session.GeyserSession;
@@ -41,6 +42,7 @@ final class ProxyRuntime implements AutoCloseable {
     private final LoadingGuard guard;
     private volatile GeyserDisplayBridge displays;
     private volatile GeyserRiderNames riderNames;
+    private volatile GeyserWornElytra wornElytra;
     private volatile SessionDisplays sessionDisplays;
     private final DisplaySightings sightings = new DisplaySightings();
     private volatile com.siberanka.twilight.network.NetworkSettings networkSettings =
@@ -139,6 +141,11 @@ final class ProxyRuntime implements AutoCloseable {
         } catch (RuntimeException | LinkageError failure) {
             platform.warn("Java's rider name rule is unavailable for this Geyser build.", failure);
         }
+        try {
+            runtime.wornElytra = GeyserWornElytra.create(owner, logger);
+        } catch (RuntimeException | LinkageError failure) {
+            platform.warn("Custom elytras stay vanilla for Bedrock viewers on this Geyser build.", failure);
+        }
         return runtime;
     }
 
@@ -213,7 +220,7 @@ final class ProxyRuntime implements AutoCloseable {
 
     @Override
     public void close() {
-        for (AutoCloseable part : new AutoCloseable[]{network, text, language, guard, blocks, skulls, displays, riderNames}) {
+        for (AutoCloseable part : new AutoCloseable[]{network, text, language, guard, blocks, skulls, displays, riderNames, wornElytra}) {
             if (part == null) continue;
             try {
                 part.close();
