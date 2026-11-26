@@ -115,6 +115,36 @@ class PackHostTest {
     }
 
     @Test
+    void recordsTheBanBeforeTheRefusalIsWritten() throws Exception {
+        java.util.concurrent.atomic.AtomicInteger readableAtBan = new java.util.concurrent.atomic.AtomicInteger(-2);
+        java.util.concurrent.atomic.AtomicReference<Socket> last = new java.util.concurrent.atomic.AtomicReference<>();
+        host = PackHost.start(settings(true, 3, List.of()), root.resolve("cache"), line -> {
+            Socket client = last.get();
+            if (client == null || !line.contains("blocked")) return;
+            try {
+                Thread.sleep(300); // an answer written before the ban would have arrived by now
+                readableAtBan.set(client.getInputStream().available());
+            } catch (Exception failure) {
+                readableAtBan.set(-3);
+            }
+        });
+        String target = "/twilight/" + "B".repeat(43) + "/0000000000000000.zip";
+        for (int attempt = 0; attempt < 19; attempt++) get(target, "");
+        // The client keeps its connection until it has the answer, as the other tests do.
+        try (Socket socket = new Socket(LOCAL, host.port())) {
+            socket.setSoTimeout(10_000);
+            last.set(socket);
+            socket.getOutputStream().write(("GET " + target + " HTTP/1.1\r\nHost: localhost\r\n\r\n").getBytes(StandardCharsets.ISO_8859_1));
+            socket.getOutputStream().flush();
+            Response refusal = read(socket.getInputStream(), false);
+            assertNotNull(refusal);
+            assertEquals(404, refusal.status);
+        }
+        assertEquals(0, readableAtBan.get(), "the ban must be recorded before any byte of the refusal is sent");
+        assertNull(get(target, "").statusOrNull());
+    }
+
+    @Test
     void trustsForwardedAddressesOnlyFromListedProxies() throws Exception {
         Path pack = pack(1000);
         InetAddress player = InetAddress.getByName("198.51.100.7");
