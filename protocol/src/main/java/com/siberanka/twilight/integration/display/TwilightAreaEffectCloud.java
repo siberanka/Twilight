@@ -3,7 +3,6 @@ package com.siberanka.twilight.integration.display;
 
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataMap;
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataType;
-import org.cloudburstmc.protocol.bedrock.data.entity.EntityFlag;
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityLinkData;
 import org.cloudburstmc.protocol.bedrock.packet.AddEntityPacket;
 import org.cloudburstmc.protocol.bedrock.packet.RemoveEntityPacket;
@@ -19,6 +18,7 @@ final class TwilightAreaEffectCloud extends AreaEffectCloudEntity {
     private final BedrockEntityDefinition originalDefinition;
     private final EntityDataMap snapshot = new EntityDataMap();
     private float javaRadius = 3f;
+    private boolean javaInvisible;
 
     TwilightAreaEffectCloud(EntitySpawnContext context) {
         super(context);
@@ -30,6 +30,17 @@ final class TwilightAreaEffectCloud extends AreaEffectCloudEntity {
         super.setRadius(data);
     }
 
+    @Override protected void setInvisible(boolean value) {
+        javaInvisible = value;
+        // Runs from the superclass constructor too, before this class's fields exist.
+        super.setInvisible(ours() ? CloudAnchorPolicy.invisible(javaRadius, javaInvisible) : value);
+    }
+
+    /** A spawn-event override belongs to another integration; leave it alone. */
+    private boolean ours() {
+        return originalDefinition != null && originalDefinition == VanillaEntities.AREA_EFFECT_CLOUD.defaultBedrockDefinition();
+    }
+
     @Override public void updateBedrockMetadata() {
         // Geyser retains only API-exposed values after sending metadata. Keep a
         // complete snapshot so a representation change cannot lose color, scale,
@@ -39,10 +50,11 @@ final class TwilightAreaEffectCloud extends AreaEffectCloudEntity {
         snapshot.putAll(pending);
         pending.forEach(this::restorePending);
 
-        // A spawn-event override belongs to another integration; leave it alone.
-        boolean ours = originalDefinition == VanillaEntities.AREA_EFFECT_CLOUD.defaultBedrockDefinition();
-        BedrockEntityDefinition desired = ours && CloudAnchorPolicy.useAnchor(javaRadius, getFlag(EntityFlag.INVISIBLE))
+        boolean ours = ours();
+        BedrockEntityDefinition desired = ours && CloudAnchorPolicy.useAnchor(javaRadius)
                 ? VanillaEntities.ARMOR_STAND.defaultBedrockDefinition() : originalDefinition;
+        // Java draws nothing for a radius-0 cloud, flagged invisible or not; the stand that stands in for it must not show.
+        if (ours) super.setInvisible(CloudAnchorPolicy.invisible(javaRadius, javaInvisible));
         if (bedrockDefinition != desired) {
             bedrockDefinition = desired;
             if (isValid()) {
