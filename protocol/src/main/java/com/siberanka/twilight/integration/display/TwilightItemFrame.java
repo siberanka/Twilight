@@ -27,6 +27,10 @@ import org.geysermc.mcprotocollib.protocol.data.game.item.ItemStack;
  * eighths of a turn, halves the size and draws the item's {@code fixed} display context. The display entity draws
  * an item display's transformation followed by a half turn (Java's ItemDisplayRenderer), so that half turn is undone
  * on the right.
+ *
+ * <p>Geyser turns a Java frame entity by the facing's yaw (and pitch for up and down) in every move it sends, but
+ * the pose above is already relative to an unturned entity. A turned display put the model back to front inside the
+ * wall (north, yaw 180: never drawn) or sideways (east, west, up, down), so the entity is kept unturned.
  */
 final class TwilightItemFrame extends ItemFrameEntity {
     private static final int FIXED = 8;
@@ -73,6 +77,30 @@ final class TwilightItemFrame extends ItemFrameEntity {
     @Override public void updateBedrockMetadata() {
         refresh(false);
         if (!shown) super.updateBedrockMetadata();
+    }
+
+    @Override public void moveRelativeRaw(double x, double y, double z, float yaw, float pitch, float headYaw, boolean onGround) {
+        super.moveRelativeRaw(x, y, z, 0, 0, 0, onGround);
+    }
+
+    @Override public void moveAbsoluteRaw(Vector3f target, float yaw, float pitch, float headYaw, boolean onGround, boolean teleported) {
+        super.moveAbsoluteRaw(target, 0, 0, 0, onGround, teleported);
+    }
+
+    @Override public void teleport(Vector3f target, float yaw, float pitch, boolean onGround) {
+        super.teleport(target, 0, 0, onGround);
+    }
+
+    @Override public void updatePositionAndRotation(double x, double y, double z, float yaw, float pitch, boolean onGround) {
+        super.updatePositionAndRotation(x, y, z, 0, 0, onGround);
+    }
+
+    @Override public void updateRotation(float yaw, float pitch, boolean onGround) {
+        super.updateRotation(0, 0, onGround);
+    }
+
+    @Override public void updateHeadLookRotation(float headYaw) {
+        super.updateHeadLookRotation(0);
     }
 
     @Override public void despawnEntity() {
