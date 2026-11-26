@@ -1,6 +1,63 @@
-# Twilight 1.0.0-beta.6
+# Twilight 1.0.1-pre.1 - prerelease
 
 > Türkçe: [aşağıda](#türkçe)
+
+**Geyser 2.12.1 (build 1298).** Geyser removed the Java entity type registry that Twilight used, so on that build
+item and block displays, furniture, dropped 3D items and point-cloud adaptation stopped working and an error
+appeared at start. Twilight now finds the registry on each build, and earlier Geyser 2.11 and 2.12 builds keep
+working. The menu and text layout also reads Geyser's client UI profile on the builds that changed it and falls
+back to the classic profile.
+
+**Custom elytras on Bedrock.** Bedrock viewers now see other players' custom elytras (CraftEngine, ItemsAdder,
+Oraxen and Nexo elytra items) with their own wings, standing and gliding, also when Geyser runs on the proxy
+(twilight-proxy). Before, every glider showed as the vanilla elytra. A Bedrock player's own custom elytra still
+looks vanilla to that player, because the Bedrock client only glides with the vanilla elytra item. The new option
+`geyser.elytra-override` (default `false`) redraws the vanilla elytra itself with the custom wings, for servers
+whose only elytra is one custom skin; it changes every worn elytra on Bedrock, vanilla ones included, so leave it
+off on servers with vanilla elytras.
+
+**Large 3D handhelds in first person.** Bedrock showed 3D tools and weapons (axes, tridents, pickaxes, shields)
+1.3 to 1.8 times smaller than Java in first person. They are now scaled and placed like Java's first person
+view: the measured silhouette area went from 0.29-0.50 of Java's to 0.80-0.95. Flat items, bows and crossbows are
+unchanged, and so is the third person view.
+
+**Models and blocks.** Models whose faces name their texture under a non-standard key (seen in an ItemsAdder
+pack, where the key was the texture path and the value `#0`) are repaired during conversion, so strict mode no
+longer rejects the whole conversion. A `model-repaired` notice names the model and says that Java clients may
+show it as missing and that the source model should be fixed. Ambiguous faces still fail strict mode, now with
+the element and face in the message. Custom blocks keep Java's ambient occlusion and face shading: a block model
+with `"ambientocclusion": false` or elements with `"shade": false` turn off Bedrock's `ambient_occlusion` and
+`face_dimming` for those materials, so glowing or flat-lit blocks are no longer darkened. Other blocks are
+unchanged.
+
+**Resource pack host.** A client that is banned for misbehaving is now recorded as banned before the refusal is
+sent, so a reconnect that races the response cannot slip through.
+
+Thanks to yorik100 for the ideas behind the block shading, the pack host ban ordering and the first person scale
+observation (pull request #2).
+
+**Known limitations.** A Bedrock player's own custom elytra looks vanilla to that player. A custom item in an
+invisible item frame facing north may not render on Bedrock; this is under investigation.
+
+**Tested** on Leaf 1.21.4 with CraftEngine and Oraxen, Geyser 2.12.1 (build 1298) and Floodgate, comparing Java
+1.21.4 and Bedrock 26.6x captures of items, 3D handhelds in first person, furniture, displays, custom elytras
+standing and gliding, and blocks. Server start was also checked on Geyser 2.12.0 (build 1263). Converting the
+CraftEngine and Oraxen test packs produced the same packs as beta.6 apart from the intended changes.
+
+Test server: `oyna.twilightnw.com`.
+
+Update both JARs and restart the server and the proxy once.
+
+The [JARs and SHA-256 files](artifacts/) were built locally under siberanka using Java 25; 400 tests
+across 68 suites passed. Both JARs carry `LICENSE` and `NOTICE` in `META-INF`. No hosted CI was run.
+
+Runtime requirements: Java 21+, Paper/Folia/Spigot 1.21.4+, Geyser with custom content enabled;
+for twilight-proxy, Velocity or BungeeCord with Geyser on the proxy. The runtime bridges target
+Geyser 2.11.3, 2.12.0 and 2.12.1; other Geyser core versions require validation.
+
+The notes below describe previous prereleases.
+
+## Twilight 1.0.0-beta.6
 
 **Worn armour and Java's poses.** Custom armour now shows on Bedrock players, armour stands and mobs: equipment
 assets of CraftEngine, Oraxen and 1.21.2+ packs, ItemsAdder's leather-coloured armour and dyed equipment. Hats,
@@ -190,7 +247,65 @@ Geyser 2.11.3; other Geyser core versions require validation.
 
 ## Türkçe
 
-### Twilight 1.0.0-beta.6
+### Twilight 1.0.1-pre.1 - ön sürüm
+
+**Geyser 2.12.1 (1298 numaralı derleme).** Geyser, Twilight'ın kullandığı Java varlık türü kaydını kaldırdı;
+bu yüzden o derlemede eşya ve blok görüntüleri, mobilyalar, düşen 3B eşyalar ve nokta bulutu uyarlaması
+çalışmayı bıraktı ve açılışta bir hata görünüyordu. Twilight artık kaydı her derlemede bulur; önceki Geyser 2.11
+ve 2.12 derlemeleri çalışmaya devam eder. Menü ve yazı yerleşimi de bunu değiştiren derlemelerde Geyser'ın
+istemci arayüz profilini okur, bulamazsa klasik profile döner.
+
+**Bedrock'ta özel elytralar.** Bedrock oyuncuları artık diğer oyuncuların özel elytralarını (CraftEngine,
+ItemsAdder, Oraxen ve Nexo elytra eşyaları) kendi kanatlarıyla, dururken ve süzülürken görür; Geyser proxy'de
+çalışıyorsa da (twilight-proxy). Önceden her planör vanilla elytra olarak görünüyordu. Bir Bedrock oyuncusunun
+kendi özel elytrası, Bedrock istemcisi yalnızca vanilla elytra eşyasıyla süzülebildiği için o oyuncuya hâlâ
+vanilla görünür. Yeni `geyser.elytra-override` seçeneği (varsayılan `false`) vanilla elytrayı özel kanatlarla
+yeniden çizer; tek elytrası tek bir özel görünüm olan sunucular içindir ve Bedrock'ta giyilen her elytrayı,
+vanilla olanlar dahil, değiştirir; vanilla elytrası olan sunucularda kapalı bırakın.
+
+**Birinci şahıs bakışta büyük 3B el eşyaları.** Bedrock, 3B aletleri ve silahları (baltalar, üç dişli mızraklar,
+kazmalar, kalkanlar) birinci şahıs bakışta Java'dan 1,3 ila 1,8 kat küçük gösteriyordu. Artık Java'nın birinci
+şahıs görünümü gibi ölçeklenir ve yerleştirilir: ölçülen siluet alanı Java'nınkinin 0,29-0,50 katından 0,80-0,95
+katına çıktı. Düz eşyalar, yaylar ve arbaletler değişmedi; üçüncü şahıs görünüm de değişmedi.
+
+**Modeller ve bloklar.** Yüzleri dokusunu standart olmayan bir anahtar altında adlandıran modeller (bir
+ItemsAdder paketinde görüldü; anahtar doku yoluydu, değer `#0`) dönüştürme sırasında onarılır; böylece katı mod
+artık tüm dönüştürmeyi reddetmez. Bir `model-repaired` bildirimi modeli adlandırır ve Java istemcilerinin onu
+eksik gösterebileceğini, kaynak modelin düzeltilmesi gerektiğini söyler. Belirsiz yüzler katı modda yine hata
+verir; artık iletide öğe ve yüz de bulunur. Özel bloklar Java'nın ortam kapanmasını ve yüz gölgelendirmesini
+korur: `"ambientocclusion": false` olan bir blok modeli veya `"shade": false` olan öğeler, o malzemeler için
+Bedrock'ın `ambient_occlusion` ve `face_dimming` ayarlarını kapatır; böylece parlayan veya düz aydınlatılmış
+bloklar artık kararmaz. Diğer bloklar değişmedi.
+
+**Kaynak paketi sunucusu.** Kötü davranışı nedeniyle yasaklanan bir istemci artık ret gönderilmeden önce
+yasaklı olarak kaydedilir; böylece yanıtla yarışan bir yeniden bağlanma içeri sızamaz.
+
+Blok gölgelendirmesi, paket sunucusundaki yasak sıralaması ve birinci şahıs ölçeği gözlemi için fikirleri
+veren yorik100'e teşekkürler (pull request #2).
+
+**Bilinen sınırlamalar.** Bir Bedrock oyuncusunun kendi özel elytrası o oyuncuya vanilla görünür. Kuzeye bakan
+görünmez bir eşya çerçevesindeki özel bir eşya Bedrock'ta görünmeyebilir; bu inceleniyor.
+
+**Test edildi:** Leaf 1.21.4 üzerinde CraftEngine ve Oraxen, Geyser 2.12.1 (1298 numaralı derleme) ve Floodgate
+ile; eşyaların, birinci şahıs bakışta 3B el eşyalarının, mobilyaların, görüntülerin, dururken ve süzülürken özel
+elytraların ve blokların Java 1.21.4 ve Bedrock 26.6x görüntüleri karşılaştırıldı. Sunucu açılışı Geyser 2.12.0
+(1263 numaralı derleme) üzerinde de denendi. CraftEngine ve Oraxen deneme paketlerinin dönüştürülmesi, istenen
+değişiklikler dışında beta.6 ile aynı paketleri üretti.
+
+Test sunucusu: `oyna.twilightnw.com`.
+
+İki JAR'ı da güncelleyin ve sunucuyu ve proxy'yi bir kez yeniden başlatın.
+
+[JAR'lar ve SHA-256 dosyaları](artifacts/) siberanka adına Java 25 ile yerelde derlendi; 68 paketteki
+400 test geçti. İki JAR da `META-INF` içinde `LICENSE` ve `NOTICE` taşır. Barındırılan CI çalıştırılmadı.
+
+Çalışma zamanı gereksinimleri: Java 21+, Paper/Folia/Spigot 1.21.4+, özel içeriği açık Geyser; twilight-proxy
+için proxy'de Geyser bulunan Velocity veya BungeeCord. Çalışma zamanı köprüleri Geyser 2.11.3, 2.12.0 ve
+2.12.1'i hedefler; diğer Geyser çekirdek sürümleri doğrulama gerektirir.
+
+Aşağıdaki notlar önceki ön sürümleri anlatır.
+
+#### Twilight 1.0.0-beta.6
 
 **Giyilen zırhlar ve Java'nın duruşları.** Özel zırhlar artık Bedrock oyuncularında, zırh askılarında ve
 moblarda görünür: CraftEngine'in, Oraxen'in ve 1.21.2+ paketlerinin ekipman varlıkları, ItemsAdder'ın deri

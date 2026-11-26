@@ -4,6 +4,27 @@
 
 All notable changes in Twilight are documented here.
 
+## 1.0.1-pre.1 - 2026-11-26
+
+- Geyser 2.12.1 (build 1298) support: the Java entity type registry Twilight used is gone on that build, which broke
+  item and block displays, furniture, dropped 3D items and point-cloud adaptation (an error at start). Twilight
+  finds the registry on each build, and earlier Geyser 2.11 and 2.12 builds keep working. The menu and text layout
+  reads Geyser's client UI profile on builds that changed it and falls back to the classic profile.
+- Bedrock viewers see other players' custom elytras (CraftEngine, ItemsAdder, Oraxen, Nexo) with their own wings,
+  standing and gliding, also when Geyser runs on the proxy. A Bedrock player's own custom elytra still looks vanilla
+  to that player.
+- New option `geyser.elytra-override` (default `false`): redraws the vanilla elytra itself with the custom wings,
+  for servers whose only elytra is one custom skin. It changes every worn elytra on Bedrock, vanilla ones too.
+- Large 3D handhelds (axes, tridents, pickaxes, shields) are scaled and placed like Java's first person view
+  instead of showing 1.3 to 1.8 times smaller. Flat items, bows, crossbows and the third person view are unchanged.
+- Models whose faces name their texture under a non-standard key are repaired during conversion instead of
+  failing strict mode, with a `model-repaired` notice. Ambiguous faces still fail strict mode, now with the
+  element and face in the message.
+- Custom blocks keep Java's ambient occlusion and face shading: `"ambientocclusion": false` and `"shade": false`
+  turn off Bedrock's `ambient_occlusion` and `face_dimming` for those materials.
+- Resource pack host: a client banned for misbehaving is recorded as banned before the refusal is sent, so a
+  reconnect that races the response cannot slip through.
+
 ## 1.0.0-beta.6 - 2026-10-18
 
 - Worn custom armour shows on Bedrock players, armour stands and mobs: equipment assets (CraftEngine, Oraxen,
@@ -133,6 +154,30 @@ First public beta of Twilight and twilight-proxy.
 ### Değişiklik günlüğü
 
 Twilight'taki tüm önemli değişiklikler burada belgelenir.
+
+#### 1.0.1-pre.1 - 2026-11-26
+
+- Geyser 2.12.1 (1298 numaralı derleme) desteği: Twilight'ın kullandığı Java varlık türü kaydı o derlemede
+  kaldırıldı; bu da eşya ve blok görüntülerini, mobilyaları, düşen 3B eşyaları ve nokta bulutu uyarlamasını bozuyordu
+  (açılışta hata). Twilight kaydı her derlemede bulur; önceki Geyser 2.11 ve 2.12 derlemeleri çalışmaya devam eder.
+  Menü ve yazı yerleşimi, bunu değiştiren derlemelerde Geyser'ın istemci arayüz profilini okur ve klasik profile
+  döner.
+- Bedrock oyuncuları diğer oyuncuların özel elytralarını (CraftEngine, ItemsAdder, Oraxen, Nexo) kendi kanatlarıyla,
+  dururken ve süzülürken görür; Geyser proxy'de çalışıyorsa da. Bir Bedrock oyuncusunun kendi özel elytrası o
+  oyuncuya hâlâ vanilla görünür.
+- Yeni `geyser.elytra-override` seçeneği (varsayılan `false`): vanilla elytrayı özel kanatlarla yeniden çizer;
+  tek elytrası tek bir özel görünüm olan sunucular içindir. Bedrock'ta giyilen her elytrayı, vanilla olanlar dahil,
+  değiştirir.
+- Büyük 3B el eşyaları (baltalar, üç dişli mızraklar, kazmalar, kalkanlar) 1,3 ila 1,8 kat küçük görünmek yerine
+  Java'nın birinci şahıs görünümü gibi ölçeklenir ve yerleştirilir. Düz eşyalar, yaylar, arbaletler ve üçüncü şahıs
+  görünüm değişmedi.
+- Yüzleri dokusunu standart olmayan bir anahtar altında adlandıran modeller katı modda başarısız olmak yerine
+  dönüştürme sırasında onarılır ve bir `model-repaired` bildirimi verilir. Belirsiz yüzler katı modda yine hata
+  verir; artık iletide öğe ve yüz de bulunur.
+- Özel bloklar Java'nın ortam kapanmasını ve yüz gölgelendirmesini korur: `"ambientocclusion": false` ve
+  `"shade": false`, o malzemeler için Bedrock'ın `ambient_occlusion` ve `face_dimming` ayarlarını kapatır.
+- Kaynak paketi sunucusu: kötü davranışı nedeniyle yasaklanan bir istemci ret gönderilmeden önce yasaklı olarak
+  kaydedilir; böylece yanıtla yarışan bir yeniden bağlanma içeri sızamaz.
 
 #### 1.0.0-beta.6 - 2026-10-18
 

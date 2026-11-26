@@ -43,7 +43,7 @@ are in the [reports](docs/); limits per feature are in [docs/COMPATIBILITY.md](d
 |---|---|
 | Java | 21 or newer (Twilight is built with Java 25, release 21) |
 | Backend server | Paper, Folia or Spigot 1.21.4 or newer; newest versions first (tested on Paper 26.2) |
-| Geyser | 2.x with custom content enabled; the runtime bridges are validated against Geyser 2.11.3 and 2.12.0 |
+| Geyser | 2.x with custom content enabled; the runtime bridges are validated against Geyser 2.11.3, 2.12.0 and 2.12.1 (build 1298) |
 | Bedrock clients | The current release (tested with 1.26.5203); older ones as far as Geyser supports them |
 | Proxy (optional) | Velocity 3.x/4.x or BungeeCord/Waterfall with Geyser on the proxy (tested on Velocity 4.2.0 and BungeeCord 26.1) |
 
@@ -206,6 +206,7 @@ flow mappings are only read and checked, never changed.
 | `player-heads` | `true` | Player heads show their skins on Bedrock instead of Steve's (menus, hands, armour stands, holograms); new heads need a restart ([player heads](#player-heads)) |
 | `player-head-skins-of-players` | `1024` | Also register the skins of this many most recent players, for heads of players that menus show (`0`: none) |
 | `custom-blocks` | `true` | Content plugins' custom blocks (ItemsAdder's and CraftEngine's ores and blocks on note blocks, mushroom blocks and tripwire) get their own Bedrock look instead of the vanilla block, and the items that place them show the block in 3D in the inventory and when dropped. Geyser registers blocks when it starts: a build that changes them needs a restart, like item changes ([custom blocks](#custom-blocks)) |
+| `elytra-override` | `false` | Custom elytras on Bedrock. Other players' custom elytras are always drawn with their own wings, standing and gliding. A player's own custom elytra still looks vanilla to that player, because the Bedrock client only glides with the vanilla elytra. `true` redraws the vanilla elytra itself with the custom wings, for servers whose only elytra is one custom skin; it then changes every worn elytra on Bedrock, vanilla ones too, so leave it off on servers with vanilla elytras. Needs one distinct wings texture among the custom elytras |
 
 ### `ui`
 
@@ -314,6 +315,7 @@ bedrock:                 # see "Bedrock runtime on the proxy"
   translations: true
   loading-protection-seconds: 300
   custom-blocks: true
+  elytra-override: false
 ```
 
 | Key | Meaning |
@@ -1125,7 +1127,7 @@ Bu sayfa yöneticiler ve eklenti geliştiricileri için başvuru kaynağıdır. 
 |---|---|
 | Java | 21 veya üstü (Twilight Java 25 ile, release 21 olarak derlenir) |
 | Arka uç sunucu | Paper, Folia veya Spigot 1.21.4 veya üstü; önce en yeni sürümler (Paper 26.2 üzerinde test edildi) |
-| Geyser | Özel içeriği açık 2.x; çalışma zamanı köprüleri Geyser 2.11.3 ve 2.12.0'a karşı doğrulandı |
+| Geyser | Özel içeriği açık 2.x; çalışma zamanı köprüleri Geyser 2.11.3, 2.12.0 ve 2.12.1'e (1298 numaralı derleme) karşı doğrulandı |
 | Bedrock istemcileri | Güncel sürüm (1.26.5203 ile test edildi); eskileri Geyser'ın desteklediği kadar |
 | Proxy (isteğe bağlı) | Proxy'de Geyser bulunan Velocity 3.x/4.x veya BungeeCord/Waterfall (Velocity 4.2.0 ve BungeeCord 26.1 üzerinde test edildi) |
 
@@ -1292,6 +1294,7 @@ yalnızca okunur ve denetlenir, asla değiştirilmez.
 | `player-heads` | `true` | Oyuncu kafaları Bedrock'ta Steve'inki yerine kendi skinleriyle görünür (menüler, eller, zırh standları, hologramlar); yeni kafalar yeniden başlatma gerektirir ([oyuncu kafaları](#oyuncu-kafaları)) |
 | `player-head-skins-of-players` | `1024` | Menülerin gösterdiği oyuncu kafaları için en son bu kadar oyuncunun skinini de kaydeder (`0`: hiçbiri) |
 | `custom-blocks` | `true` | İçerik eklentilerinin özel blokları (ItemsAdder'ın ve CraftEngine'in nota blokları, mantar blokları ve tuzak teli üzerindeki madenleri ve blokları) vanilla blok yerine kendi Bedrock görünümlerini alır; onları yerleştiren eşyalar bloğu envanterde ve yere düştüğünde 3B gösterir. Geyser blokları açılışta kaydeder: blokları değiştiren bir derleme, eşya değişiklikleri gibi yeniden başlatma gerektirir ([özel bloklar](#özel-bloklar)) |
+| `elytra-override` | `false` | Bedrock'ta özel elytralar. Diğer oyuncuların özel elytraları her zaman kendi kanatlarıyla, dururken ve süzülürken çizilir. Bir oyuncunun kendi özel elytrası, Bedrock istemcisi yalnızca vanilla elytra ile süzülebildiği için o oyuncuya hâlâ vanilla görünür. `true` değeri vanilla elytrayı özel kanatlarla yeniden çizer; tek elytrası tek bir özel görünüm olan sunucular içindir ve Bedrock'ta giyilen her elytrayı, vanilla olanlar dahil, değiştirir; vanilla elytrası olan sunucularda kapalı bırakın. Özel elytralar arasında tek ve ayrı bir kanat dokusu gerekir |
 
 ##### `ui`
 
@@ -1400,6 +1403,7 @@ bedrock:                 # "Proxy'de Bedrock çalışma zamanı" bölümüne bak
   translations: true
   loading-protection-seconds: 300
   custom-blocks: true
+  elytra-override: false
 ```
 
 | Anahtar | Anlamı |
