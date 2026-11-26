@@ -165,11 +165,21 @@ final class EquipmentModels {
      * {@code item} condition, as Bedrock's own armour attachables use), so a held item keeps its icon or model.
      */
     static JsonObject attachable(String identifier, CustomItemDescriptor.Equipment equipment, Look look, String texturePath) {
-        JsonObject description = new JsonObject();
-        description.addProperty("identifier", identifier + ".worn");
         JsonObject item = new JsonObject();
         item.addProperty(identifier, "query.is_item_name_any('" + slotName(equipment.slot()) + "', 0, '" + identifier + "')");
-        description.add("item", item);
+        return describe(identifier + ".worn", item, look, texturePath);
+    }
+
+    /** The attachable of Bedrock's own elytra drawn with custom wings (the item Geyser sends for every glider). */
+    static JsonObject vanillaElytraAttachable(String texturePath) {
+        return describe("minecraft:elytra", null,
+                new Look("wings", "geometry.elytra", "variable.chest_layer_visible", true), texturePath);
+    }
+
+    private static JsonObject describe(String identifier, JsonObject item, Look look, String texturePath) {
+        JsonObject description = new JsonObject();
+        description.addProperty("identifier", identifier);
+        if (item != null) description.add("item", item);
         JsonObject materials = new JsonObject();
         materials.addProperty("default", look.wings() ? "elytra" : "armor");
         materials.addProperty("enchanted", look.wings() ? "elytra_glint" : "armor_enchanted");

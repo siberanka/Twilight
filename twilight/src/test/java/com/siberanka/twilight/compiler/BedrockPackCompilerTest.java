@@ -18,6 +18,7 @@ import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -1643,6 +1644,86 @@ class BedrockPackCompilerTest {
                     legs.getAsJsonObject("textures").get("default").getAsString() + ".png")));
             assertEquals(Color.YELLOW.getRGB(), leggings.getRGB(0, 0), "leggings draw the humanoid_leggings layer");
             assertEquals(2, zip.stream().filter(entry -> entry.getName().endsWith(".worn.json")).count());
+        }
+    }
+
+    private BuildResult buildWings(String name, boolean override, String[][] elytras) throws Exception {
+        Path source = root.resolve(name);
+        List<CustomItemDescriptor> live = new ArrayList<>();
+        for (String[] elytra : elytras) {
+            String id = elytra[0], wings = elytra[1], base = elytra[2];
+            write(source, "assets/demo/items/" + id + ".json",
+                    "{\"model\":{\"type\":\"minecraft:model\",\"model\":\"demo:item/" + id + "\"}}");
+            write(source, "assets/demo/models/item/" + id + ".json",
+                    "{\"parent\":\"minecraft:item/generated\",\"textures\":{\"layer0\":\"demo:item/" + id + "\"}}");
+            png(source.resolve("assets/demo/textures/item/" + id + ".png"), Color.ORANGE);
+            write(source, "assets/demo/equipment/" + wings + ".json",
+                    "{\"layers\":{\"wings\":[{\"texture\":\"demo:" + wings + "\",\"use_player_texture\":false}]}}");
+            png(source.resolve("assets/demo/textures/entity/equipment/wings/" + wings + ".png"),
+                    wings.equals("flame") ? Color.RED : Color.BLUE);
+            live.add(new CustomItemDescriptor("test", base, Optional.of("demo:" + id), OptionalInt.empty(), id,
+                    Optional.of(new CustomItemDescriptor.Equipment("chest", Optional.of("demo:" + wings)))));
+        }
+        ContentSource pack = new ContentSource("test", ContentSource.Kind.RESOURCE_PACK, source, 1);
+        return new BedrockPackCompiler(root.resolve("data-" + name), config()).withElytraOverride(override)
+                .build(List.of(pack), live);
+    }
+
+    private static String notices(BuildResult result) throws Exception {
+        return JsonParser.parseString(Files.readString(result.outputDirectory().resolve("build-report.json")))
+                .getAsJsonObject().get("notices").toString();
+    }
+
+    /**
+     * Geyser sends any glider in the chest slot to Bedrock as minecraft:elytra, so the custom item's own worn
+     * attachable never applies; the wings are drawn by an attachable for the vanilla identifier.
+     */
+    @Test
+    void customElytraRedrawsBedrocksVanillaElytra() throws Exception {
+        BuildResult result = buildWings("elytra-one", true, new String[][]{
+                {"flame_elytra", "flame", "minecraft:elytra"}, {"flame_elytra_broken", "flame", "minecraft:elytra"}});
+        assertTrue(result.problems().isEmpty(), result.problems().toString());
+        try (ZipFile zip = new ZipFile(result.outputDirectory().resolve("pack.zip").toFile())) {
+            JsonObject vanilla = read(zip, "attachables/twilight_vanilla_elytra.json")
+                    .getAsJsonObject("minecraft:attachable").getAsJsonObject("description");
+            assertEquals("minecraft:elytra", vanilla.get("identifier").getAsString());
+            assertFalse(vanilla.has("item"), "the vanilla identifier needs no item condition");
+            assertEquals("geometry.elytra", vanilla.getAsJsonObject("geometry").get("default").getAsString());
+            assertEquals("elytra", vanilla.getAsJsonObject("materials").get("default").getAsString());
+            assertEquals("variable.chest_layer_visible = 0.0;", vanilla.getAsJsonObject("scripts").get("parent_setup").getAsString());
+            assertEquals("controller.animation.elytra.default", vanilla.getAsJsonObject("animations").get("default_controller").getAsString());
+            String texture = vanilla.getAsJsonObject("textures").get("default").getAsString();
+            assertTrue(texture.startsWith("textures/twilight/equipment/"), texture);
+            BufferedImage image = ImageIO.read(zip.getInputStream(zip.getEntry(texture + ".png")));
+            assertEquals(Color.RED.getRGB(), image.getRGB(0, 0), "the flame wings, not the vanilla texture");
+            // Both items keep their own worn attachable (the same wings, one texture file).
+            assertEquals(2, zip.stream().filter(entry -> entry.getName().endsWith(".worn.json")).count());
+            assertEquals(1, zip.stream().filter(entry -> entry.getName().startsWith("textures/twilight/equipment/")).count());
+        }
+    }
+
+    /** One vanilla elytra draws one look: elytras with different wings stay vanilla, and the build says so. */
+    @Test
+    void differentElytraWingsLeaveBedrocksElytraVanilla() throws Exception {
+        BuildResult result = buildWings("elytra-two", true, new String[][]{
+                {"flame_elytra", "flame", "minecraft:elytra"}, {"frost_elytra", "frost", "minecraft:elytra"}});
+        try (ZipFile zip = new ZipFile(result.outputDirectory().resolve("pack.zip").toFile())) {
+            assertNull(zip.getEntry("attachables/twilight_vanilla_elytra.json"));
+            assertEquals(2, zip.stream().filter(entry -> entry.getName().endsWith(".worn.json")).count());
+        }
+        assertTrue(notices(result).contains("2 different wings"), notices(result));
+    }
+
+    /** Wings on an item that is no glider are not sent as the vanilla elytra; the setting turns the override off. */
+    @Test
+    void wingsOfNonGlidersAndDisabledOverrideKeepVanillaElytra() throws Exception {
+        BuildResult cosmetic = buildWings("elytra-cosmetic", true, new String[][]{{"cape_wings", "flame", "minecraft:paper"}});
+        BuildResult off = buildWings("elytra-off", false, new String[][]{{"flame_elytra", "flame", "minecraft:elytra"}});
+        for (BuildResult result : List.of(cosmetic, off)) {
+            try (ZipFile zip = new ZipFile(result.outputDirectory().resolve("pack.zip").toFile())) {
+                assertNull(zip.getEntry("attachables/twilight_vanilla_elytra.json"));
+                assertEquals(1, zip.stream().filter(entry -> entry.getName().endsWith(".worn.json")).count());
+            }
         }
     }
 

@@ -86,12 +86,23 @@ public final class BedrockPackCompiler {
      * load: on a server with thousands of 3D items that takes minutes on a phone. Only Twilight's display bridge on
      * the same server's Geyser uses it, so a pack for a proxy's Geyser leaves it out.
      */
+    /**
+     * Whether a custom elytra also redraws Bedrock's own elytra. Geyser sends every glider in the chest slot to
+     * Bedrock as the vanilla elytra (GliderUtils.toBedrockChest), so the client never sees the custom item there and
+     * an attachable bound to it never applies; only an attachable for minecraft:elytra can show the wings.
+     */
+    public BedrockPackCompiler withElytraOverride(boolean value) {
+        this.elytraOverride = value;
+        return this;
+    }
+
     public BedrockPackCompiler withItemDisplays(boolean value) {
         this.itemDisplays = value;
         return this;
     }
 
     private boolean itemDisplays = true;
+    private boolean elytraOverride = true;
     /** Keys of the items shown in Java item displays ({@code DisplayedItems}); null gives every item a variant. */
     private Set<String> displayedItems;
 
@@ -195,6 +206,8 @@ public final class BedrockPackCompiler {
 
         Map<String, CustomItemDescriptor.Equipment> worn = equipmentBySelector(liveItems);
         Set<String> emitted = new HashSet<>();
+        // Wings texture path -> the elytra items that wear it (items Geyser sends to Bedrock as the vanilla elytra).
+        Map<String, List<String>> gliderWings = new java.util.TreeMap<>();
         for (ItemCandidate candidate : candidates) {
             TextureSet.MISSING_FILES.get().clear();
             try {
@@ -311,7 +324,7 @@ public final class BedrockPackCompiler {
                 CustomItemDescriptor.Equipment equipment = worn.get(selectorKey(candidate));
                 addMapping(mappedItems, candidate, identifier, iconKey, model.handheld(), equipment);
                 if (equipment != null && equipment.assetId().isPresent()) {
-                    wear(resources, vanillaAssets, candidate, identifier, safe, equipment, packFiles, notices);
+                    wear(resources, vanillaAssets, candidate, identifier, safe, equipment, packFiles, notices, gliderWings);
                 }
                 if (model.isThreeDimensional() && candidate.visualModels().size() == 1) {
                     itemModels.putIfAbsent(JavaModelResolver.qualified(candidate.visualModels().getFirst(), "minecraft"), identifier);
@@ -332,6 +345,7 @@ public final class BedrockPackCompiler {
             }
         }
         TextureSet.MISSING_FILES.remove();
+        if (elytraOverride) overrideVanillaElytra(gliderWings, packFiles, notices);
 
         if (itemDisplays) for (String key : new java.util.TreeSet<>(displayedOwn)) {
             try {
@@ -1286,7 +1300,8 @@ public final class BedrockPackCompiler {
     /** Worn custom armour and elytras: the equipment asset Java draws on the body (see {@link EquipmentModels}). */
     private static void wear(ResourceIndex resources, VanillaAssetCache vanillaAssets, ItemCandidate candidate,
                              String identifier, String safe, CustomItemDescriptor.Equipment equipment,
-                             Map<String, byte[]> packFiles, List<String> notices) {
+                             Map<String, byte[]> packFiles, List<String> notices,
+                             Map<String, List<String>> gliderWings) {
         String asset = equipment.assetId().orElseThrow();
         String label = candidate.baseItem() + " -> " + candidate.visualModels() + " worn as " + asset;
         try {
@@ -1322,9 +1337,34 @@ public final class BedrockPackCompiler {
             packFiles.putIfAbsent(texturePath + ".png", TextureSet.png(texture.get()));
             packFiles.put("attachables/" + safe + ".worn.json",
                     jsonBytes(EquipmentModels.attachable(identifier, equipment, look.get(), texturePath)));
+            if (look.get().wings() && candidate.baseItem().equals("minecraft:elytra")) {
+                gliderWings.computeIfAbsent(texturePath, key -> new ArrayList<>()).add(identifier);
+            }
         } catch (IOException | RuntimeException failure) {
             notices.add(label + ": " + failure.getMessage() + "; worn, it shows nothing on Bedrock");
         }
+    }
+
+    /**
+     * Geyser sends any glider in the chest slot to Bedrock as the vanilla {@code minecraft:elytra} (the client only
+     * glides with it), for the player's own inventory and for every viewer. The custom item's worn attachable never
+     * matches then, so the wings are drawn by an attachable for the vanilla identifier instead. It cannot tell one
+     * elytra from another, so it applies only while the pack's custom elytras all wear the same wings.
+     */
+    private static void overrideVanillaElytra(Map<String, List<String>> gliderWings, Map<String, byte[]> packFiles,
+                                              List<String> notices) {
+        if (gliderWings.isEmpty()) return;
+        if (gliderWings.size() > 1) {
+            notices.add("custom elytras wear " + gliderWings.size() + " different wings " + gliderWings.keySet()
+                    + ": Geyser shows every worn elytra to Bedrock as the vanilla one, which can draw only one look, so "
+                    + "they stay vanilla there");
+            return;
+        }
+        String texture = gliderWings.keySet().iterator().next();
+        packFiles.put("attachables/twilight_vanilla_elytra.json",
+                jsonBytes(EquipmentModels.vanillaElytraAttachable(texture)));
+        notices.add("Bedrock draws every worn elytra, vanilla ones too, with the wings " + texture + " of "
+                + gliderWings.get(texture) + " (Geyser sends them all as minecraft:elytra)");
     }
 
     /**
