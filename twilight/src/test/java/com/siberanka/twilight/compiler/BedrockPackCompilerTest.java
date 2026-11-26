@@ -392,6 +392,77 @@ class BedrockPackCompilerTest {
         }
     }
 
+    /**
+     * Java's {@code ambientocclusion: false} (inherited through parents) and {@code shade: false} reach Bedrock as
+     * {@code ambient_occlusion} and {@code face_dimming} on the block's materials. Models that set neither keep
+     * the materials they always had.
+     */
+    @Test
+    void carriesJavasAmbientOcclusionAndShadingToBlockMaterials() throws Exception {
+        Path source = root.resolve("shading-source");
+        write(source, "assets/minecraft/blockstates/note_block.json", """
+                {"variants":{
+                  "instrument=basedrum,note=0,powered=false":{"model":"demo:block/plain"},
+                  "instrument=basedrum,note=1,powered=false":{"model":"demo:block/flat"},
+                  "instrument=basedrum,note=2,powered=false":{"model":"demo:block/unshaded"},
+                  "instrument=basedrum,note=3,powered=false":{"model":"demo:block/lamp"},
+                  "instrument=basedrum,note=4,powered=false":{"model":"demo:block/plant"},
+                  "instrument=basedrum,note=5,powered=false":{"model":"demo:block/plant_unshaded"}}}
+                """);
+        String faces = "\"faces\":{\"north\":{\"texture\":\"#all\"},\"south\":{\"texture\":\"#all\"},\"east\":{\"texture\":\"#all\"},"
+                + "\"west\":{\"texture\":\"#all\"},\"up\":{\"texture\":\"#all\"},\"down\":{\"texture\":\"#all\"}}";
+        write(source, "assets/demo/models/block/plain.json", "{\"textures\":{\"all\":\"demo:block/ruby\"},\"elements\":[{\"from\":[0,0,0],"
+                + "\"to\":[16,16,16]," + faces + "}]}");
+        write(source, "assets/demo/models/block/base.json", "{\"ambientocclusion\":false,\"textures\":{\"all\":\"demo:block/ruby\"},"
+                + "\"elements\":[{\"from\":[0,0,0],\"to\":[16,16,16]," + faces + "}]}");
+        write(source, "assets/demo/models/block/flat.json", "{\"parent\":\"demo:block/base\"}");
+        write(source, "assets/demo/models/block/unshaded.json", "{\"textures\":{\"all\":\"demo:block/ruby\"},\"elements\":[{\"from\":[0,0,0],"
+                + "\"to\":[16,16,16],\"shade\":false," + faces + "}]}");
+        write(source, "assets/demo/models/block/lamp.json", "{\"textures\":{\"all\":\"demo:block/ruby\"},\"elements\":[{\"from\":[0,0,0],"
+                + "\"to\":[16,16,16],\"faces\":{\"north\":{\"texture\":\"#all\",\"shade\":false},\"south\":{\"texture\":\"#all\"},"
+                + "\"east\":{\"texture\":\"#all\"},\"west\":{\"texture\":\"#all\"},\"up\":{\"texture\":\"#all\"},\"down\":{\"texture\":\"#all\"}}}]}");
+        String cross = "\"faces\":{\"north\":{\"texture\":\"#cross\"},\"south\":{\"texture\":\"#cross\"}}";
+        write(source, "assets/demo/models/block/plant.json", "{\"textures\":{\"cross\":\"demo:block/plant\"},\"elements\":["
+                + "{\"from\":[0.8,0,8],\"to\":[15.2,16,8],\"rotation\":{\"origin\":[8,8,8],\"axis\":\"y\",\"angle\":45}," + cross + "}]}");
+        write(source, "assets/demo/models/block/plant_unshaded.json", "{\"ambientocclusion\":false,\"textures\":{\"cross\":\"demo:block/plant\"},"
+                + "\"elements\":[{\"from\":[0.8,0,8],\"to\":[15.2,16,8],\"shade\":false,"
+                + "\"rotation\":{\"origin\":[8,8,8],\"axis\":\"y\",\"angle\":45}," + cross + "}]}");
+        png(source.resolve("assets/demo/textures/block/ruby.png"), Color.RED);
+        png(source.resolve("assets/demo/textures/block/plant.png"), new Color(0, 255, 0, 0));
+        ContentSource pack = new ContentSource("test", ContentSource.Kind.RESOURCE_PACK, source, 1);
+        BuildResult result = new BedrockPackCompiler(root.resolve("data-shading"), config()).build(List.of(pack), List.of());
+        try (ZipFile zip = new ZipFile(result.outputDirectory().resolve("pack.zip").toFile())) {
+            JsonObject file = JsonParser.parseString(new String(zip.getInputStream(zip.getEntry("twilight/geyser_blocks.json"))
+                    .readAllBytes(), StandardCharsets.UTF_8)).getAsJsonObject();
+            Map<String, JsonObject> blocks = new LinkedHashMap<>();
+            for (var block : file.getAsJsonArray("blocks")) blocks.put(block.getAsJsonObject().get("state").getAsString(), block.getAsJsonObject());
+            assertEquals(6, blocks.size());
+            JsonObject plain = blocks.get("minecraft:note_block[instrument=basedrum,note=0,powered=false]").getAsJsonObject("materials");
+            for (var material : plain.entrySet()) {
+                assertEquals(java.util.Set.of("texture", "render_method"), material.getValue().getAsJsonObject().keySet(),
+                        "a model that sets neither keeps the materials it always had");
+            }
+            JsonObject flat = blocks.get("minecraft:note_block[instrument=basedrum,note=1,powered=false]").getAsJsonObject("materials");
+            for (var material : flat.entrySet()) {
+                assertFalse(material.getValue().getAsJsonObject().get("ambient_occlusion").getAsBoolean(), "inherited from the parent");
+                assertFalse(material.getValue().getAsJsonObject().has("face_dimming"));
+            }
+            JsonObject unshaded = blocks.get("minecraft:note_block[instrument=basedrum,note=2,powered=false]").getAsJsonObject("materials");
+            for (var material : unshaded.entrySet()) {
+                assertFalse(material.getValue().getAsJsonObject().get("face_dimming").getAsBoolean());
+                assertFalse(material.getValue().getAsJsonObject().has("ambient_occlusion"));
+            }
+            JsonObject lamp = blocks.get("minecraft:note_block[instrument=basedrum,note=3,powered=false]").getAsJsonObject("materials");
+            assertFalse(lamp.getAsJsonObject("north").get("face_dimming").getAsBoolean(), "only the face that opts out");
+            assertFalse(lamp.getAsJsonObject("south").has("face_dimming"));
+            JsonObject plant = blocks.get("minecraft:note_block[instrument=basedrum,note=4,powered=false]").getAsJsonObject("materials");
+            assertEquals(java.util.Set.of("texture", "render_method"), plant.getAsJsonObject("*").keySet());
+            JsonObject flatPlant = blocks.get("minecraft:note_block[instrument=basedrum,note=5,powered=false]").getAsJsonObject("materials");
+            assertFalse(flatPlant.getAsJsonObject("*").get("ambient_occlusion").getAsBoolean());
+            assertFalse(flatPlant.getAsJsonObject("*").get("face_dimming").getAsBoolean());
+        }
+    }
+
     @Test
     void expandsPartialBlockStatesInJavaOrder() {
         var domain = CustomBlockCompiler.BLOCKS.get("note_block");

@@ -226,11 +226,13 @@ public final class CustomBlocks implements AutoCloseable {
             JsonObject value = material.getValue().getAsJsonObject();
             String renderMethod = value.get("render_method").getAsString();
             opaqueCube &= renderMethod.equals("opaque");
-            components.materialInstance(material.getKey(), MaterialInstance.builder()
+            // Both default to on, as in Bedrock; the pack turns them off where the Java model does.
+            MaterialInstance.Builder instance = MaterialInstance.builder()
                     .texture(value.get("texture").getAsString())
                     .renderMethod(renderMethod)
-                    .faceDimming(true)
-                    .build());
+                    .faceDimming(flag(value, "face_dimming"));
+            if (!flag(value, "ambient_occlusion")) instance.ambientOcclusionExponent(0.0f);
+            components.materialInstance(material.getKey(), instance.build());
         }
         components.selectionBox(box(block.getAsJsonArray("selection")));
         List<BoxComponent> collision = new ArrayList<>();
@@ -250,6 +252,10 @@ public final class CustomBlocks implements AutoCloseable {
                 .includedInCreativeInventory(false)
                 .components(components.build())
                 .build();
+    }
+
+    private static boolean flag(JsonObject value, String key) {
+        return !value.has(key) || value.get(key).getAsBoolean();
     }
 
     private static BoxComponent box(JsonArray value) {

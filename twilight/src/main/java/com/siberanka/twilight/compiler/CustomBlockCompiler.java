@@ -186,7 +186,19 @@ final class CustomBlockCompiler {
 
     /** One Bedrock look: a unit cube with a texture per face, or a block geometry with one atlas. */
     private record Look(boolean cube, Map<String, String> faceTextures, String atlasTexture, JsonObject geometry,
-                        String renderMethod, String signature) {}
+                        String renderMethod, String signature, boolean ambientOcclusion, Map<String, Boolean> dimming) {}
+
+    /**
+     * Whether Java shades a face by its direction: an element or a face can switch that off with {@code "shade": false}
+     * (Java documents the key on the element; a face that carries it is treated the same).
+     */
+    static boolean shaded(JsonObject element, JsonObject face) {
+        return !(isFalse(element.get("shade")) || face != null && isFalse(face.get("shade")));
+    }
+
+    private static boolean isFalse(JsonElement value) {
+        return value != null && value.isJsonPrimitive() && value.getAsJsonPrimitive().isBoolean() && !value.getAsBoolean();
+    }
 
     /**
      * A model's shape and art independent of its file and texture variable names: the elements with every face's
@@ -232,7 +244,9 @@ final class CustomBlockCompiler {
             if (cube != null) {
                 Map<String, String> faces = new LinkedHashMap<>();
                 boolean translucent = false, cutout = false;
+                Map<String, Boolean> dimming = new LinkedHashMap<>();
                 for (String face : FACES) {
+                    dimming.put(face, shaded(cube, cube.getAsJsonObject("faces").getAsJsonObject(face)));
                     JsonObject javaFace = cube.getAsJsonObject("faces").getAsJsonObject(face);
                     BufferedImage image = faceImage(model, javaFace, face);
                     int alpha = alphaKind(image);
@@ -241,7 +255,7 @@ final class CustomBlockCompiler {
                     faces.put(face, texture(image));
                 }
                 return new Look(true, faces, null, null, translucent ? "blend" : cutout ? "alpha_test" : "opaque",
-                        signature(resources, model));
+                        signature(resources, model), model.ambientOcclusion(), dimming);
             }
             List<String> used = new ArrayList<>();
             for (String texture : model.textures().values()) if (!used.contains(texture)) used.add(texture);
@@ -265,8 +279,19 @@ final class CustomBlockCompiler {
                 notices.add("custom block model " + variant.model() + " reaches past the space Bedrock allows a block (2 pixels"
                         + " less than Java on each side); its outermost pixels are pulled in");
             }
+            // One material covers the whole geometry, so directional shading goes only when no face has it.
+            boolean anyShaded = false, anyFace = false;
+            for (JsonElement element : model.elements()) {
+                JsonObject faces = element.getAsJsonObject().getAsJsonObject("faces");
+                if (faces == null) continue;
+                for (Map.Entry<String, JsonElement> face : faces.entrySet()) {
+                    anyFace = true;
+                    anyShaded |= shaded(element.getAsJsonObject(), face.getValue().getAsJsonObject());
+                }
+            }
             return new Look(false, Map.of(), texture(image), geometry,
-                    alpha == 2 ? "blend" : "alpha_test", signature(resources, model));
+                    alpha == 2 ? "blend" : "alpha_test", signature(resources, model), model.ambientOcclusion(),
+                    Map.of("*", anyShaded || !anyFace));
         } catch (IOException | RuntimeException failure) {
             notices.add("custom block model " + variant.model() + " could not be converted (" + failure.getMessage()
                     + "); Bedrock keeps the vanilla block");
@@ -287,7 +312,7 @@ final class CustomBlockCompiler {
                 // Keys follow the Java state, so every backend's pack can draw the same Bedrock block its own way.
                 String faceKey = key + "_" + face;
                 terrainTexture(faceKey, look.faceTextures().get(face));
-                materials.add(face, material(faceKey, look.renderMethod()));
+                materials.add(face, material(faceKey, look.renderMethod(), look.ambientOcclusion(), look.dimming().get(face)));
             }
         } else {
             String geometry = "geometry." + key;
@@ -296,7 +321,7 @@ final class CustomBlockCompiler {
             geometries.add(copy);
             entry.addProperty("geometry", geometry);
             terrainTexture(key, look.atlasTexture());
-            materials.add("*", material(key, look.renderMethod()));
+            materials.add("*", material(key, look.renderMethod(), look.ambientOcclusion(), look.dimming().get("*")));
         }
         entry.add("materials", materials);
         if (variant.x() != 0 || variant.y() != 0) entry.add("rotation", BedrockPackCompiler.intArray(variant.x(), variant.y()));
@@ -319,10 +344,13 @@ final class CustomBlockCompiler {
         entry.add("collision", collision);
     }
 
-    private static JsonObject material(String texture, String renderMethod) {
+    /** The keys {@code ambient_occlusion} and {@code face_dimming} are written only when off: Bedrock's default is on. */
+    private static JsonObject material(String texture, String renderMethod, boolean ambientOcclusion, boolean faceDimming) {
         JsonObject material = new JsonObject();
         material.addProperty("texture", texture);
         material.addProperty("render_method", renderMethod);
+        if (!ambientOcclusion) material.addProperty("ambient_occlusion", false);
+        if (!faceDimming) material.addProperty("face_dimming", false);
         return material;
     }
 

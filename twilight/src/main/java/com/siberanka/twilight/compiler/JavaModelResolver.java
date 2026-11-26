@@ -100,8 +100,14 @@ final class JavaModelResolver {
         Map<String, String> textures = new LinkedHashMap<>();
         JsonObject display = new JsonObject();
         boolean frontLight = false;
+        // Java's default: block models are shaded by ambient occlusion unless a model in the chain turns it off.
+        boolean ambientOcclusion = true;
         com.google.gson.JsonArray elements = null;
         for (JsonObject json : chain) {
+            if (json.has("ambientocclusion") && json.get("ambientocclusion").isJsonPrimitive()
+                    && json.get("ambientocclusion").getAsJsonPrimitive().isBoolean()) {
+                ambientOcclusion = json.get("ambientocclusion").getAsBoolean();
+            }
             if (json.has("gui_light")) frontLight = json.get("gui_light").getAsString().equals("front");
             if (json.has("textures") && json.get("textures").isJsonObject()) {
                 for (Map.Entry<String, JsonElement> texture : json.getAsJsonObject("textures").entrySet()) {
@@ -122,7 +128,7 @@ final class JavaModelResolver {
         ModelFaceRepair.Result repaired = ModelFaceRepair.repair(elements, textures, resolvedTextures);
         if (repaired.repaired() > 0) repairs.putIfAbsent(modelId, ModelFaceRepair.note(modelId, repaired));
         return new ResolvedJavaModel(modelId, elements, Map.copyOf(resolvedTextures),
-                display, handheld, frontLight);
+                display, handheld, frontLight, List.of(), ambientOcclusion);
     }
 
     /** Notes for the models whose faces were repaired while resolving, one line per model. */

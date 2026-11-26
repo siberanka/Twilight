@@ -7,10 +7,14 @@ import java.util.Map;
 import java.util.List;
 
 record ResolvedJavaModel(String identifier, JsonArray elements, Map<String, String> textures, JsonObject display,
-                         boolean handheld, boolean frontLight, List<ResolvedJavaModel> parts) {
+                         boolean handheld, boolean frontLight, List<ResolvedJavaModel> parts, boolean ambientOcclusion) {
     ResolvedJavaModel(String identifier, JsonArray elements, Map<String, String> textures, JsonObject display,
                       boolean handheld, boolean frontLight) {
-        this(identifier, elements, textures, display, handheld, frontLight, List.of());
+        this(identifier, elements, textures, display, handheld, frontLight, List.of(), true);
+    }
+    ResolvedJavaModel(String identifier, JsonArray elements, Map<String, String> textures, JsonObject display,
+                      boolean handheld, boolean frontLight, List<ResolvedJavaModel> parts) {
+        this(identifier, elements, textures, display, handheld, frontLight, parts, true);
     }
     ResolvedJavaModel { parts = List.copyOf(parts); }
     List<ResolvedJavaModel> renderParts() { return parts.isEmpty() ? List.of(this) : parts; }
