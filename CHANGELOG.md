@@ -4,6 +4,32 @@
 
 All notable changes in Twilight are documented here.
 
+## 1.0.1-pre.2 - 2026-11-27
+
+- Invisible item frames: furniture and 3D items in frames facing north are drawn again, and frames facing east,
+  west, up and down are no longer about one block out of place. Newer Geyser builds turn the frame entity by its
+  facing after spawning it, and Twilight's display followed that turn. Visible frames are unchanged.
+- Custom datapack biomes through the proxy (issue #3): with Geyser on Velocity or BungeeCord they showed as ocean
+  on Bedrock. twilight-proxy maps each Bedrock player's custom biomes with the tables of the pack that player
+  loaded, so backends with different custom biomes keep their own looks, also after server switches and
+  reconnects, and a biome name shared by two servers no longer borrows the other's look. Needs both JARs.
+  Backends without Twilight or with `world.bedrock-biome-matching: false` are unchanged. Biome-only changes while
+  a player is online (seasons plugins, `/fillbiome`) show when the chunks are sent again.
+- CraftEngine blocks built on cactus, sugar cane, sapling and oak leaves states (copper coil, reeds, flowers,
+  saplings, palm leaves) show their own look on Bedrock with Java's collision and outline; leaves and cane-based
+  blocks get Java's plains foliage and grass colour. Natural cactus, sugar cane, saplings and leaves stay vanilla
+  unless the pack reskins those states on Java too.
+- Block models taller or wider than Bedrock's 30 pixels per axis are trimmed by their outermost pixels with a
+  notice, and parts without volume are skipped, because one invalid block makes Bedrock drop every custom block.
+- Area effect clouds with radius 0 no longer show Geyser's particle swirl on Bedrock; entities riding them stay
+  seated.
+- New experimental option `geyser.elytra-per-player` (default `false`): a Bedrock player also sees their own
+  custom elytra, standing and gliding, and vanilla elytras stay vanilla. It takes precedence over
+  `elytra-override`, works with Geyser on the backend server (not yet on the proxy) and needs a Geyser restart
+  after the first build with custom elytras.
+- Identical content always builds a byte-identical pack across restarts (the texture order of multi-texture block
+  models depended on the JVM run), so Bedrock players are not asked to download an unchanged pack again.
+
 ## 1.0.1-pre.1 - 2026-11-26
 
 - Geyser 2.12.1 (build 1298) support: the Java entity type registry Twilight used is gone on that build, which broke
@@ -154,6 +180,35 @@ First public beta of Twilight and twilight-proxy.
 ### Değişiklik günlüğü
 
 Twilight'taki tüm önemli değişiklikler burada belgelenir.
+
+#### 1.0.1-pre.2 - 2026-11-27
+
+- Görünmez eşya çerçeveleri: kuzeye bakan çerçevelerdeki mobilyalar ve 3B eşyalar yeniden çizilir; doğuya, batıya,
+  yukarı ve aşağı bakan çerçeveler artık yaklaşık bir blok yanlış yerde durmaz. Yeni Geyser derlemeleri çerçeve
+  varlığını oluşturduktan sonra baktığı yöne göre döndürür ve Twilight'ın görüntüsü bu dönüşü izliyordu. Görünür
+  çerçeveler değişmedi.
+- Proxy üzerinden özel datapack biyomları (issue #3): Geyser Velocity veya BungeeCord üzerindeyken Bedrock'ta
+  okyanus görünüyordu. twilight-proxy her Bedrock oyuncusunun özel biyomlarını o oyuncunun yüklediği paketin
+  tablolarıyla eşler; farklı özel biyomlara sahip arka uçlar sunucu değiştirmelerden ve yeniden bağlanmalardan
+  sonra da kendi görünümlerini korur ve iki sunucunun paylaştığı bir biyom adı artık diğerinin görünümünü almaz.
+  İki JAR da gerekir. Twilight olmayan veya `world.bedrock-biome-matching: false` olan arka uçlar değişmedi.
+  Oyuncu çevrimiçiyken yalnızca biyomu değiştiren işlemler (mevsim eklentileri, `/fillbiome`) parçalar yeniden
+  gönderildiğinde görünür.
+- Kaktüs, şeker kamışı, fide ve meşe yaprağı durumları üzerine kurulan CraftEngine blokları (bakır bobin, kamışlar,
+  çiçekler, fideler, palmiye yaprakları) Bedrock'ta Java'nın çarpışması ve çerçevesiyle kendi görünümlerini
+  gösterir; yapraklar ve kamış tabanlı bloklar Java'nın ova yaprak ve çim rengini alır. Doğal kaktüs, şeker kamışı,
+  fide ve yapraklar, paket Java'da da o durumları yeniden kaplamadıkça vanilla kalır.
+- Bedrock'un eksen başına 30 piksel sınırından uzun veya geniş blok modelleri en dış piksellerinden kırpılır ve
+  bildirim verilir; hacmi olmayan parçalar atlanır, çünkü tek bir geçersiz blok Bedrock'un tüm özel blokları
+  düşürmesine yol açar.
+- Yarıçapı 0 olan alan etkisi bulutları artık Bedrock'ta Geyser'ın parçacık girdabını göstermez; üzerlerinde binen
+  varlıklar oturmaya devam eder.
+- Yeni deneysel `geyser.elytra-per-player` seçeneği (varsayılan `false`): Bedrock oyuncusu kendi özel elytrasını da
+  dururken ve süzülürken görür, vanilla elytralar vanilla kalır. `elytra-override` üzerinde önceliklidir, arka uç
+  sunucudaki Geyser ile çalışır (proxy'de henüz değil) ve özel elytra içeren ilk derlemeden sonra Geyser'ın
+  yeniden başlatılmasını gerektirir.
+- Aynı içerik yeniden başlatmalarda her zaman bayt bayt aynı paketi derler (çok dokulu blok modellerinin doku
+  sırası JVM çalıştırmasına bağlıydı); Bedrock oyuncularından değişmemiş paketi yeniden indirmeleri istenmez.
 
 #### 1.0.1-pre.1 - 2026-11-26
 

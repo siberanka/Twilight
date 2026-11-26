@@ -1,6 +1,65 @@
-# Twilight 1.0.1-pre.1 - prerelease
+# Twilight 1.0.1-pre.2 - prerelease
 
 > Türkçe: [aşağıda](#türkçe)
+
+**Invisible item frames.** Furniture and 3D items in invisible item frames facing north are drawn again, and
+frames facing east, west, up and down are no longer about one block out of place. Newer Geyser builds turn the
+frame entity by its facing after spawning it, and Twilight's display followed that turn; only south was right
+before. Checked live in all six facings against Java; visible frames are unchanged.
+
+**Custom datapack biomes through the proxy** (GitHub issue #3). With Geyser on Velocity or BungeeCord, custom
+biomes showed as ocean on Bedrock, without custom grass, foliage, water, fog or sky colours. twilight-proxy now
+maps each Bedrock player's custom biomes with the tables of the pack that player loaded, so several backends with
+different custom biomes keep their own looks, also after server switches and reconnects; a biome name shared by
+two servers with different looks no longer borrows the other server's look. Backends without Twilight, or with
+`world.bedrock-biome-matching: false`, are unchanged, and Geyser on a backend behaves as before. Both JARs need
+the update. Biome-only changes while a player is online (seasons plugins, `/fillbiome`) are not resent through
+the proxy; they show when the chunks are sent again.
+
+**CraftEngine blocks on more vanilla states.** Blocks built on cactus, sugar cane, sapling and oak leaves states
+(for example copper coil, reeds, flowers, saplings and palm leaves) now show their own look on Bedrock instead of
+the vanilla block, with Java's collision and outline. Leaves and cane-based blocks get Java's plains foliage and
+grass colour baked in. Natural cactus, sugar cane, saplings and leaves stay vanilla unless the pack reskins those
+exact states on Java too. Block models taller or wider than Bedrock allows (30 pixels per axis) are trimmed by
+their outermost pixels with a notice, and parts without volume are skipped, because a single invalid block makes
+Bedrock drop every custom block.
+
+**Area effect clouds.** Clouds with a radius of 0 no longer show Geyser's particle swirl on Bedrock, as Java draws
+none. Entities riding them (the seats of furniture and model plugins) stay seated.
+
+**Experimental per-player elytras.** The new option `geyser.elytra-per-player` (default `false`) lets a Bedrock
+player also see their own custom elytra, standing and gliding, while vanilla elytras stay vanilla. It takes
+precedence over `elytra-override`. It works with Geyser on the backend server, not yet with Geyser on the proxy,
+and needs a Geyser restart after the first build that contains custom elytras.
+
+**Identical packs across restarts.** The same content now always builds a byte-identical pack: the texture order
+of multi-texture block models depended on the JVM run. Bedrock players are no longer asked to download an
+unchanged pack again.
+
+Thanks to JamDoggie for the detailed report of issue #3.
+
+**Tested** on Leaf 1.21.4 with CraftEngine, Geyser 2.12.1 (build 1298) and Floodgate, comparing Java 1.21.4 and
+Bedrock 26.6x captures of item frames in all facings, the new blocks, clouds, custom elytras including gliding,
+furniture, displays, first person 3D handhelds and armour. Packs built from CraftEngine, Oraxen and ItemsAdder
+content were compared offline: only the intended changes, and no block outside Bedrock's geometry limits. The
+proxy biomes were verified on Velocity with Geyser 2.12.1 (builds 1277, 1298 and 1310) and Leaf 26.3 and 1.21.4
+backends, checking the biome ids and definitions on the Bedrock side.
+
+Test server: `oyna.twilightnw.com`.
+
+Update both JARs and restart the server and the proxy once after the build; new custom blocks, items and player
+heads appear after that restart, as Geyser registers them when it starts.
+
+The [JARs and SHA-256 files](artifacts/) were built locally under siberanka using Java 25; 420 tests
+across 70 suites passed. Both JARs carry `LICENSE` and `NOTICE` in `META-INF`. No hosted CI was run.
+
+Runtime requirements: Java 21+, Paper/Folia/Spigot 1.21.4+, Geyser with custom content enabled;
+for twilight-proxy, Velocity or BungeeCord with Geyser on the proxy. The runtime bridges target
+Geyser 2.11.3, 2.12.0 and 2.12.1; other Geyser core versions require validation.
+
+The notes below describe previous prereleases.
+
+## Twilight 1.0.1-pre.1 - prerelease
 
 **Geyser 2.12.1 (build 1298).** Geyser removed the Java entity type registry that Twilight used, so on that build
 item and block displays, furniture, dropped 3D items and point-cloud adaptation stopped working and an error
@@ -54,8 +113,6 @@ across 68 suites passed. Both JARs carry `LICENSE` and `NOTICE` in `META-INF`. N
 Runtime requirements: Java 21+, Paper/Folia/Spigot 1.21.4+, Geyser with custom content enabled;
 for twilight-proxy, Velocity or BungeeCord with Geyser on the proxy. The runtime bridges target
 Geyser 2.11.3, 2.12.0 and 2.12.1; other Geyser core versions require validation.
-
-The notes below describe previous prereleases.
 
 ## Twilight 1.0.0-beta.6
 
@@ -247,7 +304,70 @@ Geyser 2.11.3; other Geyser core versions require validation.
 
 ## Türkçe
 
-### Twilight 1.0.1-pre.1 - ön sürüm
+### Twilight 1.0.1-pre.2 - ön sürüm
+
+**Görünmez eşya çerçeveleri.** Kuzeye bakan görünmez eşya çerçevelerindeki mobilyalar ve 3B eşyalar yeniden
+çizilir; doğuya, batıya, yukarı ve aşağı bakan çerçeveler de artık yaklaşık bir blok yanlış yerde durmaz. Yeni
+Geyser derlemeleri çerçeve varlığını oluşturduktan sonra baktığı yöne göre döndürür ve Twilight'ın görüntüsü bu
+dönüşü izliyordu; önceden yalnızca güney doğruydu. Altı yönün hepsinde Java ile canlı karşılaştırıldı; görünür
+çerçeveler değişmedi.
+
+**Proxy üzerinden özel datapack biyomları** (GitHub issue #3). Geyser Velocity veya BungeeCord üzerinde
+çalışırken özel biyomlar Bedrock'ta okyanus olarak görünüyordu; özel çim, yaprak, su, sis veya gökyüzü renkleri
+yoktu. twilight-proxy artık her Bedrock oyuncusunun özel biyomlarını o oyuncunun yüklediği paketin tablolarıyla
+eşler; böylece farklı özel biyomlara sahip birden çok arka uç, sunucu değiştirmelerden ve yeniden bağlanmalardan
+sonra da kendi görünümlerini korur. Farklı görünümlere sahip iki sunucunun paylaştığı bir biyom adı artık diğer
+sunucunun görünümünü almaz. Twilight olmayan veya `world.bedrock-biome-matching: false` olan arka uçlar
+değişmedi; arka uçtaki Geyser eskisi gibi davranır. İki JAR'ın da güncellenmesi gerekir. Oyuncu çevrimiçiyken
+yalnızca biyomu değiştiren işlemler (mevsim eklentileri, `/fillbiome`) proxy üzerinden yeniden gönderilmez;
+parçalar yeniden gönderildiğinde görünürler.
+
+**Daha fazla vanilla durumda CraftEngine blokları.** Kaktüs, şeker kamışı, fide ve meşe yaprağı durumları
+üzerine kurulan bloklar (örneğin bakır bobin, kamışlar, çiçekler, fideler ve palmiye yaprakları) artık vanilla
+blok yerine Bedrock'ta kendi görünümlerini gösterir; çarpışma ve çerçeve Java'nınkiyle aynıdır. Yapraklar ve
+kamış tabanlı bloklar Java'nın ova yaprak ve çim rengini hazır alır. Doğal kaktüs, şeker kamışı, fide ve
+yapraklar, paket Java'da da tam o durumları yeniden kaplamadıkça vanilla kalır. Bedrock'un izin verdiğinden
+(eksen başına 30 piksel) uzun veya geniş blok modelleri en dış piksellerinden kırpılır ve bildirim verilir;
+hacmi olmayan parçalar atlanır, çünkü tek bir geçersiz blok Bedrock'un tüm özel blokları düşürmesine yol açar.
+
+**Alan etkisi bulutları.** Yarıçapı 0 olan bulutlar artık Bedrock'ta Geyser'ın parçacık girdabını göstermez;
+Java da bir şey çizmez. Üzerlerinde binen varlıklar (mobilya ve model eklentilerinin oturakları) oturmaya devam
+eder.
+
+**Deneysel oyuncu başına elytra.** Yeni `geyser.elytra-per-player` seçeneği (varsayılan `false`), bir Bedrock
+oyuncusunun kendi özel elytrasını da dururken ve süzülürken görmesini sağlar; vanilla elytralar vanilla kalır.
+`elytra-override` üzerinde önceliklidir. Arka uç sunucudaki Geyser ile çalışır, proxy'deki Geyser ile henüz
+çalışmaz ve özel elytra içeren ilk derlemeden sonra Geyser'ın yeniden başlatılmasını gerektirir.
+
+**Yeniden başlatmalarda aynı paket.** Aynı içerik artık her zaman bayt bayt aynı paketi derler: çok dokulu blok
+modellerinin doku sırası JVM çalıştırmasına bağlıydı. Bedrock oyuncularından değişmemiş bir paketi yeniden
+indirmeleri artık istenmez.
+
+#3 numaralı issue'nun ayrıntılı raporu için JamDoggie'ye teşekkürler.
+
+**Test edildi:** Leaf 1.21.4 üzerinde CraftEngine, Geyser 2.12.1 (1298 numaralı derleme) ve Floodgate ile; tüm
+yönlerdeki eşya çerçevelerinin, yeni blokların, bulutların, süzülme dahil özel elytraların, mobilyaların,
+görüntülerin, birinci şahıs bakışta 3B el eşyalarının ve zırhların Java 1.21.4 ve Bedrock 26.6x görüntüleri
+karşılaştırıldı. CraftEngine, Oraxen ve ItemsAdder içeriğinden derlenen paketler çevrimdışı karşılaştırıldı:
+yalnızca istenen değişiklikler vardı ve Bedrock'un geometri sınırları dışında blok kalmadı. Proxy biyomları
+Velocity üzerinde Geyser 2.12.1 (1277, 1298 ve 1310 numaralı derlemeler) ve Leaf 26.3 ile 1.21.4 arka uçlarıyla
+doğrulandı; biyom kimlikleri ve tanımları Bedrock tarafında kontrol edildi.
+
+Test sunucusu: `oyna.twilightnw.com`.
+
+İki JAR'ı da güncelleyin ve derlemeden sonra sunucuyu ve proxy'yi bir kez yeniden başlatın; yeni özel bloklar,
+eşyalar ve oyuncu kafaları, Geyser onları açılışta kaydettiği için bu yeniden başlatmadan sonra görünür.
+
+[JAR'lar ve SHA-256 dosyaları](artifacts/) siberanka adına Java 25 ile yerelde derlendi; 70 paketteki
+420 test geçti. İki JAR da `META-INF` içinde `LICENSE` ve `NOTICE` taşır. Barındırılan CI çalıştırılmadı.
+
+Çalışma zamanı gereksinimleri: Java 21+, Paper/Folia/Spigot 1.21.4+, özel içeriği açık Geyser; twilight-proxy
+için proxy'de Geyser bulunan Velocity veya BungeeCord. Çalışma zamanı köprüleri Geyser 2.11.3, 2.12.0 ve
+2.12.1'i hedefler; diğer Geyser çekirdek sürümleri doğrulama gerektirir.
+
+Aşağıdaki notlar önceki ön sürümleri anlatır.
+
+#### Twilight 1.0.1-pre.1 - ön sürüm
 
 **Geyser 2.12.1 (1298 numaralı derleme).** Geyser, Twilight'ın kullandığı Java varlık türü kaydını kaldırdı;
 bu yüzden o derlemede eşya ve blok görüntüleri, mobilyalar, düşen 3B eşyalar ve nokta bulutu uyarlaması
@@ -302,8 +422,6 @@ Test sunucusu: `oyna.twilightnw.com`.
 Çalışma zamanı gereksinimleri: Java 21+, Paper/Folia/Spigot 1.21.4+, özel içeriği açık Geyser; twilight-proxy
 için proxy'de Geyser bulunan Velocity veya BungeeCord. Çalışma zamanı köprüleri Geyser 2.11.3, 2.12.0 ve
 2.12.1'i hedefler; diğer Geyser çekirdek sürümleri doğrulama gerektirir.
-
-Aşağıdaki notlar önceki ön sürümleri anlatır.
 
 #### Twilight 1.0.0-beta.6
 
