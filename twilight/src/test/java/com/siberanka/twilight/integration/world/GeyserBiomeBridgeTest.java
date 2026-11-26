@@ -202,4 +202,38 @@ class GeyserBiomeBridgeTest {
                 Map.of("demo:x", 19, "minecraft:plains", 5), () -> { throw new IllegalStateException("broken"); }));
         assertEquals(Map.of("minecraft:plains", 1), identifiers, "Geyser's own mappings are neither replaced nor removed");
     }
+
+    @Test
+    void aSessionWithAnotherServersPackOnlyUsesASlotOfTheSameKeyWhenTheLooksAgree() throws Exception {
+        var blossom = new com.siberanka.twilight.world.BiomeLook(0xF29AC0, 0xE36FA4, 0x5DB7EF, 0x2A5C8A, 0xFFD8EC,
+                0x9CC8FF, 0.7f, 0.8f, 1);
+        var slots = new com.siberanka.twilight.world.BiomeSlots(List.of(
+                new com.siberanka.twilight.world.BiomeSlots.Slot(19, "taiga_hills", blossom, List.of("demo:blossom_vale"))));
+        var pink = NbtMap.builder().putFloat("temperature", 0.7f).putFloat("downfall", 0.8f)
+                .putCompound("effects", NbtMap.builder().putInt("grass_color", 0xF29AC0).putInt("foliage_color", 0xE36FA4)
+                        .putInt("water_color", 0x5DB7EF).build())
+                .putCompound("attributes", NbtMap.builder().putString("minecraft:visual/fog_color", "#ffd8ec").build()).build();
+        // The same key on the other server, with a very different (blue, snowy) look.
+        var blue = NbtMap.builder().putFloat("temperature", -0.5f).putFloat("downfall", 0.5f).putByte("has_precipitation", (byte) 1)
+                .putCompound("effects", NbtMap.builder().putInt("grass_color", 0x0050FF).putInt("foliage_color", 0x00FFF0)
+                        .putInt("water_color", 0xFFFFFF).build())
+                .putCompound("attributes", NbtMap.builder().putString("minecraft:visual/fog_color", "#0030ff").build()).build();
+        Map<String, Integer> base = Map.of("minecraft:plains", 1, "minecraft:snowy_plains", 12, "minecraft:nether_wastes", 8);
+
+        Map<String, Integer> same = new HashMap<>(base);
+        var samePacket = new ClientboundRegistryDataPacket(Key.key("minecraft", "worldgen/biome"),
+                List.of(new RegistryEntry(Key.key("demo", "blossom_vale"), pink)));
+        assertEquals(Map.of("demo:blossom_vale", "taiga_hills"), GeyserBiomeBridge.register(samePacket, MATCHER, slots, same, true));
+        assertEquals(19, same.get("demo:blossom_vale"));
+
+        var otherPacket = new ClientboundRegistryDataPacket(Key.key("minecraft", "worldgen/biome"),
+                List.of(new RegistryEntry(Key.key("demo", "blossom_vale"), blue)));
+        Map<String, Integer> other = new HashMap<>(base);
+        Map<String, String> added = GeyserBiomeBridge.register(otherPacket, MATCHER, slots, other, true);
+        assertNotEquals("taiga_hills", added.get("demo:blossom_vale"), "another server's slot look is not shown for this look");
+        assertNotEquals(19, other.get("demo:blossom_vale"));
+        // The backend's own Geyser trusts the slot of its own pack, as before.
+        Map<String, Integer> backend = new HashMap<>(base);
+        assertEquals(Map.of("demo:blossom_vale", "taiga_hills"), GeyserBiomeBridge.register(otherPacket, MATCHER, slots, backend));
+    }
 }

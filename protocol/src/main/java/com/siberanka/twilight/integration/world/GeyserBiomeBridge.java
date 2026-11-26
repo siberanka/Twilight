@@ -370,6 +370,20 @@ public final class GeyserBiomeBridge implements AutoCloseable {
     @SuppressWarnings("unchecked")
     static Map<String, String> register(Object packet, BiomeMatcher matcher, BiomeSlots slots, Map<String, Integer> identifiers)
             throws ReflectiveOperationException {
+        return register(packet, matcher, slots, identifiers, false);
+    }
+
+    /** A slot keeps a biome of its key only while the registry's look is this close to the slot's (see {@link BiomeMatcher#distance}). */
+    static final double EXACT_SLOT_TOLERANCE = 40;
+
+    /**
+     * @param verifyExact proxy mode: the pack may belong to another server than the biome registry (a session that
+     *                    switched servers keeps its pack), so a slot of the same key is only used when the registry's
+     *                    own look is the slot's look; otherwise the biome takes the closest look like any other
+     */
+    @SuppressWarnings("unchecked")
+    static Map<String, String> register(Object packet, BiomeMatcher matcher, BiomeSlots slots, Map<String, Integer> identifiers,
+                                        boolean verifyExact) throws ReflectiveOperationException {
         Map<String, String> added = new java.util.LinkedHashMap<>();
         if (!BIOME_REGISTRY.equals(keyString(packet.getClass().getMethod("getRegistry").invoke(packet)))) return added;
         List<String> candidates = new ArrayList<>();
@@ -381,6 +395,10 @@ public final class GeyserBiomeBridge implements AutoCloseable {
             if (key == null || identifiers.containsKey(key)) continue;
             BiomeSlots.Slot exact = null;
             for (BiomeSlots.Slot slot : slots.slots()) if (slot.biomes().contains(key)) exact = slot;
+            if (exact != null && verifyExact && data instanceof Map<?, ?> nbt) {
+                BiomeMatcher.Appearance have = matcher.appearance((Map<String, ?>) nbt);
+                if (BiomeMatcher.distance(have, BiomeMatcher.appearance(exact.look())) > EXACT_SLOT_TOLERANCE) exact = null;
+            }
             if (exact != null) {
                 identifiers.put(key, exact.id());
                 added.put(key, exact.name());
@@ -493,7 +511,7 @@ public final class GeyserBiomeBridge implements AutoCloseable {
                 synchronized (identifiers) {
                     scratch = new java.util.HashMap<>(identifiers);
                 }
-                Map<String, String> added = register(packet, tables.matcher(), tables.slots(), scratch);
+                Map<String, String> added = register(packet, tables.matcher(), tables.slots(), scratch, true);
                 if (!added.isEmpty()) {
                     mappings = new java.util.LinkedHashMap<>();
                     for (String key : added.keySet()) mappings.put(key, scratch.get(key));
