@@ -1958,6 +1958,166 @@ class BedrockPackCompilerTest {
                 true, true, List.of(), "auto", false, false, 3, true, false);
     }
 
+    /** A vertical bar of the given height in model pixels, held with an explicit first person display scale. */
+    private static String tallBar(String texture, int height, double scale) {
+        return """
+                {"textures":{"all":"%s"},"display":{"firstperson_righthand":{"rotation":[0,-90,25],"scale":[%s,%s,%s]}},
+                 "elements":[{"from":[7,-16,7],"to":[9,%d,9],"faces":{
+                   "north":{"texture":"#all"},"south":{"texture":"#all"},
+                   "east":{"texture":"#all"},"west":{"texture":"#all"},
+                   "up":{"texture":"#all"},"down":{"texture":"#all"}}}]}
+                """.formatted(texture, scale, scale, scale, height - 16);
+    }
+
+    /** Digest of every model, animation, attachable and render controller file of a built pack. */
+    private static String modelDigest(BuildResult result) throws Exception {
+        StringBuilder text = new StringBuilder();
+        try (ZipFile zip = new ZipFile(result.outputDirectory().resolve("pack.zip").toFile())) {
+            for (String name : zip.stream().map(ZipEntry::getName).sorted().toList()) {
+                if (!(name.startsWith("animations/") || name.startsWith("attachables/")
+                        || name.startsWith("render_controllers/") || name.startsWith("models/entity/"))) continue;
+                byte[] bytes = zip.getInputStream(zip.getEntry(name)).readAllBytes();
+                text.append(name).append(':').append(java.util.HexFormat.of().formatHex(
+                        java.security.MessageDigest.getInstance("SHA-256").digest(bytes))).append('\n');
+            }
+        }
+        return java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256")
+                .digest(text.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+    }
+
+    /** A tall bow and crossbow with states plus a flat item and a small cube: classes the tall correction must not touch. */
+    private String untouchedClassesDigest(String name) throws Exception {
+        Path source = root.resolve(name + "-source");
+        write(source, "assets/minecraft/models/item/bow.json", """
+                {"overrides":[
+                  {"predicate":{"custom_model_data":200},"model":"demo:item/tall_bow"},
+                  {"predicate":{"custom_model_data":200,"pulling":1,"pull":0.0},"model":"demo:item/tall_bow_0"},
+                  {"predicate":{"custom_model_data":200,"pulling":1,"pull":0.65},"model":"demo:item/tall_bow_1"},
+                  {"predicate":{"custom_model_data":200,"pulling":1,"pull":0.9},"model":"demo:item/tall_bow_2"}]}
+                """);
+        write(source, "assets/minecraft/models/item/crossbow.json", """
+                {"overrides":[
+                  {"predicate":{"custom_model_data":300},"model":"demo:item/tall_crossbow"},
+                  {"predicate":{"custom_model_data":300,"pulling":1,"pull":0.0},"model":"demo:item/tall_crossbow_0"},
+                  {"predicate":{"custom_model_data":300,"pulling":1,"pull":0.58},"model":"demo:item/tall_crossbow_1"},
+                  {"predicate":{"custom_model_data":300,"pulling":1,"pull":1.0},"model":"demo:item/tall_crossbow_2"},
+                  {"predicate":{"custom_model_data":300,"charged":1},"model":"demo:item/tall_crossbow_arrow"}]}
+                """);
+        for (String model : List.of("tall_bow", "tall_bow_0", "tall_bow_1", "tall_bow_2", "tall_crossbow",
+                "tall_crossbow_0", "tall_crossbow_1", "tall_crossbow_2", "tall_crossbow_arrow")) {
+            write(source, "assets/demo/models/item/" + model + ".json", tallBar("demo:item/" + model, 48, 1.0));
+            png(source.resolve("assets/demo/textures/item/" + model + ".png"), Color.ORANGE);
+        }
+        write(source, "assets/demo/models/item/flat.json",
+                "{\"parent\":\"minecraft:item/handheld\",\"textures\":{\"layer0\":\"demo:item/flat\"}}");
+        png(source.resolve("assets/demo/textures/item/flat.png"), Color.GRAY);
+        write(source, "assets/demo/models/item/small.json", cube("demo:item/small"));
+        png(source.resolve("assets/demo/textures/item/small.png"), Color.PINK);
+        BuildResult result = new BedrockPackCompiler(root.resolve(name + "-data"), config()).build(
+                List.of(new ContentSource("test", ContentSource.Kind.RESOURCE_PACK, source, 1)),
+                List.of(new CustomItemDescriptor("test", "minecraft:iron_sword", Optional.of("demo:item/flat"),
+                                OptionalInt.empty(), "Flat"),
+                        new CustomItemDescriptor("test", "minecraft:paper", Optional.of("demo:item/small"),
+                                OptionalInt.empty(), "Small")));
+        return modelDigest(result);
+    }
+
+    @Test
+    void leavesBowCrossbowFlatAndSmallModelOutputUnchangedByTheTallCorrection() throws Exception {
+        // Recorded from the build before the tall correction existed (master a605f27).
+        assertEquals("60a751590b525ac895d4d79e4ad0a5fc9b898eac28ad61af1efda42151cd91c1", untouchedClassesDigest("untouched"));
+    }
+
+    /** Compiles one held bar and returns the pack's geometry and first person animations of that item. */
+    private JsonObject[] compileBar(String name, int height, double scale) throws Exception {
+        Path source = root.resolve(name + "-source");
+        write(source, "assets/demo/models/item/bar.json", tallBar("demo:item/bar", height, scale));
+        png(source.resolve("assets/demo/textures/item/bar.png"), Color.ORANGE);
+        BuildResult result = new BedrockPackCompiler(root.resolve(name + "-data"), config()).build(
+                List.of(new ContentSource("test", ContentSource.Kind.RESOURCE_PACK, source, 1)),
+                List.of(new CustomItemDescriptor("test", "minecraft:iron_axe", Optional.of("demo:item/bar"),
+                        OptionalInt.empty(), "Bar")));
+        try (ZipFile zip = new ZipFile(result.outputDirectory().resolve("pack.zip").toFile())) {
+            String geometry = zip.stream().map(ZipEntry::getName).filter(n -> n.startsWith("models/entity/geometry."))
+                    .findFirst().orElseThrow();
+            String animations = zip.stream().map(ZipEntry::getName).filter(n -> n.startsWith("animations/"))
+                    .findFirst().orElseThrow();
+            return new JsonObject[]{read(zip, geometry), read(zip, animations).getAsJsonObject("animations")};
+        }
+    }
+
+    private static JsonObject boneOf(JsonObject geometry, String name) {
+        for (JsonElement bone : geometry.getAsJsonArray("minecraft:geometry").get(0).getAsJsonObject()
+                .getAsJsonArray("bones")) {
+            if (bone.getAsJsonObject().get("name").getAsString().equals(name)) return bone.getAsJsonObject();
+        }
+        return null;
+    }
+
+    private static JsonObject animatedBone(JsonObject animations, String context, String bone) {
+        return animations.entrySet().stream().filter(e -> e.getKey().endsWith("." + context)).findFirst().orElseThrow()
+                .getValue().getAsJsonObject().getAsJsonObject("bones").getAsJsonObject(bone);
+    }
+
+    @Test
+    void addsTheViewBoneOnlyToTallThreeDimensionalHandhelds() throws Exception {
+        for (int height : new int[]{16, 24}) {
+            JsonObject[] small = compileBar("short_bar_" + height, height, 0.68);
+            assertEquals(null, boneOf(small[0], "bone_view"), "height " + height);
+            assertEquals("q.item_slot_to_bone_name(context.item_slot)", boneOf(small[0], "bone").get("binding").getAsString());
+            assertEquals(null, animatedBone(small[1], "first_person_right", "bone_view"));
+        }
+        JsonObject[] tall = compileBar("tall_bar_48", 48, 1.0);
+        JsonObject view = boneOf(tall[0], "bone_view");
+        assertEquals("q.item_slot_to_bone_name(context.item_slot)", view.get("binding").getAsString());
+        assertEquals(false, boneOf(tall[0], "bone").has("binding"));
+        assertEquals("bone_view", boneOf(tall[0], "bone").get("parent").getAsString());
+        JsonObject right = animatedBone(tall[1], "first_person_right", "bone_view");
+        assertEquals(1 + BedrockPackCompiler.TALL_SCALE_GAIN, right.getAsJsonArray("scale").get(0).getAsDouble(), 1.0e-9);
+        assertEquals(right, animatedBone(tall[1], "first_person_left", "bone_view"), "both hands share the correction");
+        assertEquals(null, animatedBone(tall[1], "third_person_right", "bone_view"));
+        assertVector(animatedBone(tall[1], "first_person_right", "bone").getAsJsonArray("scale"), 1, 1, 1);
+    }
+
+    @Test
+    void growsTheTallCorrectionBetweenTheMinimumAndFullHeight() throws Exception {
+        // A 32 px bar at scale 0.9 tilted 25 degrees shows about 26.5 px: between the minimum and the full height.
+        JsonObject[] middle = compileBar("middle_bar", 32, 0.9);
+        double extent = 32 * 0.9 * Math.cos(Math.toRadians(25)) + 2 * 0.9 * Math.sin(Math.toRadians(25));
+        double t = (extent - BedrockPackCompiler.TALL_MIN_HEIGHT)
+                / (BedrockPackCompiler.TALL_FULL_HEIGHT - BedrockPackCompiler.TALL_MIN_HEIGHT);
+        assertTrue(t > 0 && t < 1);
+        assertEquals(1 + BedrockPackCompiler.TALL_SCALE_GAIN * t, animatedBone(middle[1], "first_person_right",
+                "bone_view").getAsJsonArray("scale").get(0).getAsDouble(), 1.0e-9);
+    }
+
+    @Test
+    void rollsTheTallModelAboutJavasViewAxisOnTopOfTheExactOrientation() throws Exception {
+        JsonObject[] tall = compileBar("roll_bar", 48, 1.0);
+        double[] bone = animatedEuler(tall[1], "bone"), wrapper = animatedEuler(tall[1], "bone_view");
+        double[] java = {0, 1, 0};
+        // Java's display rotation (0, -90, 25) in the view frame, then the roll about the view axis.
+        java = rotateAxis(rotateAxis(rotateAxis(java, 2, 25), 1, -90), 0, 0);
+        double[] expected = rotateAxis(java, 2, BedrockPackCompiler.TALL_ROLL_DEGREES);
+        double[] actual = {-0.0, 1, 0};
+        actual = applyEuler(actual, bone);
+        actual = applyEuler(actual, wrapper);
+        actual[0] = -actual[0];
+        assertArrayEquals(expected, firstPersonView(actual), 1.0e-9);
+    }
+
+    private static double[] animatedEuler(JsonObject animations, String bone) {
+        JsonArray rotation = animatedBone(animations, "first_person_right", bone).getAsJsonArray("rotation");
+        return new double[]{rotation.get(0).getAsDouble(), rotation.get(1).getAsDouble(), rotation.get(2).getAsDouble()};
+    }
+
+    /** The bone frame's X mirror, then Bedrock's x, y, z euler turns (the first person orientation test's convention). */
+    private static double[] applyEuler(double[] point, double[] euler) {
+        double[] result = rotateAxis(point, 0, euler[0]);
+        result = rotateAxis(result, 1, euler[1]);
+        return rotateAxis(result, 2, euler[2]);
+    }
+
     private TwilightConfig config() {
         return new TwilightConfig(false, true, false, true, 40, 100, 10_000_000, 10_000,
                 true, true, List.of(), "auto", false, false, 3);

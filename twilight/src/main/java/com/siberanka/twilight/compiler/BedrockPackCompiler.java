@@ -267,7 +267,7 @@ public final class BedrockPackCompiler {
                         packFiles.put("models/entity/geometry." + stateSafe + ".geo.json",
                                 jsonBytes(geometry(stateSafe, stateModel, atlas, bounds)));
                         packFiles.put("animations/" + stateSafe + ".animation.json",
-                                jsonBytes(animations(stateSafe, stateModel)));
+                                jsonBytes(animations(stateSafe, stateModel, false)));
                     }
                     packFiles.put("render_controllers/" + safe + ".render_controllers.json",
                             jsonBytes(dynamicRenderController(safe, dynamicWeapon.states().size())));
@@ -286,10 +286,14 @@ public final class BedrockPackCompiler {
                     packFiles.put(texturePath + ".png", atlas.png());
                     icon = TextureSet.png(GuiIconRenderer.render(model, atlas, geometryElements(model)));
                     packFiles.put("textures/twilight/" + safe + "_icon.png", icon);
-                    packFiles.put("models/entity/geometry." + safe + ".geo.json",
-                            jsonBytes(geometry(safe, model, atlas, bounds)));
+                    JsonObject itemGeometry = geometry(safe, model, atlas, bounds);
+                    // Bows and crossbows (pull and charge states) keep their measured mapping.
+                    boolean tall = !candidate.baseItem().equals("minecraft:bow") && !candidate.baseItem().equals("minecraft:crossbow")
+                            && candidate.nativeStateModels().isEmpty() && tallCorrection(model) != null;
+                    if (tall) addViewBone(itemGeometry);
+                    packFiles.put("models/entity/geometry." + safe + ".geo.json", jsonBytes(itemGeometry));
                     packFiles.put("animations/" + safe + ".animation.json",
-                            jsonBytes(animations(safe, model)));
+                            jsonBytes(animations(safe, model, tall)));
                     packFiles.put("attachables/" + safe + ".json",
                             jsonBytes(attachable(identifier, safe, texturePath, oneSided(model))));
                     if (itemDisplays && model.isThreeDimensional() && displayed(candidate, displayedItems)) {
@@ -1061,8 +1065,12 @@ public final class BedrockPackCompiler {
                 " >= " + finalThreshold + " ? 3 : (" + progress + " >= " + secondThreshold + " ? 2 : 1)) : 0";
     }
 
-    private static JsonObject animations(String safe, ResolvedJavaModel model) {
-        if (model.parts().isEmpty()) return animations(safe, model.display());
+    private static JsonObject animations(String safe, ResolvedJavaModel model, boolean tallView) {
+        if (model.parts().isEmpty()) {
+            JsonObject result = animations(safe, model.display());
+            if (tallView) addViewAnimation(result, tallCorrection(model));
+            return result;
+        }
         JsonObject result = null;
         for (int i = 0; i < model.parts().size(); i++) {
             JsonObject part = animations(safe, model.parts().get(i).display());
@@ -1107,6 +1115,84 @@ public final class BedrockPackCompiler {
             .mul(Quaternion.axis(-25, 0, 1, 0)).mul(Quaternion.axis(-135, 0, 0, 1)).mul(Quaternion.axis(90, 1, 0, 0));
     /** Java holds first person items lower, further right and nearer than Bedrock's hand (view pixels). */
     private static final double[] FIRST_PERSON_OFFSET = {1.5, -1.5, 3};
+
+    /** Switch for the tall handheld correction below; false restores the previous output exactly. */
+    static final boolean TALL_VIEW_CORRECTION = true;
+    /**
+     * PROVISIONAL (to be fitted from live captures, see ai/docs/FIRST_PERSON_LIVE_PLAN_2026-11-26.md).
+     * Models whose first person height, in Java pixels after the display scale and rotation, is at most
+     * TALL_MIN_HEIGHT get no correction; the effect grows linearly up to TALL_FULL_HEIGHT. A vanilla handheld
+     * tool shows about 11 px (16 px at scale 0.68), the small-cube calibration items 8 to 16 px.
+     */
+    static final double TALL_MIN_HEIGHT = 20, TALL_FULL_HEIGHT = 32;
+    /** PROVISIONAL: extra uniform scale at full effect (the PR used 1.4 right and 1.2 left, over its own base). */
+    static final double TALL_SCALE_GAIN = 0.25;
+    /**
+     * PROVISIONAL: roll at full effect in degrees about Java's view axis towards the eye; positive turns
+     * counter-clockwise as the viewer sees it. Our tall items lean about 20 degrees to the left in captures,
+     * so a clockwise (negative) roll is the expected direction. Both hands use the same value (mirrored view).
+     */
+    static final double TALL_ROLL_DEGREES = -6;
+    /** Pivot of the wrapper bone: where the model centre sits in the hand frame (bone pivot 8 plus 12.5). */
+    private static final double[] TALL_VIEW_PIVOT = {0, 20.5, 0};
+
+    /**
+     * Scale and roll for a tall three-dimensional handheld, or null. Decided by geometry only: the vertical
+     * extent of the model box in Java's first person view after the firstperson_righthand scale and rotation.
+     */
+    static double[] tallCorrection(ResolvedJavaModel model) {
+        if (!TALL_VIEW_CORRECTION || !model.parts().isEmpty() || !model.isThreeDimensional()) return null;
+        try {
+            GeometryBounds bounds = geometryBounds(model);
+            if (!bounds.finite()) return null;
+            JsonObject pose = transform(model.display(), "firstperson_righthand", null);
+            double[] r = vector(pose.getAsJsonArray("rotation"), 0, 0, 0), s = vector(pose.getAsJsonArray("scale"), 1, 1, 1);
+            Quaternion q = Quaternion.axis(r[0], 1, 0, 0).mul(Quaternion.axis(r[1], 0, 1, 0)).mul(Quaternion.axis(r[2], 0, 0, 1));
+            double low = Double.POSITIVE_INFINITY, high = Double.NEGATIVE_INFINITY;
+            for (int mask = 0; mask < 8; mask++) {
+                // geometryBounds is in the bone frame (x - 8, y, 8 - z); Java's centred frame is (x - 8, y - 8, z - 8).
+                double[] corner = q.rotate(new double[]{((mask & 1) == 0 ? bounds.minX() : bounds.maxX()) * s[0],
+                        (((mask & 2) == 0 ? bounds.minY() : bounds.maxY()) - 8) * s[1],
+                        -((mask & 4) == 0 ? bounds.minZ() : bounds.maxZ()) * s[2]});
+                low = Math.min(low, corner[1]);
+                high = Math.max(high, corner[1]);
+            }
+            double t = Math.max(0, Math.min(1, ((high - low) - TALL_MIN_HEIGHT) / (TALL_FULL_HEIGHT - TALL_MIN_HEIGHT)));
+            return t <= 0 ? null : new double[]{1 + TALL_SCALE_GAIN * t, TALL_ROLL_DEGREES * t};
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    /** Puts the item's bone under a wrapper bone that takes the binding, so first person can correct it. */
+    static void addViewBone(JsonObject geometry) {
+        JsonObject description = geometry.getAsJsonArray("minecraft:geometry").get(0).getAsJsonObject();
+        JsonArray bones = description.getAsJsonArray("bones");
+        JsonObject bone = bones.get(0).getAsJsonObject();
+        JsonObject wrapper = new JsonObject();
+        wrapper.addProperty("name", "bone_view");
+        wrapper.addProperty("binding", bone.remove("binding").getAsString());
+        wrapper.add("pivot", numberArray(TALL_VIEW_PIVOT));
+        bone.addProperty("parent", "bone_view");
+        JsonArray result = new JsonArray();
+        result.add(wrapper);
+        result.add(bone);
+        description.add("bones", result);
+    }
+
+    /** First person animations of the wrapper bone: the roll in Java's view frame, then the scale. */
+    private static void addViewAnimation(JsonObject animations, double[] correction) {
+        // The view rotation of a bone turn q is V Mx q Mx V^-1, so rolling it by Z about the view axis needs
+        // the extra turn Mx V^-1 Z V Mx in front of q.
+        Quaternion roll = FIRST_PERSON_VIEW.inverse().mul(Quaternion.axis(correction[1], 0, 0, 1)).mul(FIRST_PERSON_VIEW).mirrorX();
+        for (var entry : animations.getAsJsonObject("animations").entrySet()) {
+            if (!entry.getKey().endsWith(".first_person_right") && !entry.getKey().endsWith(".first_person_left")) continue;
+            JsonObject view = new JsonObject();
+            view.add("rotation", numberArray(roll.eulerXYZ()));
+            view.add("scale", numberArray(correction[0], correction[0], correction[0]));
+            entry.getValue().getAsJsonObject().getAsJsonObject("bones").add("bone_view", view);
+        }
+    }
 
     private static MappedTransform mapFirst(JsonObject transform) {
         double[] t = vector(transform.getAsJsonArray("translation"), 0, 0, 0), r = vector(transform.getAsJsonArray("rotation"), 0, 0, 0), s = vector(transform.getAsJsonArray("scale"), 1, 1, 1);
