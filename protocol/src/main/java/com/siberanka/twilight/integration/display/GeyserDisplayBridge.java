@@ -13,7 +13,6 @@ import org.geysermc.geyser.entity.BedrockEntityDefinition;
 import org.geysermc.geyser.entity.GeyserEntityType;
 import org.geysermc.geyser.entity.VanillaEntityType;
 import org.geysermc.geyser.entity.VanillaEntities;
-import org.geysermc.geyser.registry.Registries;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.metadata.MetadataTypes;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.type.EntityType;
 
@@ -58,6 +57,7 @@ public final class GeyserDisplayBridge implements AutoCloseable {
     /** Billboard, dropped-item mode and brightness override, see {@link TwilightItemDisplay#style}. */
     GeyserIntEntityProperty style;
     private final EventRegistrar registrar;
+    private final EntityTypeRegistry entities = EntityTypeRegistry.detect();
     private VanillaEntityType<TwilightItemDisplay> definition, blockDefinition;
     private VanillaEntityType<TwilightAreaEffectCloud> cloudDefinition;
     private VanillaEntityType<TwilightDroppedItem> droppedDefinition;
@@ -81,7 +81,11 @@ public final class GeyserDisplayBridge implements AutoCloseable {
         registrar = EventRegistrar.of(owner);
         if (!register) return;
         com.siberanka.twilight.geyser.GeyserEvents.subscribe(registrar, GeyserDefineEntitiesEvent.class, event -> {
-            if (Registries.JAVA_ENTITY_TYPES.get(GeyserEntityType.ofVanilla(EntityType.ITEM_DISPLAY)) != null) {
+            if (!entities.available()) {
+                logger.warning("This Geyser build keeps its entity types where Twilight cannot reach them; item displays are "
+                        + "registered without an ownership check and furniture frames, dropped 3D items and clouds stay Geyser's.");
+            }
+            if (registered(EntityType.ITEM_DISPLAY) != null) {
                 logger.severe("Item-display bridge cannot start: another translator already owns item_display.");
                 return;
             }
@@ -91,16 +95,21 @@ public final class GeyserDisplayBridge implements AutoCloseable {
             builder.addTranslator(MetadataTypes.ITEM_STACK, (entity, data) -> entity.item(data.getValue()));
             builder.addTranslator(MetadataTypes.BYTE, (entity, data) -> entity.context(data.getValue()));
             definition = builder.build();
-            if (Registries.JAVA_ENTITY_TYPES.get(GeyserEntityType.ofVanilla(EntityType.BLOCK_DISPLAY)) == null) {
+            if (registered(EntityType.BLOCK_DISPLAY) == null) {
                 var blocks = displayBase(EntityType.BLOCK_DISPLAY, (BedrockEntityDefinition) custom);
                 blocks.addTranslator(MetadataTypes.BLOCK_STATE, (entity, data) -> entity.block(data.getValue()));
                 blockDefinition = blocks.build();
             } else {
                 logger.warning("Block displays keep another translator: something else already owns block_display.");
             }
-            registerCloudAnchors(logger);
-            registerDroppedItems(logger, (BedrockEntityDefinition) custom);
-            registerItemFrames(logger, (BedrockEntityDefinition) custom);
+            List<String> degraded = new ArrayList<>();
+            guarded(degraded, "point-cloud adaptation", () -> registerCloudAnchors(logger));
+            guarded(degraded, "3D dropped items", () -> registerDroppedItems(logger, (BedrockEntityDefinition) custom));
+            guarded(degraded, "furniture item frames", () -> registerItemFrames(logger, (BedrockEntityDefinition) custom));
+            if (!degraded.isEmpty()) {
+                logger.warning("Geyser's entity registry (" + entities.describe() + ") could not be changed for: "
+                        + String.join(", ", degraded) + "; these stay Geyser's own translators.");
+            }
             logger.info("Registered the display bridge: item and block displays, furniture and model bones show with the pack's models.");
         });
         com.siberanka.twilight.geyser.GeyserEvents.subscribe(registrar, GeyserDefineEntityPropertiesEvent.class, event -> {
@@ -149,17 +158,17 @@ public final class GeyserDisplayBridge implements AutoCloseable {
     /** Java item entities: custom items with 3D models lie on the ground with their model, as on Java. */
     private void registerDroppedItems(Logger logger, BedrockEntityDefinition custom) {
         var original = VanillaEntities.ITEM;
-        var type = GeyserEntityType.ofVanilla(EntityType.ITEM);
-        if (Registries.JAVA_ENTITY_TYPES.get(type) != original
+        if (!entities.available()) throw new IllegalStateException("no entity registry");
+        if (registered(EntityType.ITEM) != original
                 || GeyserRegistries.entity("minecraft:item", original) != original) {
             logger.warning("Dropped items keep another translator: something else already owns minecraft:item.");
             return;
         }
         var replacement = VanillaEntityType.<TwilightDroppedItem>inherited(spawn -> new TwilightDroppedItem(spawn, this), original)
                 .type(EntityType.ITEM).bedrockDefinition(custom).build(false);
-        if (!Registries.JAVA_ENTITY_TYPES.get().replace(type, original, replacement)) return;
+        if (!swap(EntityType.ITEM, original, replacement)) return;
         if (!GeyserRegistries.replaceEntity("minecraft:item", original, replacement)) {
-            Registries.JAVA_ENTITY_TYPES.get().replace(type, replacement, original);
+            swap(EntityType.ITEM, replacement, original);
             return;
         }
         droppedDefinition = replacement;
@@ -174,17 +183,17 @@ public final class GeyserDisplayBridge implements AutoCloseable {
 
     private VanillaEntityType<TwilightItemFrame> replaceFrame(Logger logger, BedrockEntityDefinition custom, EntityType javaType,
                                                               String identifier, VanillaEntityType<?> original) {
-        var type = GeyserEntityType.ofVanilla(javaType);
-        if (Registries.JAVA_ENTITY_TYPES.get(type) != original || GeyserRegistries.entity(identifier, original) != original) {
+        if (!entities.available()) throw new IllegalStateException("no entity registry");
+        if (registered(javaType) != original || GeyserRegistries.entity(identifier, original) != original) {
             logger.warning("Item frames keep another translator: something else already owns " + identifier + ".");
             return null;
         }
         @SuppressWarnings("unchecked") var frames = (VanillaEntityType<org.geysermc.geyser.entity.type.ItemFrameEntity>) original;
         var replacement = VanillaEntityType.<TwilightItemFrame>inherited(spawn -> new TwilightItemFrame(spawn, this), frames)
                 .type(javaType).bedrockDefinition(custom).build(false);
-        if (!Registries.JAVA_ENTITY_TYPES.get().replace(type, original, replacement)) return null;
+        if (!swap(javaType, original, replacement)) return null;
         if (!GeyserRegistries.replaceEntity(identifier, original, replacement)) {
-            Registries.JAVA_ENTITY_TYPES.get().replace(type, replacement, original);
+            swap(javaType, replacement, original);
             return null;
         }
         return replacement;
@@ -192,18 +201,18 @@ public final class GeyserDisplayBridge implements AutoCloseable {
 
     private void registerCloudAnchors(Logger logger) {
         var original = VanillaEntities.AREA_EFFECT_CLOUD;
-        var type = GeyserEntityType.ofVanilla(EntityType.AREA_EFFECT_CLOUD);
+        if (!entities.available()) throw new IllegalStateException("no entity registry");
         // Adapt only Geyser's own translator; never replace another plugin's.
-        if (Registries.JAVA_ENTITY_TYPES.get(type) != original
+        if (registered(EntityType.AREA_EFFECT_CLOUD) != original
                 || GeyserRegistries.entity("minecraft:area_effect_cloud", original) != original) {
             logger.warning("Point-cloud adaptation skipped: another translator owns area_effect_cloud.");
             return;
         }
         var replacement = VanillaEntityType.<TwilightAreaEffectCloud>inherited(TwilightAreaEffectCloud::new, original)
                 .type(EntityType.AREA_EFFECT_CLOUD).bedrockDefinition(original.defaultBedrockDefinition()).build(false);
-        if (!Registries.JAVA_ENTITY_TYPES.get().replace(type, original, replacement)) return;
+        if (!swap(EntityType.AREA_EFFECT_CLOUD, original, replacement)) return;
         if (!GeyserRegistries.replaceEntity("minecraft:area_effect_cloud", original, replacement)) {
-            Registries.JAVA_ENTITY_TYPES.get().replace(type, replacement, original);
+            swap(EntityType.AREA_EFFECT_CLOUD, replacement, original);
             return;
         }
         cloudDefinition = replacement;
@@ -242,30 +251,52 @@ public final class GeyserDisplayBridge implements AutoCloseable {
         }
     }
 
+    /** Geyser's definition currently registered for a Java entity type, or null. */
+    private Object registered(EntityType type) {
+        return entities.current(GeyserEntityType.ofVanilla(type), type.ordinal());
+    }
+
+    private boolean swap(EntityType type, Object expected, Object replacement) {
+        return entities.replace(GeyserEntityType.ofVanilla(type), type.ordinal(), expected, replacement);
+    }
+
+    private void unregister(EntityType type, Object definition) {
+        entities.remove(GeyserEntityType.ofVanilla(type), type.ordinal(), definition);
+    }
+
+    /** Runs one registry-changing feature; a failure leaves that feature to Geyser and is reported once with the others. */
+    private static void guarded(List<String> degraded, String feature, Runnable action) {
+        try {
+            action.run();
+        } catch (RuntimeException | LinkageError failure) {
+            degraded.add(feature);
+        }
+    }
+
     @Override public void close() {
         GeyserApi.api().eventBus().unregisterAll(registrar);
         if (cloudDefinition != null) {
-            Registries.JAVA_ENTITY_TYPES.get().replace(cloudDefinition.type(), cloudDefinition, VanillaEntities.AREA_EFFECT_CLOUD);
+            swap(EntityType.AREA_EFFECT_CLOUD, cloudDefinition, VanillaEntities.AREA_EFFECT_CLOUD);
             GeyserRegistries.replaceEntity("minecraft:area_effect_cloud", cloudDefinition, VanillaEntities.AREA_EFFECT_CLOUD);
         }
         if (definition != null) {
-            Registries.JAVA_ENTITY_TYPES.get().remove(definition.type(), definition);
+            unregister(EntityType.ITEM_DISPLAY, definition);
             GeyserRegistries.removeEntity("minecraft:item_display", definition);
         }
         if (blockDefinition != null) {
-            Registries.JAVA_ENTITY_TYPES.get().remove(blockDefinition.type(), blockDefinition);
+            unregister(EntityType.BLOCK_DISPLAY, blockDefinition);
             GeyserRegistries.removeEntity("minecraft:block_display", blockDefinition);
         }
         if (frameDefinition != null) {
-            Registries.JAVA_ENTITY_TYPES.get().replace(frameDefinition.type(), frameDefinition, VanillaEntities.ITEM_FRAME);
+            swap(EntityType.ITEM_FRAME, frameDefinition, VanillaEntities.ITEM_FRAME);
             GeyserRegistries.replaceEntity("minecraft:item_frame", frameDefinition, VanillaEntities.ITEM_FRAME);
         }
         if (glowFrameDefinition != null) {
-            Registries.JAVA_ENTITY_TYPES.get().replace(glowFrameDefinition.type(), glowFrameDefinition, VanillaEntities.GLOW_ITEM_FRAME);
+            swap(EntityType.GLOW_ITEM_FRAME, glowFrameDefinition, VanillaEntities.GLOW_ITEM_FRAME);
             GeyserRegistries.replaceEntity("minecraft:glow_item_frame", glowFrameDefinition, VanillaEntities.GLOW_ITEM_FRAME);
         }
         if (droppedDefinition != null) {
-            Registries.JAVA_ENTITY_TYPES.get().replace(droppedDefinition.type(), droppedDefinition, VanillaEntities.ITEM);
+            swap(EntityType.ITEM, droppedDefinition, VanillaEntities.ITEM);
             GeyserRegistries.replaceEntity("minecraft:item", droppedDefinition, VanillaEntities.ITEM);
         }
     }
