@@ -2138,4 +2138,58 @@ class BedrockPackCompilerTest {
         return new TwilightConfig(false, true, false, true, 40, 100, 10_000_000, 10_000,
                 true, true, List.of(), "auto", false, false, 3);
     }
+
+    /**
+     * Resolved model textures keep the order they are declared in (parent first, then the child's additions). An
+     * immutable Map.copyOf iterates in a per-JVM random order, which reordered block atlases between builds.
+     */
+    @Test
+    void resolvedTexturesKeepDeclarationOrder() throws Exception {
+        Path source = root.resolve("order-source");
+        String[] names = {"zulu", "alpha", "mike", "kilo", "echo", "tango", "bravo", "x1", "a9", "q"};
+        StringBuilder parent = new StringBuilder("{\"textures\":{");
+        for (int i = 0; i < 7; i++) parent.append(i == 0 ? "" : ",").append('"').append(names[i]).append("\":\"demo:block/t").append(i).append('"');
+        write(source, "assets/demo/models/block/parent.json", parent.append("}}").toString());
+        StringBuilder child = new StringBuilder("{\"parent\":\"demo:block/parent\",\"textures\":{");
+        for (int i = 7; i < names.length; i++) child.append(i == 7 ? "" : ",").append('"').append(names[i]).append("\":\"demo:block/t").append(i).append('"');
+        write(source, "assets/demo/models/block/child.json", child.append("}}").toString());
+        ContentSource pack = new ContentSource("test", ContentSource.Kind.RESOURCE_PACK, source, 1);
+        try (var index = com.siberanka.twilight.source.ResourceIndex.build(List.of(pack), config())) {
+            ResolvedJavaModel model = new JavaModelResolver(index).resolve("demo:block/child");
+            assertEquals(List.of(names), new ArrayList<>(model.textures().keySet()));
+            List<String> values = new ArrayList<>();
+            for (int i = 0; i < names.length; i++) values.add("demo:block/t" + i);
+            assertEquals(values, new ArrayList<>(model.textures().values()));
+        }
+    }
+
+    /** A block with several textures gets its atlas in declaration order, so identical inputs give identical packs. */
+    @Test
+    void multiTextureBlockAtlasFollowsDeclarationOrder() throws Exception {
+        Path source = root.resolve("atlas-order-source");
+        write(source, "assets/minecraft/blockstates/note_block.json",
+                "{\"variants\":{\"instrument=basedrum,note=3,powered=false\":{\"model\":\"demo:block/multi\"}}}");
+        String[] names = {"red", "green", "blue", "yellow", "white"};
+        Color[] colors = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.WHITE};
+        StringBuilder textures = new StringBuilder(), elements = new StringBuilder();
+        for (int i = 0; i < names.length; i++) {
+            textures.append(i == 0 ? "" : ",").append("\"").append(names[i]).append("\":\"demo:block/").append(names[i]).append("\"");
+            elements.append(i == 0 ? "" : ",").append("{\"from\":[").append(i * 3).append(",0,0],\"to\":[").append(i * 3 + 2)
+                    .append(",2,2],\"faces\":{\"north\":{\"texture\":\"#").append(names[i]).append("\"}}}");
+            png(source.resolve("assets/demo/textures/block/" + names[i] + ".png"), colors[i]);
+        }
+        write(source, "assets/demo/models/block/multi.json", "{\"textures\":{" + textures + "},\"elements\":[" + elements + "]}");
+        ContentSource pack = new ContentSource("test", ContentSource.Kind.RESOURCE_PACK, source, 1);
+        BuildResult result = new BedrockPackCompiler(root.resolve("data-atlas-order"), config()).build(List.of(pack), List.of());
+        try (ZipFile zip = new ZipFile(result.outputDirectory().resolve("pack.zip").toFile())) {
+            JsonObject terrain = read(zip, "textures/terrain_texture.json").getAsJsonObject("texture_data");
+            String key = terrain.keySet().stream().filter(k -> k.startsWith("twilight_b_")).findFirst().orElseThrow();
+            String path = terrain.getAsJsonObject(key).get("textures").getAsString();
+            BufferedImage atlas = ImageIO.read(zip.getInputStream(zip.getEntry(path + ".png")));
+            assertEquals(16 * names.length, atlas.getWidth(), "one cell per distinct texture");
+            for (int i = 0; i < names.length; i++) {
+                assertEquals(colors[i].getRGB(), atlas.getRGB(16 * i + 8, 8), "cell " + i + " is " + names[i]);
+            }
+        }
+    }
 }

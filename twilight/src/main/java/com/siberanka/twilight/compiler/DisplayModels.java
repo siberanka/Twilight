@@ -182,7 +182,7 @@ final class DisplayModels {
             }
         }
         if (elements.isEmpty()) throw new IOException("Flat item has no opaque pixels");
-        return new ResolvedJavaModel(flat.identifier(), elements, Map.copyOf(textures), flat.display(), flat.handheld(),
+        return new ResolvedJavaModel(flat.identifier(), elements, java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(textures)), flat.display(), flat.handheld(),
                 flat.frontLight());
     }
 
@@ -330,7 +330,7 @@ final class DisplayModels {
         none.add("translation", BedrockPackCompiler.numberArray(-8, 8, -8));
         none.add("rotation", BedrockPackCompiler.numberArray(0, 180, 0));
         display.add("none", none);
-        ResolvedJavaModel model = new ResolvedJavaModel(block, elements, Map.copyOf(textures), display, false, false);
+        ResolvedJavaModel model = new ResolvedJavaModel(block, elements, java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(textures)), display, false, false);
         add(displays, "block_" + Integer.toHexString(key.hashCode()), model, false, DisplayEntityResources.Section.BLOCK, key);
         return true;
     }
@@ -626,7 +626,7 @@ final class DisplayModels {
                 face.addProperty("texture", "#" + variable);
             }
         }
-        return new ResolvedJavaModel(model.identifier(), elements, Map.copyOf(textures), model.display(), model.handheld(),
+        return new ResolvedJavaModel(model.identifier(), elements, java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(textures)), model.display(), model.handheld(),
                 model.frontLight());
     }
 

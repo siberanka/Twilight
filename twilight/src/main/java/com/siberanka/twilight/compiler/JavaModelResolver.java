@@ -127,7 +127,7 @@ final class JavaModelResolver {
         String modelId = qualified(identifier, "minecraft");
         ModelFaceRepair.Result repaired = ModelFaceRepair.repair(elements, textures, resolvedTextures);
         if (repaired.repaired() > 0) repairs.putIfAbsent(modelId, ModelFaceRepair.note(modelId, repaired));
-        return new ResolvedJavaModel(modelId, elements, Map.copyOf(resolvedTextures),
+        return new ResolvedJavaModel(modelId, elements, java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(resolvedTextures)),
                 display, handheld, frontLight, List.of(), ambientOcclusion);
     }
 
@@ -167,7 +167,7 @@ final class JavaModelResolver {
             }
         }
         return new ResolvedJavaModel("twilight:composite", elements.isEmpty() ? null : elements,
-                Map.copyOf(textures), display, models.getFirst().handheld(), models.getFirst().frontLight(), models);
+                java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(textures)), display, models.getFirst().handheld(), models.getFirst().frontLight(), models);
     }
 
     /** A texture entry: a sprite name, or (since 1.21.6) an object such as {"sprite":..., "force_translucent":true}. */
