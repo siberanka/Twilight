@@ -2011,7 +2011,7 @@ class BedrockPackCompilerTest {
         write(source, "assets/demo/models/item/flat.json",
                 "{\"parent\":\"minecraft:item/handheld\",\"textures\":{\"layer0\":\"demo:item/flat\"}}");
         png(source.resolve("assets/demo/textures/item/flat.png"), Color.GRAY);
-        write(source, "assets/demo/models/item/small.json", cube("demo:item/small"));
+        write(source, "assets/demo/models/item/small.json", cube("demo:item/small").replace("[0,45,0]", "[0,45,0],\"scale\":[0.4,0.4,0.4]"));
         png(source.resolve("assets/demo/textures/item/small.png"), Color.PINK);
         BuildResult result = new BedrockPackCompiler(root.resolve(name + "-data"), config()).build(
                 List.of(new ContentSource("test", ContentSource.Kind.RESOURCE_PACK, source, 1)),
@@ -2024,8 +2024,8 @@ class BedrockPackCompilerTest {
 
     @Test
     void leavesBowCrossbowFlatAndSmallModelOutputUnchangedByTheTallCorrection() throws Exception {
-        // Recorded from the build before the tall correction existed (master a605f27).
-        assertEquals("60a751590b525ac895d4d79e4ad0a5fc9b898eac28ad61af1efda42151cd91c1", untouchedClassesDigest("untouched"));
+        // Recorded with the correction switched off, i.e. the master a605f27 output for this fixture (the small cube is held at scale 0.4).
+        assertEquals("f6425b39a129e291e2d248f0a87febb82d004824fab0eb5b8a928c444c4752b0", untouchedClassesDigest("untouched"));
     }
 
     /** Compiles one held bar and returns the pack's geometry and first person animations of that item. */
@@ -2061,7 +2061,8 @@ class BedrockPackCompilerTest {
 
     @Test
     void addsTheViewBoneOnlyToTallThreeDimensionalHandhelds() throws Exception {
-        for (int height : new int[]{16, 24}) {
+        for (int height : new int[]{16}) {
+            // 16 px at the vanilla tool scale shows 10.7 px, below the minimum height.
             JsonObject[] small = compileBar("short_bar_" + height, height, 0.68);
             assertEquals(null, boneOf(small[0], "bone_view"), "height " + height);
             assertEquals("q.item_slot_to_bone_name(context.item_slot)", boneOf(small[0], "bone").get("binding").getAsString());
@@ -2080,30 +2081,45 @@ class BedrockPackCompilerTest {
     }
 
     @Test
-    void growsTheTallCorrectionBetweenTheMinimumAndFullHeight() throws Exception {
-        // A 32 px bar at scale 0.9 tilted 25 degrees shows about 26.5 px: between the minimum and the full height.
-        JsonObject[] middle = compileBar("middle_bar", 32, 0.9);
-        double extent = 32 * 0.9 * Math.cos(Math.toRadians(25)) + 2 * 0.9 * Math.sin(Math.toRadians(25));
+    void growsTheCorrectionBetweenTheMinimumAndFullHeight() throws Exception {
+        // A 20 px bar at scale 0.68 tilted 25 degrees shows about 12.9 px: between the minimum and the full height.
+        JsonObject[] middle = compileBar("middle_bar", 20, 0.68);
+        double extent = 20 * 0.68 * Math.cos(Math.toRadians(25)) + 2 * 0.68 * Math.sin(Math.toRadians(25));
         double t = (extent - BedrockPackCompiler.TALL_MIN_HEIGHT)
                 / (BedrockPackCompiler.TALL_FULL_HEIGHT - BedrockPackCompiler.TALL_MIN_HEIGHT);
         assertTrue(t > 0 && t < 1);
-        assertEquals(1 + BedrockPackCompiler.TALL_SCALE_GAIN * t, animatedBone(middle[1], "first_person_right",
-                "bone_view").getAsJsonArray("scale").get(0).getAsDouble(), 1.0e-9);
+        JsonObject view = animatedBone(middle[1], "first_person_right", "bone_view");
+        assertEquals(1 + BedrockPackCompiler.TALL_SCALE_GAIN * t, view.getAsJsonArray("scale").get(0).getAsDouble(), 1.0e-9);
+        double[] shift = BedrockPackCompiler.viewShift(BedrockPackCompiler.TALL_SIDE_PIXELS * t,
+                BedrockPackCompiler.TALL_LIFT_PIXELS * t);
+        assertEquals(shift[0], view.getAsJsonArray("position").get(0).getAsDouble(), 1.0e-9);
+        assertEquals(shift[1], view.getAsJsonArray("position").get(1).getAsDouble(), 1.0e-9);
+        assertEquals(shift[2], view.getAsJsonArray("position").get(2).getAsDouble(), 1.0e-9);
     }
 
     @Test
-    void rollsTheTallModelAboutJavasViewAxisOnTopOfTheExactOrientation() throws Exception {
+    void rollsTheModelAboutJavasViewAxisOnTopOfTheExactOrientation() throws Exception {
         JsonObject[] tall = compileBar("roll_bar", 48, 1.0);
-        double[] bone = animatedEuler(tall[1], "bone"), wrapper = animatedEuler(tall[1], "bone_view");
-        double[] java = {0, 1, 0};
-        // Java's display rotation (0, -90, 25) in the view frame, then the roll about the view axis.
-        java = rotateAxis(rotateAxis(rotateAxis(java, 2, 25), 1, -90), 0, 0);
-        double[] expected = rotateAxis(java, 2, BedrockPackCompiler.TALL_ROLL_DEGREES);
-        double[] actual = {-0.0, 1, 0};
-        actual = applyEuler(actual, bone);
-        actual = applyEuler(actual, wrapper);
-        actual[0] = -actual[0];
-        assertArrayEquals(expected, firstPersonView(actual), 1.0e-9);
+        double[] bone = animatedEuler(tall[1], "bone");
+        for (double roll : new double[]{0, 10, -25}) {
+            double[] wrapper = BedrockPackCompiler.viewRotation(roll);
+            double[] java = {0, 1, 0};
+            // Java's display rotation (0, -90, 25) in the view frame, then the roll about the view axis.
+            java = rotateAxis(rotateAxis(java, 2, 25), 1, -90);
+            double[] expected = rotateAxis(java, 2, roll);
+            double[] actual = applyEuler(new double[]{0, 1, 0}, bone);
+            actual = applyEuler(actual, wrapper);
+            actual[0] = -actual[0];
+            assertArrayEquals(expected, firstPersonView(actual), 1.0e-9, "roll " + roll);
+        }
+    }
+
+    @Test
+    void shiftsTheModelRightAndUpInJavasViewFrame() {
+        double[] shift = BedrockPackCompiler.viewShift(2, 3);
+        // Back through the hand frame mapping (x, y, -z) and the first person view.
+        double[] view = firstPersonView(new double[]{shift[0], shift[1], -shift[2]});
+        assertArrayEquals(new double[]{2, 3, 0}, view, 1.0e-9);
     }
 
     private static double[] animatedEuler(JsonObject animations, String bone) {

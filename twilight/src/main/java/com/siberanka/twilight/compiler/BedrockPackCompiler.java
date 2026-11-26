@@ -1116,28 +1116,39 @@ public final class BedrockPackCompiler {
     /** Java holds first person items lower, further right and nearer than Bedrock's hand (view pixels). */
     private static final double[] FIRST_PERSON_OFFSET = {1.5, -1.5, 3};
 
-    /** Switch for the tall handheld correction below; false restores the previous output exactly. */
+    /** Switch for the three-dimensional handheld correction below; false restores the previous output exactly. */
     static final boolean TALL_VIEW_CORRECTION = true;
     /**
-     * PROVISIONAL (to be fitted from live captures, see ai/docs/FIRST_PERSON_LIVE_PLAN_2026-11-26.md).
-     * Models whose first person height, in Java pixels after the display scale and rotation, is at most
-     * TALL_MIN_HEIGHT get no correction; the effect grows linearly up to TALL_FULL_HEIGHT. A vanilla handheld
-     * tool shows about 11 px (16 px at scale 0.68), the small-cube calibration items 8 to 16 px.
+     * Models whose first person vertical extent (Java px after the firstperson_righthand scale and rotation) is at
+     * most TALL_MIN_HEIGHT get no correction; the effect grows linearly up to TALL_FULL_HEIGHT. Fitted on 2026-11-26
+     * (m21-ce, Java 1.21.4 against Bedrock at the same 16:9 view): vanilla-sized tools show about 11 px, an 8 px cube
+     * 11.3 px and was already close, every real 3D tool or weapon measured (14.9 to 31.8 px) was clearly too small.
      */
-    static final double TALL_MIN_HEIGHT = 20, TALL_FULL_HEIGHT = 32;
-    /** PROVISIONAL: extra uniform scale at full effect (the PR used 1.4 right and 1.2 left, over its own base). */
-    static final double TALL_SCALE_GAIN = 0.25;
+    static final double TALL_MIN_HEIGHT = 11, TALL_FULL_HEIGHT = 13.5;
     /**
-     * PROVISIONAL: roll at full effect in degrees about Java's view axis towards the eye; positive turns
-     * counter-clockwise as the viewer sees it. Our tall items lean about 20 degrees to the left in captures,
-     * so a clockwise (negative) roll is the expected direction. Both hands use the same value (mirrored view).
+     * Extra uniform scale at full effect. Fitted: Java shows the models 1.3 to 1.8 times larger by area than Bedrock;
+     * 1.58 about the wrapper pivot brought the silhouette areas of nine real and synthetic models to 0.77 to 1.12
+     * of Java's (from 0.29 to 0.64).
      */
-    static final double TALL_ROLL_DEGREES = -6;
-    /** Pivot of the wrapper bone: where the model centre sits in the hand frame (bone pivot 8 plus 12.5). */
-    private static final double[] TALL_VIEW_PIVOT = {0, 20.5, 0};
+    static final double TALL_SCALE_GAIN = 0.58;
+    /**
+     * Roll in degrees about Java's view axis towards the eye (positive = counter-clockwise for the viewer). The fitted
+     * models already lean like Java's without it (axe 13.7 against 13.4 degrees), so it stays 0.
+     */
+    static final double TALL_ROLL_DEGREES = 0;
+    /**
+     * Shift in Java view pixels at full effect: {right, up}. Fitted so the silhouette centroid and bounding box
+     * line up with Java's: Java holds these models further left and higher than the scaled Bedrock model.
+     */
+    static final double TALL_SIDE_PIXELS = -2.8, TALL_LIFT_PIXELS = -4;
+    /**
+     * Height of the wrapper bone's pivot in the hand frame (bone pivot 8 plus the 12.5 hand offset is the model
+     * centre, 20.5). A pivot nearer the tool's head keeps the head where Java has it while the model grows.
+     */
+    static final double TALL_VIEW_PIVOT_HEIGHT = 28;
 
     /**
-     * Scale and roll for a tall three-dimensional handheld, or null. Decided by geometry only: the vertical
+     * Scale, roll and shift for a large three-dimensional handheld, or null. Decided by geometry only: the vertical
      * extent of the model box in Java's first person view after the firstperson_righthand scale and rotation.
      */
     static double[] tallCorrection(ResolvedJavaModel model) {
@@ -1158,7 +1169,8 @@ public final class BedrockPackCompiler {
                 high = Math.max(high, corner[1]);
             }
             double t = Math.max(0, Math.min(1, ((high - low) - TALL_MIN_HEIGHT) / (TALL_FULL_HEIGHT - TALL_MIN_HEIGHT)));
-            return t <= 0 ? null : new double[]{1 + TALL_SCALE_GAIN * t, TALL_ROLL_DEGREES * t};
+            return t <= 0 ? null : new double[]{1 + TALL_SCALE_GAIN * t, TALL_ROLL_DEGREES * t, TALL_LIFT_PIXELS * t,
+                    TALL_SIDE_PIXELS * t};
         } catch (IOException e) {
             return null;
         }
@@ -1172,23 +1184,37 @@ public final class BedrockPackCompiler {
         JsonObject wrapper = new JsonObject();
         wrapper.addProperty("name", "bone_view");
         wrapper.addProperty("binding", bone.remove("binding").getAsString());
-        wrapper.add("pivot", numberArray(TALL_VIEW_PIVOT));
+        wrapper.add("pivot", numberArray(0, TALL_VIEW_PIVOT_HEIGHT, 0));
         bone.addProperty("parent", "bone_view");
         JsonArray result = new JsonArray();
-        result.add(wrapper);
+        // The item's bone stays first: everything that reads the geometry finds it where it always was.
         result.add(bone);
+        result.add(wrapper);
         description.add("bones", result);
     }
 
-    /** First person animations of the wrapper bone: the roll in Java's view frame, then the scale. */
-    private static void addViewAnimation(JsonObject animations, double[] correction) {
+    /** Euler turn of the wrapper bone that rolls the model by the given degrees about Java's view axis. */
+    static double[] viewRotation(double rollDegrees) {
         // The view rotation of a bone turn q is V Mx q Mx V^-1, so rolling it by Z about the view axis needs
         // the extra turn Mx V^-1 Z V Mx in front of q.
-        Quaternion roll = FIRST_PERSON_VIEW.inverse().mul(Quaternion.axis(correction[1], 0, 0, 1)).mul(FIRST_PERSON_VIEW).mirrorX();
+        return FIRST_PERSON_VIEW.inverse().mul(Quaternion.axis(rollDegrees, 0, 0, 1)).mul(FIRST_PERSON_VIEW)
+                .mirrorX().eulerXYZ();
+    }
+
+    /** Hand frame position of the wrapper bone that moves the model right and up in Java's view frame. */
+    static double[] viewShift(double right, double up) {
+        // The way mapFirst carries translations into the hand frame.
+        double[] shift = FIRST_PERSON_VIEW.inverse().rotate(new double[]{right, up, 0});
+        return new double[]{shift[0], shift[1], -shift[2]};
+    }
+
+    /** First person animations of the wrapper bone: scale, shift and roll, all expressed in Java's view frame. */
+    private static void addViewAnimation(JsonObject animations, double[] correction) {
         for (var entry : animations.getAsJsonObject("animations").entrySet()) {
             if (!entry.getKey().endsWith(".first_person_right") && !entry.getKey().endsWith(".first_person_left")) continue;
             JsonObject view = new JsonObject();
-            view.add("rotation", numberArray(roll.eulerXYZ()));
+            view.add("rotation", numberArray(viewRotation(correction[1])));
+            view.add("position", numberArray(viewShift(correction[3], correction[2])));
             view.add("scale", numberArray(correction[0], correction[0], correction[0]));
             entry.getValue().getAsJsonObject().getAsJsonObject("bones").add("bone_view", view);
         }
