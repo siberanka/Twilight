@@ -160,4 +160,46 @@ class GeyserBiomeBridgeTest {
         java.nio.file.Files.writeString(broken, "not a zip");
         assertThrows(java.io.IOException.class, () -> GeyserBiomeBridge.readTables(broken, slots -> slots));
     }
+
+    @Test
+    void concurrentSessionsNeverSeeEachOthersMappingsOfTheSameKey() throws Exception {
+        Map<String, Integer> identifiers = new HashMap<>(Map.of("minecraft:plains", 1));
+        Object lock = new Object();
+        var insideA = new java.util.concurrent.CountDownLatch(1);
+        var releaseA = new java.util.concurrent.CountDownLatch(1);
+        var seenA = new java.util.concurrent.atomic.AtomicInteger(-1);
+        var seenB = new java.util.concurrent.atomic.AtomicInteger(-1);
+        var done = new java.util.concurrent.CountDownLatch(2);
+        Thread a = new Thread(() -> {
+            GeyserBiomeBridge.applied(lock, identifiers, Map.of("demo:blossom_vale", 19), () -> {
+                insideA.countDown();
+                try { releaseA.await(); } catch (InterruptedException ignored) { }
+                seenA.set(identifiers.get("demo:blossom_vale"));
+            });
+            done.countDown();
+        });
+        Thread b = new Thread(() -> {
+            GeyserBiomeBridge.applied(lock, identifiers, Map.of("demo:blossom_vale", 17),
+                    () -> seenB.set(identifiers.get("demo:blossom_vale")));
+            done.countDown();
+        });
+        a.start();
+        assertTrue(insideA.await(5, java.util.concurrent.TimeUnit.SECONDS));
+        b.start();
+        Thread.sleep(200); // B waits for A's lock instead of overwriting or removing A's mapping
+        assertEquals(-1, seenB.get());
+        releaseA.countDown();
+        assertTrue(done.await(5, java.util.concurrent.TimeUnit.SECONDS));
+        assertEquals(19, seenA.get());
+        assertEquals(17, seenB.get());
+        assertEquals(Map.of("minecraft:plains", 1), identifiers);
+    }
+
+    @Test
+    void mappingsAreRemovedEvenWhenGeysersTranslatorFails() {
+        Map<String, Integer> identifiers = new HashMap<>(Map.of("minecraft:plains", 1));
+        assertThrows(IllegalStateException.class, () -> GeyserBiomeBridge.applied(new Object(), identifiers,
+                Map.of("demo:x", 19, "minecraft:plains", 5), () -> { throw new IllegalStateException("broken"); }));
+        assertEquals(Map.of("minecraft:plains", 1), identifiers, "Geyser's own mappings are neither replaced nor removed");
+    }
 }

@@ -15,6 +15,7 @@ import org.geysermc.geyser.registry.Registries;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.translator.protocol.PacketTranslator;
 import org.geysermc.mcprotocollib.network.packet.Packet;
+import org.geysermc.mcprotocollib.protocol.packet.configuration.clientbound.ClientboundFinishConfigurationPacket;
 import org.geysermc.mcprotocollib.protocol.packet.configuration.clientbound.ClientboundRegistryDataPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.level.ClientboundChunksBiomesPacket;
 
@@ -56,6 +57,17 @@ public final class GeyserBiomeBridge implements AutoCloseable {
     private final Logger logger;
     private final EventRegistrar registrar;
     private final Wrapper wrapper = new Wrapper();
+    private final Finish finish = new Finish();
+    private volatile PacketTranslator<? extends Packet> originalFinish;
+    /**
+     * Proxy mode: one session at a time holds its mappings in Geyser's global biome identifiers, for as long as
+     * Geyser reads them (see {@link #applied}). Held across mapping, Geyser's translator and removal.
+     */
+    private final Object sessionLock = new Object();
+    /** Proxy mode: the mappings each session computed from its registry data, until its configuration ends. */
+    private final Map<GeyserSession, Pending> pending = java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+
+    private record Pending(Map<String, Integer> ids, Tables tables) {}
     private final BiomeUpdates updates = new BiomeUpdates();
     private final java.util.function.BiConsumer<java.util.UUID, List<long[]>> resend;
     private volatile PacketTranslator<? extends Packet> originalUpdates;
@@ -119,6 +131,7 @@ public final class GeyserBiomeBridge implements AutoCloseable {
     private synchronized void attach() {
         if (perSession()) {
             parsed.clear();
+            pending.clear();
             pristine = null;
             applied = null;
             appliedFor = null;
@@ -165,7 +178,16 @@ public final class GeyserBiomeBridge implements AutoCloseable {
             original = current;
             translators.put(ClientboundRegistryDataPacket.class, wrapper);
         }
-        if (perSession()) logger.info("Custom biomes are matched per Bedrock session from the pack of its server.");
+        if (perSession()) {
+            // Geyser b1298 and newer read the identifiers when the configuration finishes, older builds while the
+            // registry data is read: the session's mappings are present around both translators.
+            PacketTranslator<? extends Packet> end = translators.get(ClientboundFinishConfigurationPacket.class);
+            if (end != null && !com.siberanka.twilight.geyser.TranslatorChain.installed(end, finish)) {
+                originalFinish = end;
+                translators.put(ClientboundFinishConfigurationPacket.class, finish);
+            }
+            logger.info("Custom biomes are matched per Bedrock session from the pack of its server.");
+        }
         return true;
     }
 
@@ -215,6 +237,24 @@ public final class GeyserBiomeBridge implements AutoCloseable {
             return usable(read);
         } catch (IOException failure) {
             throw new java.io.UncheckedIOException(failure);
+        }
+    }
+
+    /**
+     * Runs Geyser's translator with the session's mappings in the identifiers and removes them again, all under
+     * one lock: another session (another backend, another pack) never sees them or loses its own meanwhile.
+     */
+    static void applied(Object lock, Map<String, Integer> identifiers, Map<String, Integer> mappings, Runnable translate) {
+        synchronized (lock) {
+            java.util.List<String> put = new ArrayList<>();
+            synchronized (identifiers) {
+                mappings.forEach((key, id) -> { if (identifiers.putIfAbsent(key, id) == null) put.add(key); });
+            }
+            try {
+                translate.run();
+            } finally {
+                forget(identifiers, put);
+            }
         }
     }
 
@@ -315,6 +355,7 @@ public final class GeyserBiomeBridge implements AutoCloseable {
         if (perSession() && applied != null && Registries.BIOMES.get() == applied) Registries.BIOMES.set(pristine);
         if (original != null) Registries.JAVA_PACKET_TRANSLATORS.get().replace(ClientboundRegistryDataPacket.class, wrapper, original);
         var translators = Registries.JAVA_PACKET_TRANSLATORS.get();
+        if (originalFinish != null) translators.replace(ClientboundFinishConfigurationPacket.class, finish, originalFinish);
         if (resend == null) return;
         if (originalUpdates != null) translators.replace(ClientboundChunksBiomesPacket.class, updates, originalUpdates);
         else translators.remove(ClientboundChunksBiomesPacket.class, updates);
@@ -408,19 +449,22 @@ public final class GeyserBiomeBridge implements AutoCloseable {
 
         @SuppressWarnings("unchecked")
         @Override public void translate(GeyserSession session, ClientboundRegistryDataPacket packet) {
-            Tables tables = tablesOf(session);
-            Map<String, Integer> identifiers = null;
-            Map<String, String> added = Map.of();
-            if (tables != null) {
+            PacketTranslator<ClientboundRegistryDataPacket> next = (PacketTranslator<ClientboundRegistryDataPacket>) original;
+            if (perSession()) {
+                translateForSession(session, packet, next);
+                return;
+            }
+            BiomeMatcher current = matcher;
+            if (current != null) {
                 try {
-                    identifiers = identifiers();
+                    Map<String, Integer> identifiers = identifiers();
+                    Map<String, String> added;
                     synchronized (identifiers) {
-                        added = register(packet, tables.matcher(), tables.slots(), identifiers);
+                        added = register(packet, current, slots, identifiers);
                     }
                     if (!added.isEmpty()) {
                         logger.info("Bedrock biome mapping: " + added.size() + " custom biome(s), e.g. "
                                 + added.entrySet().iterator().next());
-                        climateFor(tables);
                     }
                 } catch (IOException | ReflectiveOperationException | RuntimeException | LinkageError failure) {
                     if (failureLogged.compareAndSet(false, true)) {
@@ -428,16 +472,82 @@ public final class GeyserBiomeBridge implements AutoCloseable {
                     }
                 }
             }
-            try {
-                ((PacketTranslator<ClientboundRegistryDataPacket>) original).translate(session, packet);
-            } finally {
-                // A session's mapping must not leak to sessions of other servers: the registry has been read by now.
-                if (perSession() && identifiers != null) forget(identifiers, added.keySet());
-            }
+            next.translate(session, packet);
         }
 
         @Override public boolean shouldExecuteInEventLoop() {
             return original.shouldExecuteInEventLoop();
+        }
+    }
+
+    /** Proxy mode: works out what the session's pack makes of its custom biomes, then lets Geyser read the registry. */
+    private void translateForSession(GeyserSession session, ClientboundRegistryDataPacket packet,
+                                     PacketTranslator<ClientboundRegistryDataPacket> next) {
+        Map<String, Integer> identifiers = null;
+        Map<String, Integer> mappings = Map.of();
+        try {
+            Tables tables = tablesOf(session);
+            if (tables != null) {
+                identifiers = identifiers();
+                Map<String, Integer> scratch;
+                synchronized (identifiers) {
+                    scratch = new java.util.HashMap<>(identifiers);
+                }
+                Map<String, String> added = register(packet, tables.matcher(), tables.slots(), scratch);
+                if (!added.isEmpty()) {
+                    mappings = new java.util.LinkedHashMap<>();
+                    for (String key : added.keySet()) mappings.put(key, scratch.get(key));
+                    pending.put(session, new Pending(mappings, tables));
+                    logger.info("Bedrock biome mapping: " + added.size() + " custom biome(s), e.g. "
+                            + added.entrySet().iterator().next());
+                }
+            }
+        } catch (IOException | ReflectiveOperationException | RuntimeException | LinkageError failure) {
+            if (failureLogged.compareAndSet(false, true)) {
+                logger.log(Level.WARNING, "Custom biome matching failed; such biomes keep Geyser's fallback.", failure);
+            }
+        }
+        if (identifiers == null || mappings.isEmpty()) {
+            next.translate(session, packet);
+            return;
+        }
+        applied(sessionLock, identifiers, mappings, () -> next.translate(session, packet));
+    }
+
+    /** Proxy mode: the end of the configuration, where Geyser b1298 and newer turn the biome registry into Bedrock ids. */
+    private final class Finish extends PacketTranslator<ClientboundFinishConfigurationPacket>
+            implements com.siberanka.twilight.geyser.TranslatorChain.Link {
+        @Override public Object next() {
+            return originalFinish;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override public void translate(GeyserSession session, ClientboundFinishConfigurationPacket packet) {
+            PacketTranslator<ClientboundFinishConfigurationPacket> next =
+                    (PacketTranslator<ClientboundFinishConfigurationPacket>) originalFinish;
+            Pending mine = pending.remove(session);
+            if (mine == null) {
+                next.translate(session, packet);
+                return;
+            }
+            Map<String, Integer> identifiers;
+            try {
+                identifiers = identifiers();
+            } catch (IOException | RuntimeException | LinkageError failure) {
+                if (failureLogged.compareAndSet(false, true)) {
+                    logger.log(Level.WARNING, "Custom biome matching failed; such biomes keep Geyser's fallback.", failure);
+                }
+                next.translate(session, packet);
+                return;
+            }
+            synchronized (sessionLock) {
+                climateFor(mine.tables()); // the biome definitions Geyser sends next carry this pack's slot climate
+                applied(sessionLock, identifiers, mine.ids(), () -> next.translate(session, packet));
+            }
+        }
+
+        @Override public boolean shouldExecuteInEventLoop() {
+            return originalFinish.shouldExecuteInEventLoop();
         }
     }
 }
