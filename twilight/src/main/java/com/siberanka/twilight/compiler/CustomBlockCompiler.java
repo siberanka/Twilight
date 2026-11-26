@@ -157,7 +157,7 @@ final class CustomBlockCompiler {
                 Variant variant = state.getValue();
                 Look look = looks.get(variant);
                 if (look == null && !looks.containsKey(variant)) {
-                    look = look(variant);
+                    look = look(block.getKey(), variant);
                     looks.put(variant, look);
                 }
                 if (look == null) continue;
@@ -238,7 +238,23 @@ final class CustomBlockCompiler {
         return "look:" + elements;
     }
 
-    private Look look(Variant variant) {
+    private static boolean drawsAnything(JsonArray elements) throws IOException {
+        for (JsonElement element : elements) {
+            JsonObject object = InvertedElements.normalized(element.getAsJsonObject());
+            if (!degenerate(vector(object.getAsJsonArray("from")), vector(object.getAsJsonArray("to")))) return true;
+        }
+        return false;
+    }
+
+    /**
+     * The colour Java's client multiplies into a vanilla block's tinted faces. A Bedrock custom block cannot follow
+     * the biome, so a model drawn through the block gets the colour of a plains biome baked in.
+     */
+    private static final Map<String, Map<Integer, Integer>> TINTS = Map.of(
+            "oak_leaves", Map.of(0, 0xFF77AB2F),
+            "sugar_cane", Map.of(0, 0xFF91BD59));
+
+    private Look look(String block, Variant variant) {
         ResolvedJavaModel model;
         try {
             model = resolver.resolve(variant.model(), true);
@@ -248,7 +264,9 @@ final class CustomBlockCompiler {
         }
         try {
             if (!custom(model)) return null;
-            if (model.elements() == null || model.elements().isEmpty()) {
+            ResolvedJavaModel untinted = model;
+            if (TINTS.containsKey(block)) model = DisplayModels.tinted(model, TINTS.get(block));
+            if (model.elements() == null || model.elements().isEmpty() || !drawsAnything(model.elements())) {
                 notices.add("custom block model " + variant.model() + " has no elements; Bedrock keeps the vanilla block");
                 return null;
             }
@@ -270,7 +288,7 @@ final class CustomBlockCompiler {
                     faces.put(face, texture(image));
                 }
                 return new Look(true, faces, null, null, translucent ? "blend" : cutout ? "alpha_test" : "opaque",
-                        signature(resources, model), model.ambientOcclusion(), dimming);
+                        signature(resources, untinted), model.ambientOcclusion(), dimming);
             }
             List<String> used = new ArrayList<>();
             for (String texture : model.textures().values()) if (!used.contains(texture)) used.add(texture);
@@ -305,7 +323,7 @@ final class CustomBlockCompiler {
                 }
             }
             return new Look(false, Map.of(), texture(image), geometry,
-                    alpha == 2 ? "blend" : "alpha_test", signature(resources, model), model.ambientOcclusion(),
+                    alpha == 2 ? "blend" : "alpha_test", signature(resources, untinted), model.ambientOcclusion(),
                     Map.of("*", anyShaded || !anyFace));
         } catch (IOException | RuntimeException failure) {
             notices.add("custom block model " + variant.model() + " could not be converted (" + failure.getMessage()
@@ -481,6 +499,14 @@ final class CustomBlockCompiler {
      * A block geometry of the model's elements in one bone. Bedrock mirrors a block geometry's x axis against the
      * world (as Geyser's collision boxes do), so Java's east is geometry -x and its east and west faces swap.
      */
+    /** Most pixels all parts of a Bedrock block geometry may span on one axis. */
+    private static final double MAX_SPAN = 30;
+
+    /** An element without volume on every axis draws nothing and Bedrock rejects its box. */
+    private static boolean degenerate(double[] from, double[] to) {
+        return to[0] == from[0] && to[1] == from[1] && to[2] == from[2];
+    }
+
     static JsonObject geometry(ResolvedJavaModel model, TextureSet atlas) throws IOException {
         return geometry(model, atlas, new boolean[1]);
     }
@@ -488,16 +514,29 @@ final class CustomBlockCompiler {
     /** @param clamped set when an element reached past Bedrock's block bounds and was cut */
     static JsonObject geometry(ResolvedJavaModel model, TextureSet atlas, boolean[] clamped) throws IOException {
         JsonArray cubes = new JsonArray();
+        // Bedrock also rejects a block whose parts together span more than 30 pixels on an axis (1 + 14/16 blocks);
+        // the far side of what exceeds that is pulled in like the bounds below.
+        double[] low = {Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE};
         for (JsonElement value : model.elements()) {
             JsonObject element = InvertedElements.normalized(value.getAsJsonObject());
             double[] from = vector(element.getAsJsonArray("from"));
             double[] to = vector(element.getAsJsonArray("to"));
+            if (degenerate(from, to)) continue;
+            low[0] = Math.min(low[0], Math.max(-22, 8 - to[0]));
+            low[1] = Math.min(low[1], Math.max(-14, from[1]));
+            low[2] = Math.min(low[2], Math.max(-22, from[2] - 8));
+        }
+        for (JsonElement value : model.elements()) {
+            JsonObject element = InvertedElements.normalized(value.getAsJsonObject());
+            double[] from = vector(element.getAsJsonArray("from"));
+            double[] to = vector(element.getAsJsonArray("to"));
+            if (degenerate(from, to)) continue;
             JsonObject cube = new JsonObject();
             // Bedrock rejects block boxes outside -14..30 pixels of the block (Java allows -16..32): the outermost
             // pixels of such elements are pulled in (the box is clamped, its texture keeps its whole face).
-            double x0 = Math.max(-22, 8 - to[0]), x1 = Math.min(22, 8 - from[0]);
-            double y0 = Math.max(-14, from[1]), y1 = Math.min(30, to[1]);
-            double z0 = Math.max(-22, from[2] - 8), z1 = Math.min(22, to[2] - 8);
+            double x0 = Math.max(-22, 8 - to[0]), x1 = Math.min(Math.min(22, 8 - from[0]), low[0] + MAX_SPAN);
+            double y0 = Math.max(-14, from[1]), y1 = Math.min(Math.min(30, to[1]), low[1] + MAX_SPAN);
+            double z0 = Math.max(-22, from[2] - 8), z1 = Math.min(Math.min(22, to[2] - 8), low[2] + MAX_SPAN);
             if (x1 < x0 || y1 < y0 || z1 < z0) continue;
             if (x0 != 8 - to[0] || x1 != 8 - from[0] || y0 != from[1] || y1 != to[1] || z0 != from[2] - 8 || z1 != to[2] - 8) clamped[0] = true;
             cube.add("origin", BedrockPackCompiler.numberArray(x0, y0, z0));

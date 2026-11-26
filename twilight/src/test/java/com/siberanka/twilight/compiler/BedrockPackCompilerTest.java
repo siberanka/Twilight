@@ -516,6 +516,65 @@ class BedrockPackCompilerTest {
         }
     }
 
+    /**
+     * Bedrock rejects a block geometry whose parts together span more than 30 pixels on an axis or that is only a
+     * zero-size box, and one rejected block hides every custom block of the pack: CraftEngine's 32 pixel tall reed and
+     * its empty sugar cane state must not reach Geyser as they are.
+     */
+    @Test
+    void keepsBlockGeometryWithinBedrockLimits() throws Exception {
+        Path source = root.resolve("tall-block-source");
+        write(source, "assets/minecraft/blockstates/sugar_cane.json",
+                "{\"variants\":{\"age=3\":{\"model\":\"block/custom/tall\"},\"age=5\":{\"model\":\"block/custom/nothing\"}}}");
+        write(source, "assets/minecraft/models/block/custom/tall.json", """
+                {"textures":{"cross":"minecraft:block/custom/tall"},"elements":[
+                  {"from":[0,-3,8],"to":[16,29,8],"faces":{"north":{"texture":"#cross"},"south":{"texture":"#cross"}}}]}
+                """);
+        write(source, "assets/minecraft/models/block/custom/nothing.json", """
+                {"textures":{"cross":"minecraft:block/custom/tall"},"elements":[
+                  {"from":[0,0,0],"to":[0,0,0],"faces":{"north":{"texture":"#cross"}}}]}
+                """);
+        png(source.resolve("assets/minecraft/textures/block/custom/tall.png"), new Color(0, 255, 0, 0));
+        ContentSource pack = new ContentSource("test", ContentSource.Kind.RESOURCE_PACK, source, 1);
+        BuildResult result = new BedrockPackCompiler(root.resolve("data-tall-blocks"), config()).build(List.of(pack), List.of());
+        try (ZipFile zip = new ZipFile(result.outputDirectory().resolve("pack.zip").toFile())) {
+            JsonObject file = JsonParser.parseString(new String(zip.getInputStream(zip.getEntry("twilight/geyser_blocks.json"))
+                    .readAllBytes(), StandardCharsets.UTF_8)).getAsJsonObject();
+            assertEquals(1, file.getAsJsonArray("blocks").size(), "the zero-size state stays vanilla");
+            JsonObject geometry = JsonParser.parseString(new String(zip.getInputStream(zip.getEntry("models/blocks/twilight_blocks.geo.json"))
+                    .readAllBytes(), StandardCharsets.UTF_8)).getAsJsonObject().getAsJsonArray("minecraft:geometry").get(0).getAsJsonObject();
+            JsonObject cube = geometry.getAsJsonArray("bones").get(0).getAsJsonObject().getAsJsonArray("cubes").get(0).getAsJsonObject();
+            assertEquals(-3.0, cube.getAsJsonArray("origin").get(1).getAsDouble());
+            assertEquals(30.0, cube.getAsJsonArray("size").get(1).getAsDouble());
+        }
+    }
+
+    @Test
+    void bakesPlainsFoliageColourIntoLeafStates() throws Exception {
+        Path source = root.resolve("leaf-tint-source");
+        write(source, "assets/minecraft/blockstates/oak_leaves.json",
+                "{\"variants\":{\"distance=1,persistent=true,waterlogged=false\":{\"model\":\"block/custom/leaf\"}}}");
+        write(source, "assets/minecraft/models/block/custom/leaf.json", """
+                {"textures":{"all":"minecraft:block/custom/leaf"},"elements":[{"from":[0,0,0],"to":[16,16,16],"faces":{
+                  "north":{"texture":"#all","tintindex":0},"south":{"texture":"#all","tintindex":0},"east":{"texture":"#all","tintindex":0},
+                  "west":{"texture":"#all","tintindex":0},"up":{"texture":"#all","tintindex":0},"down":{"texture":"#all","tintindex":0}}}]}
+                """);
+        png(source.resolve("assets/minecraft/textures/block/custom/leaf.png"), Color.WHITE);
+        ContentSource pack = new ContentSource("test", ContentSource.Kind.RESOURCE_PACK, source, 1);
+        BuildResult result = new BedrockPackCompiler(root.resolve("data-leaf-tint"), config()).build(List.of(pack), List.of());
+        try (ZipFile zip = new ZipFile(result.outputDirectory().resolve("pack.zip").toFile())) {
+            JsonObject file = JsonParser.parseString(new String(zip.getInputStream(zip.getEntry("twilight/geyser_blocks.json"))
+                    .readAllBytes(), StandardCharsets.UTF_8)).getAsJsonObject();
+            JsonObject block = file.getAsJsonArray("blocks").get(0).getAsJsonObject();
+            String texture = block.getAsJsonObject("materials").getAsJsonObject("up").get("texture").getAsString();
+            JsonObject terrain = JsonParser.parseString(new String(zip.getInputStream(zip.getEntry("textures/terrain_texture.json"))
+                    .readAllBytes(), StandardCharsets.UTF_8)).getAsJsonObject();
+            String path = terrain.getAsJsonObject("texture_data").getAsJsonObject(texture).get("textures").getAsString();
+            java.awt.image.BufferedImage image = javax.imageio.ImageIO.read(zip.getInputStream(zip.getEntry(path + ".png")));
+            assertEquals(0x77AB2F, image.getRGB(2, 2) & 0xFFFFFF, "a white leaf texture shows the plains foliage colour");
+        }
+    }
+
     @Test
     void expandsPartialBlockStatesInJavaOrder() {
         var domain = CustomBlockCompiler.BLOCKS.get("note_block");
