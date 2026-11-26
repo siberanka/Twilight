@@ -88,6 +88,12 @@ geyser:
   # wings on Bedrock, vanilla ones too, so leave it off on servers with vanilla elytras. Needs one distinct
   # wings texture among the custom elytras.
   elytra-override: false
+  # EXPERIMENTAL: shows a player's own custom elytra with its wings to that player, and several different custom
+  # elytras at once. The vanilla elytra's attachable picks its wings texture from a twilight:elytra entity property
+  # of the wearer, which Twilight sets from the item each player wears (viewers keep their custom items, vanilla
+  # elytras stay vanilla). Takes precedence over elytra-override. Needs a Geyser restart after the first build
+  # that contains custom elytras, like new items, and a Bedrock client that reads entity properties in attachables.
+  elytra-per-player: false
   # Player heads show their skins on Bedrock (menus, hands, armour stands, holograms) instead of Steve's:
   # Twilight learns the heads this server shows and reads the ones its plugins' configurations name
   # (textures, skin URLs, user names, HeadDatabase ids), and Geyser registers them as custom skulls when it

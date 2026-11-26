@@ -264,7 +264,7 @@ public final class TwilightPlugin extends JavaPlugin {
                 getLogger().log(Level.WARNING, "Java's rider name rule is unavailable for this Geyser build.", failure);
             }
             try {
-                wornElytra = com.siberanka.twilight.integration.display.GeyserWornElytra.create(this, getLogger());
+                wornElytra = com.siberanka.twilight.integration.display.GeyserWornElytra.create(this, getLogger(), ownElytraWings());
             } catch (Exception | LinkageError failure) {
                 getLogger().log(Level.WARNING, "Custom elytras on other players are unavailable for this Geyser build.", failure);
             }
@@ -570,7 +570,7 @@ public final class TwilightPlugin extends JavaPlugin {
                                 .withNameplatePlugin(world.nameplates()).withItemDisplays(displays).withDisplayedItems(shownItems).withDisplayedOwnModels(shownOwn)
                                 .withPlayerHeads(headSkins, headNames, getDataFolder().toPath().resolve("cache/skins"), playerHeadsEnabled())
                                 .withPlayerSkins(joinedSkins)
-                                .withElytraOverride(getConfig().getBoolean("geyser.elytra-override", false))
+                                .withElytraOverride(getConfig().getBoolean("geyser.elytra-override", false)).withElytraPerPlayer(getConfig().getBoolean("geyser.elytra-per-player", false))
                                 .withMaxGlyphCell(getConfig().getInt("ui.max-glyph-cell", 512))
                                 .withPocketContainerLayout(pocketContainerLayout())
                                 .withCustomBlocks(getConfig().getBoolean("geyser.custom-blocks", true))
@@ -586,7 +586,7 @@ public final class TwilightPlugin extends JavaPlugin {
                                 .withNameplatePlugin(world.nameplates()).withItemDisplays(displays).withDisplayedItems(shownItems).withDisplayedOwnModels(shownOwn)
                                 .withPlayerHeads(headSkins, headNames, getDataFolder().toPath().resolve("cache/skins"), playerHeadsEnabled())
                                 .withPlayerSkins(joinedSkins)
-                                .withElytraOverride(getConfig().getBoolean("geyser.elytra-override", false))
+                                .withElytraOverride(getConfig().getBoolean("geyser.elytra-override", false)).withElytraPerPlayer(getConfig().getBoolean("geyser.elytra-per-player", false))
                                 .withMaxGlyphCell(getConfig().getInt("ui.max-glyph-cell", 512))
                                 .withPocketContainerLayout(pocketContainerLayout())
                                 .withCustomBlocks(getConfig().getBoolean("geyser.custom-blocks", true))
@@ -674,6 +674,20 @@ public final class TwilightPlugin extends JavaPlugin {
                     getDataFolder().toPath().resolve("pack-host"), getLogger());
         } catch (java.io.IOException | RuntimeException | LinkageError failure) {
             getLogger().log(Level.SEVERE, "pack-host could not start; Geyser sends the packs itself: " + failure.getMessage());
+        }
+    }
+
+    /**
+     * The wings the served pack lists for a player's own custom elytra ({@code geyser.elytra-per-player}); empty when
+     * the option is off or the pack has none yet (a pack built later needs a Geyser restart, as for items).
+     */
+    private com.siberanka.twilight.geyser.ElytraWings ownElytraWings() {
+        if (!getConfig().getBoolean("geyser.elytra-per-player", false)) return com.siberanka.twilight.geyser.ElytraWings.EMPTY;
+        try {
+            return com.siberanka.twilight.geyser.ElytraWings.read(servedPack());
+        } catch (java.io.IOException unreadable) {
+            getLogger().log(Level.WARNING, "The custom elytra wings of the served pack could not be read; players' own custom elytras stay vanilla-looking.", unreadable);
+            return com.siberanka.twilight.geyser.ElytraWings.EMPTY;
         }
     }
 

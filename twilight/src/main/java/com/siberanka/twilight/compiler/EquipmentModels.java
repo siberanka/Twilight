@@ -176,6 +176,56 @@ final class EquipmentModels {
                 new Look("wings", "geometry.elytra", "variable.chest_layer_visible", true), texturePath);
     }
 
+    /** Render controller of {@link #perPlayerElytraAttachable}: the wings texture is the wearer's property value. */
+    static final String PLAYER_ELYTRA_CONTROLLER = "controller.render.twilight_elytra";
+
+    /**
+     * The vanilla elytra's attachable with one wings texture per value of the wearer's
+     * {@code twilight:elytra} property (0 is the vanilla wings, {@code n} is {@code textures[n - 1]}). Geyser sends
+     * a player's own glider as the vanilla elytra, so only the property, which Twilight sets from the Java item,
+     * tells the wings apart.
+     */
+    static JsonObject perPlayerElytraAttachable(List<String> textures) {
+        JsonObject root = describe("minecraft:elytra", null,
+                new Look("wings", "geometry.elytra", "variable.chest_layer_visible", true), "textures/models/armor/elytra");
+        JsonObject description = root.getAsJsonObject("minecraft:attachable").getAsJsonObject("description");
+        JsonObject slots = description.getAsJsonObject("textures");
+        for (int i = 0; i < textures.size(); i++) slots.addProperty("wings" + (i + 1), textures.get(i));
+        JsonArray controllers = new JsonArray();
+        controllers.add(PLAYER_ELYTRA_CONTROLLER);
+        description.add("render_controllers", controllers);
+        return root;
+    }
+
+    /** The render controller named {@link #PLAYER_ELYTRA_CONTROLLER} for the given number of custom wings. */
+    static JsonObject perPlayerElytraController(int customWings, String property) {
+        JsonArray array = new JsonArray();
+        array.add("Texture.default");
+        for (int i = 1; i <= customWings; i++) array.add("Texture.wings" + i);
+        JsonObject arrays = new JsonObject();
+        JsonObject textureArrays = new JsonObject();
+        textureArrays.add("Array.wings", array);
+        arrays.add("textures", textureArrays);
+        JsonObject controller = new JsonObject();
+        controller.add("arrays", arrays);
+        controller.addProperty("geometry", "Geometry.default");
+        JsonArray materials = new JsonArray();
+        JsonObject material = new JsonObject();
+        material.addProperty("*", "variable.is_enchanted ? Material.enchanted : Material.default");
+        materials.add(material);
+        controller.add("materials", materials);
+        JsonArray textures = new JsonArray();
+        textures.add("Array.wings[query.property('" + property + "')]");
+        textures.add("Texture.enchanted");
+        controller.add("textures", textures);
+        JsonObject controllers = new JsonObject();
+        controllers.add(PLAYER_ELYTRA_CONTROLLER, controller);
+        JsonObject root = new JsonObject();
+        root.addProperty("format_version", "1.8.0");
+        root.add("render_controllers", controllers);
+        return root;
+    }
+
     private static JsonObject describe(String identifier, JsonObject item, Look look, String texturePath) {
         JsonObject description = new JsonObject();
         description.addProperty("identifier", identifier);

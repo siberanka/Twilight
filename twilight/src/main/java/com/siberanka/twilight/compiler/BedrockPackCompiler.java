@@ -96,6 +96,17 @@ public final class BedrockPackCompiler {
         return this;
     }
 
+    /**
+     * Whether a Bedrock player sees their own custom elytra with its wings. The vanilla elytra's attachable then
+     * picks its texture from the wearer's {@code twilight:elytra} entity property, which the Geyser runtime sets
+     * from the item a player wears (Geyser sends every worn glider as the vanilla elytra). Takes precedence over
+     * {@link #withElytraOverride}.
+     */
+    public BedrockPackCompiler withElytraPerPlayer(boolean value) {
+        this.elytraPerPlayer = value;
+        return this;
+    }
+
     public BedrockPackCompiler withItemDisplays(boolean value) {
         this.itemDisplays = value;
         return this;
@@ -103,6 +114,7 @@ public final class BedrockPackCompiler {
 
     private boolean itemDisplays = true;
     private boolean elytraOverride = false;
+    private boolean elytraPerPlayer = false;
     /** Keys of the items shown in Java item displays ({@code DisplayedItems}); null gives every item a variant. */
     private Set<String> displayedItems;
 
@@ -349,7 +361,8 @@ public final class BedrockPackCompiler {
             }
         }
         TextureSet.MISSING_FILES.remove();
-        if (elytraOverride) overrideVanillaElytra(gliderWings, packFiles, notices);
+        if (elytraPerPlayer) perPlayerElytra(gliderWings, packFiles, notices);
+        else if (elytraOverride) overrideVanillaElytra(gliderWings, packFiles, notices);
 
         if (itemDisplays) for (String key : new java.util.TreeSet<>(displayedOwn)) {
             try {
@@ -1463,6 +1476,27 @@ public final class BedrockPackCompiler {
      * matches then, so the wings are drawn by an attachable for the vanilla identifier instead. It cannot tell one
      * elytra from another, so it applies only while the pack's custom elytras all wear the same wings.
      */
+    private static void perPlayerElytra(Map<String, List<String>> gliderWings, Map<String, byte[]> packFiles,
+                                        List<String> notices) {
+        if (gliderWings.isEmpty()) return;
+        List<String> textures = new ArrayList<>(gliderWings.keySet());
+        if (textures.size() > com.siberanka.twilight.geyser.ElytraWings.MAX) {
+            notices.add("custom elytras wear " + textures.size() + " different wings; only the first "
+                    + com.siberanka.twilight.geyser.ElytraWings.MAX + " show on the wearer's own screen");
+            textures = textures.subList(0, com.siberanka.twilight.geyser.ElytraWings.MAX);
+        }
+        List<List<String>> items = new ArrayList<>();
+        for (String texture : textures) items.add(gliderWings.get(texture));
+        packFiles.put("attachables/twilight_vanilla_elytra.json", jsonBytes(EquipmentModels.perPlayerElytraAttachable(textures)));
+        packFiles.put("render_controllers/twilight_elytra.render_controllers.json",
+                jsonBytes(EquipmentModels.perPlayerElytraController(textures.size(), com.siberanka.twilight.geyser.ElytraWings.PROPERTY)));
+        packFiles.put(com.siberanka.twilight.geyser.ElytraWings.PATH,
+                com.siberanka.twilight.geyser.ElytraWings.json(items).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        notices.add("Bedrock draws a worn elytra with the wings its wearer's twilight:elytra property selects ("
+                + textures.size() + " custom wings for " + gliderWings.values().stream().mapToInt(List::size).sum() + " item(s)); "
+                + "vanilla elytras keep the vanilla wings");
+    }
+
     private static void overrideVanillaElytra(Map<String, List<String>> gliderWings, Map<String, byte[]> packFiles,
                                               List<String> notices) {
         if (gliderWings.isEmpty()) return;

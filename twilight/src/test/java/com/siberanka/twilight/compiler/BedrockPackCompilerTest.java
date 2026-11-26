@@ -1700,6 +1700,10 @@ class BedrockPackCompilerTest {
     }
 
     private BuildResult buildWings(String name, boolean override, String[][] elytras) throws Exception {
+        return buildWings(name, override, false, elytras);
+    }
+
+    private BuildResult buildWings(String name, boolean override, boolean perPlayer, String[][] elytras) throws Exception {
         Path source = root.resolve(name);
         List<CustomItemDescriptor> live = new ArrayList<>();
         for (String[] elytra : elytras) {
@@ -1717,8 +1721,55 @@ class BedrockPackCompilerTest {
                     Optional.of(new CustomItemDescriptor.Equipment("chest", Optional.of("demo:" + wings)))));
         }
         ContentSource pack = new ContentSource("test", ContentSource.Kind.RESOURCE_PACK, source, 1);
-        return new BedrockPackCompiler(root.resolve("data-" + name), config()).withElytraOverride(override)
+        return new BedrockPackCompiler(root.resolve("data-" + name), config()).withElytraOverride(override).withElytraPerPlayer(perPlayer)
                 .build(List.of(pack), live);
+    }
+
+    /**
+     * With {@code elytra-per-player} the vanilla elytra's attachable picks one of several wings textures from the
+     * wearer's {@code twilight:elytra} property (0 is vanilla), so different custom elytras and a player's own
+     * view work; the pack lists the Bedrock items of each wings texture for the runtime.
+     */
+    @Test
+    void perPlayerElytraSelectsWingsByWearerProperty() throws Exception {
+        BuildResult result = buildWings("elytra-per-player", false, true, new String[][]{
+                {"flame_elytra", "flame", "minecraft:elytra"}, {"ice_elytra", "ice", "minecraft:elytra"},
+                {"flame_elytra_2", "flame", "minecraft:elytra"}});
+        assertTrue(result.problems().isEmpty(), result.problems().toString());
+        try (ZipFile zip = new ZipFile(result.outputDirectory().resolve("pack.zip").toFile())) {
+            JsonObject vanilla = read(zip, "attachables/twilight_vanilla_elytra.json")
+                    .getAsJsonObject("minecraft:attachable").getAsJsonObject("description");
+            assertEquals("minecraft:elytra", vanilla.get("identifier").getAsString());
+            JsonObject textures = vanilla.getAsJsonObject("textures");
+            assertEquals("textures/models/armor/elytra", textures.get("default").getAsString(), "vanilla wings stay index 0");
+            assertTrue(textures.has("wings1") && textures.has("wings2") && !textures.has("wings3"), textures.toString());
+            assertFalse(textures.get("wings1").equals(textures.get("wings2")));
+            assertEquals("[\"controller.render.twilight_elytra\"]", vanilla.getAsJsonArray("render_controllers").toString());
+            JsonObject controller = read(zip, "render_controllers/twilight_elytra.render_controllers.json")
+                    .getAsJsonObject("render_controllers").getAsJsonObject("controller.render.twilight_elytra");
+            assertEquals("[\"Texture.default\",\"Texture.wings1\",\"Texture.wings2\"]",
+                    controller.getAsJsonObject("arrays").getAsJsonObject("textures").getAsJsonArray("Array.wings").toString());
+            assertEquals("Array.wings[query.property('twilight:elytra')]", controller.getAsJsonArray("textures").get(0).getAsString());
+            String listing = new String(zip.getInputStream(zip.getEntry(com.siberanka.twilight.geyser.ElytraWings.PATH)).readAllBytes(),
+                    StandardCharsets.UTF_8);
+            var wings = com.siberanka.twilight.geyser.ElytraWings.parse(listing);
+            JsonObject items = JsonParser.parseString(Files.readString(result.outputDirectory()
+                    .resolve("custom_mappings/geyser_item_mappings.json"))).getAsJsonObject().getAsJsonObject("items");
+            java.util.Map<String, Integer> byModel = new java.util.TreeMap<>();
+            for (JsonElement mapping : items.getAsJsonArray("minecraft:elytra")) {
+                byModel.put(mapping.getAsJsonObject().get("model").getAsString(),
+                        wings.indexOf(mapping.getAsJsonObject().get("bedrock_identifier").getAsString()));
+            }
+            assertEquals(java.util.Set.of(1, 2), new java.util.TreeSet<>(byModel.values()), byModel.toString());
+            assertEquals(byModel.get("demo:flame_elytra"), byModel.get("demo:flame_elytra_2"), "same wings, same index");
+            assertEquals(0, wings.indexOf("minecraft:elytra"), "vanilla elytras keep index 0");
+        }
+        assertTrue(notices(result).contains("twilight:elytra"), notices(result));
+        BuildResult off = buildWings("elytra-per-player-off", false, false, new String[][]{{"flame_elytra", "flame", "minecraft:elytra"}});
+        try (ZipFile zip = new ZipFile(off.outputDirectory().resolve("pack.zip").toFile())) {
+            assertNull(zip.getEntry(com.siberanka.twilight.geyser.ElytraWings.PATH));
+            assertNull(zip.getEntry("attachables/twilight_vanilla_elytra.json"));
+        }
     }
 
     private static String notices(BuildResult result) throws Exception {
