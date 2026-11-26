@@ -93,6 +93,8 @@ geyser:
   # of the wearer, which Twilight sets from the item each player wears (viewers keep their custom items, vanilla
   # elytras stay vanilla). Takes precedence over elytra-override. Needs a Geyser restart after the first build
   # that contains custom elytras, like new items, and a Bedrock client that reads entity properties in attachables.
+  # With Geyser on a proxy, set this on the backends: twilight-proxy reads each session's wings table from the pack
+  # that session loaded (a session keeps it until it rejoins, so switch servers with a transfer).
   elytra-per-player: false
   # Player heads show their skins on Bedrock (menus, hands, armour stands, holograms) instead of Steve's:
   # Twilight learns the heads this server shows and reads the ones its plugins' configurations name

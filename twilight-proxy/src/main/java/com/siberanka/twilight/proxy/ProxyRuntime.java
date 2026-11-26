@@ -142,7 +142,7 @@ final class ProxyRuntime implements AutoCloseable {
             platform.warn("Java's rider name rule is unavailable for this Geyser build.", failure);
         }
         try {
-            runtime.wornElytra = GeyserWornElytra.create(owner, logger);
+            runtime.wornElytra = GeyserWornElytra.createForSessions(owner, logger, packOf);
         } catch (RuntimeException | LinkageError failure) {
             platform.warn("Custom elytras stay vanilla for Bedrock viewers on this Geyser build.", failure);
         }

@@ -53,12 +53,15 @@ public final class GeyserWornElytra implements AutoCloseable {
     private final List<Hook<?>> hooks = new ArrayList<>();
     private final AtomicBoolean failureLogged = new AtomicBoolean();
     private final Method translate;
-    private final ElytraWings wings;
+    private final java.util.function.Function<GeyserSession, ElytraWings> wingsOf;
+    /** The player property is registered. */
+    private final boolean wingsEnabled;
     private volatile GeyserIntEntityProperty property;
 
-    private GeyserWornElytra(Object owner, Logger logger, ElytraWings wings) {
+    private GeyserWornElytra(Object owner, Logger logger, java.util.function.Function<GeyserSession, ElytraWings> wingsOf, boolean wingsEnabled) {
         this.logger = logger;
-        this.wings = wings;
+        this.wingsOf = wingsOf;
+        this.wingsEnabled = wingsEnabled;
         this.registrar = EventRegistrar.of(owner);
         Method method;
         try {
@@ -70,7 +73,7 @@ public final class GeyserWornElytra implements AutoCloseable {
         this.translate = method;
         hooks.add(new Hook<>(ClientboundSetEquipmentPacket.class, (session, packet) -> correct(session, packet.getEntityId())));
         hooks.add(new Hook<>(ClientboundAddEntityPacket.class, (session, packet) -> correct(session, packet.getEntityId())));
-        if (!wings.isEmpty()) {
+        if (wingsEnabled) {
             // The player's own chest slot arrives as inventory packets, never as an equipment packet.
             hooks.add(new Hook<>(ClientboundContainerSetSlotPacket.class, (session, packet) -> {
                 if (packet.getContainerId() == 0) own(session);
@@ -90,13 +93,32 @@ public final class GeyserWornElytra implements AutoCloseable {
      *              registered and kept up to date. Geyser registers properties once, when it starts.
      */
     public static GeyserWornElytra create(Object owner, Logger logger, ElytraWings wings) {
-        GeyserWornElytra bridge = new GeyserWornElytra(owner, logger, wings);
-        if (!wings.isEmpty()) {
+        return create(owner, logger, session -> wings, !wings.isEmpty());
+    }
+
+    /**
+     * The bridge of a Geyser on a proxy: every session uses the wings of the pack it loaded ({@code packOf} gives
+     * that pack file by the session's XUID; sessions whose pack lists no wings keep Geyser's elytra untouched).
+     * Geyser registers entity properties once, when it starts, and the proxy cannot know yet which backend packs
+     * will list wings, so the property is always registered; at 0 (vanilla) it changes nothing, and sessions
+     * without wings never get it set.
+     */
+    public static GeyserWornElytra createForSessions(Object owner, Logger logger,
+                                                     java.util.function.Function<String, java.util.Optional<java.nio.file.Path>> packOf) {
+        com.siberanka.twilight.geyser.SessionElytraWings sessions =
+                new com.siberanka.twilight.geyser.SessionElytraWings(packOf, logger::warning);
+        return create(owner, logger, session -> sessions.of(session.xuid()), true);
+    }
+
+    private static GeyserWornElytra create(Object owner, Logger logger,
+                                           java.util.function.Function<GeyserSession, ElytraWings> wingsOf, boolean wingsEnabled) {
+        GeyserWornElytra bridge = new GeyserWornElytra(owner, logger, wingsOf, wingsEnabled);
+        if (wingsEnabled) {
             com.siberanka.twilight.geyser.GeyserEvents.subscribe(bridge.registrar, GeyserDefineEntityPropertiesEvent.class,
                     event -> bridge.property = event.registerIntegerProperty(Identifier.of("player"),
                             Identifier.of(ElytraWings.PROPERTY), 0, ElytraWings.MAX, 0));
         }
-        if (bridge.translate == null && wings.isEmpty()) return bridge;
+        if (bridge.translate == null && !wingsEnabled) return bridge;
         com.siberanka.twilight.geyser.GeyserEvents.subscribe(bridge.registrar, GeyserPostInitializeEvent.class, event -> bridge.attach());
         com.siberanka.twilight.geyser.GeyserEvents.subscribe(bridge.registrar, GeyserPostReloadEvent.class, event -> bridge.attach());
         if (Registries.JAVA_PACKET_TRANSLATORS.get().get(ClientboundSetEquipmentPacket.class) != null) bridge.attach();
@@ -114,7 +136,7 @@ public final class GeyserWornElytra implements AutoCloseable {
     }
 
     @Override public synchronized void close() {
-        if (translate == null && wings.isEmpty()) return;
+        if (translate == null && !wingsEnabled) return;
         GeyserApi.api().eventBus().unregisterAll(registrar);
         var translators = Registries.JAVA_PACKET_TRANSLATORS.get();
         for (Hook<?> hook : hooks) if (hook.original != null) translators.replace(hook.type, hook, hook.original);
@@ -134,7 +156,7 @@ public final class GeyserWornElytra implements AutoCloseable {
         boolean glider = glider(chest);
         ItemData custom = glider ? chest.getItemData(session) : null;
         String identifier = custom == null || custom.getDefinition() == null ? null : custom.getDefinition().getIdentifier();
-        wings(entity, identifier);
+        wings(session, entity, identifier);
         if (translate == null || !WornElytra.showsCustomItem(entity == session.getPlayerEntity(), glider, identifier)) return;
         MobArmorEquipmentPacket armor = new MobArmorEquipmentPacket();
         armor.setRuntimeEntityId(entity.geyserId());
@@ -152,13 +174,15 @@ public final class GeyserWornElytra implements AutoCloseable {
         if (player == null) return;
         GeyserItemStack chest = session.getPlayerInventory().getEquipment().get(EquipmentSlot.CHESTPLATE);
         ItemData item = chest != null && glider(chest) ? chest.getItemData(session) : null;
-        wings(player, item == null || item.getDefinition() == null ? null : item.getDefinition().getIdentifier());
+        wings(session, player, item == null || item.getDefinition() == null ? null : item.getDefinition().getIdentifier());
     }
 
     /** Sets the wings a player entity wears: those of the Bedrock item, or 0 (vanilla) for anything else. */
-    private void wings(Entity entity, String bedrockIdentifier) {
+    private void wings(GeyserSession session, Entity entity, String bedrockIdentifier) {
         GeyserIntEntityProperty registered = property;
         if (registered == null || !(entity instanceof PlayerEntity)) return;
+        ElytraWings wings = wingsOf.apply(session);
+        if (wings.isEmpty()) return;
         entity.updateProperty(registered, wings.indexOf(bedrockIdentifier));
     }
 

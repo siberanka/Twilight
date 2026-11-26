@@ -25,8 +25,9 @@ All notable changes in Twilight are documented here.
   seated.
 - New experimental option `geyser.elytra-per-player` (default `false`): a Bedrock player also sees their own
   custom elytra, standing and gliding, and vanilla elytras stay vanilla. It takes precedence over
-  `elytra-override`, works with Geyser on the backend server (not yet on the proxy) and needs a Geyser restart
-  after the first build with custom elytras.
+  `elytra-override`, works with Geyser on the backend server and, through twilight-proxy, with Geyser on the proxy (each Bedrock
+  session uses the wings table of the pack it loaded), and needs a Geyser restart after the first build with
+  custom elytras.
 - Identical content always builds a byte-identical pack across restarts (the texture order of multi-texture block
   models depended on the JVM run), so Bedrock players are not asked to download an unchanged pack again.
 
@@ -205,8 +206,9 @@ Twilight'taki tüm önemli değişiklikler burada belgelenir.
   varlıklar oturmaya devam eder.
 - Yeni deneysel `geyser.elytra-per-player` seçeneği (varsayılan `false`): Bedrock oyuncusu kendi özel elytrasını da
   dururken ve süzülürken görür, vanilla elytralar vanilla kalır. `elytra-override` üzerinde önceliklidir, arka uç
-  sunucudaki Geyser ile çalışır (proxy'de henüz değil) ve özel elytra içeren ilk derlemeden sonra Geyser'ın
-  yeniden başlatılmasını gerektirir.
+  sunucudaki Geyser ile ve twilight-proxy aracılığıyla proxy'deki Geyser ile çalışır (her Bedrock oturumu yüklediği
+  paketin kanat tablosunu kullanır) ve özel elytra içeren ilk derlemeden sonra Geyser'ın yeniden başlatılmasını
+  gerektirir.
 - Aynı içerik yeniden başlatmalarda her zaman bayt bayt aynı paketi derler (çok dokulu blok modellerinin doku
   sırası JVM çalıştırmasına bağlıydı); Bedrock oyuncularından değişmemiş paketi yeniden indirmeleri istenmez.
 
