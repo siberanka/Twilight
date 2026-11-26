@@ -464,6 +464,58 @@ class BedrockPackCompilerTest {
         }
     }
 
+    /**
+     * CraftEngine draws blocks through cactus, sugar cane, sapling and leaf states too ({@code auto_state: cactus}
+     * for its copper coil). Those states get their own Bedrock block with Java's collision and outline instead of
+     * keeping the vanilla block.
+     */
+    @Test
+    void convertsCactusSugarCaneSaplingAndLeafStates() throws Exception {
+        Path source = root.resolve("plant-block-source");
+        write(source, "assets/minecraft/blockstates/cactus.json",
+                "{\"variants\":{\"age=1\":{\"model\":\"block/custom/coil\"},\"age=16\":{\"model\":\"block/custom/coil\"}}}");
+        write(source, "assets/minecraft/blockstates/sugar_cane.json",
+                "{\"variants\":{\"age=3\":[{\"model\":\"block/custom/flower\",\"weight\":100}]}}");
+        write(source, "assets/minecraft/blockstates/oak_sapling.json", "{\"variants\":{\"stage=1\":{\"model\":\"block/custom/flower\"}}}");
+        write(source, "assets/minecraft/blockstates/oak_leaves.json",
+                "{\"variants\":{\"distance=1,persistent=true,waterlogged=false\":{\"model\":\"block/custom/coil\"}}}");
+        write(source, "assets/minecraft/models/block/custom/coil.json", """
+                {"textures":{"all":"minecraft:block/custom/coil"},"elements":[{"from":[0,0,0],"to":[16,16,16],"faces":{
+                  "north":{"texture":"#all"},"south":{"texture":"#all"},"east":{"texture":"#all"},
+                  "west":{"texture":"#all"},"up":{"texture":"#all"},"down":{"texture":"#all"}}}]}
+                """);
+        write(source, "assets/minecraft/models/block/custom/flower.json", """
+                {"textures":{"cross":"minecraft:block/custom/flower"},"elements":[
+                  {"from":[0.8,0,8],"to":[15.2,16,8],"rotation":{"origin":[8,8,8],"axis":"y","angle":45},
+                   "faces":{"north":{"texture":"#cross"},"south":{"texture":"#cross"}}}]}
+                """);
+        png(source.resolve("assets/minecraft/textures/block/custom/coil.png"), Color.RED);
+        png(source.resolve("assets/minecraft/textures/block/custom/flower.png"), new Color(0, 255, 0, 0));
+        ContentSource pack = new ContentSource("test", ContentSource.Kind.RESOURCE_PACK, source, 1);
+        BuildResult result = new BedrockPackCompiler(root.resolve("data-plant-blocks"), config()).build(List.of(pack), List.of());
+        try (ZipFile zip = new ZipFile(result.outputDirectory().resolve("pack.zip").toFile())) {
+            JsonObject file = JsonParser.parseString(new String(zip.getInputStream(zip.getEntry("twilight/geyser_blocks.json"))
+                    .readAllBytes(), StandardCharsets.UTF_8)).getAsJsonObject();
+            java.util.Map<String, JsonObject> blocks = new java.util.LinkedHashMap<>();
+            for (var block : file.getAsJsonArray("blocks")) blocks.put(block.getAsJsonObject().get("state").getAsString(), block.getAsJsonObject());
+            assertEquals(java.util.Set.of("minecraft:cactus[age=1]", "minecraft:sugar_cane[age=3]", "minecraft:oak_sapling[stage=1]",
+                    "minecraft:oak_leaves[distance=1,persistent=true,waterlogged=false]"), blocks.keySet(),
+                    "a state the block does not have (cactus age 16) stays out");
+            JsonObject cactus = blocks.get("minecraft:cactus[age=1]");
+            assertEquals("minecraft:geometry.full_block", cactus.get("geometry").getAsString());
+            assertEquals("[-7,0,-7,14,16,14]", cactus.get("selection").toString().replace(".0", ""));
+            assertEquals("[[-7,0,-7,14,15,14]]", cactus.get("collision").toString().replace(".0", ""));
+            JsonObject cane = blocks.get("minecraft:sugar_cane[age=3]");
+            assertEquals("[-6,0,-6,12,16,12]", cane.get("selection").toString().replace(".0", ""));
+            assertEquals("[]", cane.get("collision").toString());
+            JsonObject sapling = blocks.get("minecraft:oak_sapling[stage=1]");
+            assertEquals("[-6,0,-6,12,12,12]", sapling.get("selection").toString().replace(".0", ""));
+            assertEquals("[]", sapling.get("collision").toString());
+            JsonObject leaves = blocks.get("minecraft:oak_leaves[distance=1,persistent=true,waterlogged=false]");
+            assertEquals("[[-8,0,-8,16,16,16]]", leaves.get("collision").toString().replace(".0", ""));
+        }
+    }
+
     @Test
     void expandsPartialBlockStatesInJavaOrder() {
         var domain = CustomBlockCompiler.BLOCKS.get("note_block");

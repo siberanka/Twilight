@@ -70,7 +70,22 @@ final class CustomBlockCompiler {
             tripwire.put(property, BOOLEAN);
         }
         blocks.put("tripwire", tripwire);
+        // CraftEngine's "cactus", "sugar_cane" and "sapling" auto states and the leaves it borrows for foliage blocks.
+        blocks.put("cactus", Map.of("age", range(0, 15)));
+        blocks.put("sugar_cane", Map.of("age", range(0, 15)));
+        blocks.put("oak_sapling", Map.of("stage", range(0, 1)));
+        Map<String, List<String>> leaves = new TreeMap<>();
+        leaves.put("distance", range(1, 7));
+        leaves.put("persistent", BOOLEAN);
+        leaves.put("waterlogged", BOOLEAN);
+        blocks.put("oak_leaves", leaves);
         BLOCKS = java.util.Collections.unmodifiableMap(blocks);
+    }
+
+    private static List<String> range(int from, int to) {
+        List<String> values = new ArrayList<>();
+        for (int i = from; i <= to; i++) values.add(Integer.toString(i));
+        return List.copyOf(values);
     }
 
     record Result(int blocks, int items, JsonObject file) {}
@@ -336,6 +351,16 @@ final class CustomBlockCompiler {
         if (block.equals("tripwire")) {
             boolean attached = properties.contains("attached=true");
             selection = BedrockPackCompiler.numberArray(-8, attached ? 1 : 0, -8, 16, attached ? 1.5 : 8, 16);
+        } else if (block.equals("cactus")) {
+            // Java: outline 1..15 x 0..16 x 1..15, collision one pixel lower and inset like the outline.
+            selection = BedrockPackCompiler.numberArray(-7, 0, -7, 14, 16, 14);
+            collision.add(BedrockPackCompiler.numberArray(-7, 0, -7, 14, 15, 14));
+        } else if (block.equals("sugar_cane")) {
+            // Java: no collision; outline 2..14 x 0..16 x 2..14.
+            selection = BedrockPackCompiler.numberArray(-6, 0, -6, 12, 16, 12);
+        } else if (block.endsWith("_sapling")) {
+            // Java: no collision; outline 2..14 x 0..12 x 2..14.
+            selection = BedrockPackCompiler.numberArray(-6, 0, -6, 12, 12, 12);
         } else {
             selection = BedrockPackCompiler.numberArray(-8, 0, -8, 16, 16, 16);
             collision.add(selection.deepCopy());

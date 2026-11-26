@@ -127,7 +127,7 @@ Offset tags that a content plugin left unreplaced in laid-out text (ItemsAdder's
 
 Compiler diagnostics reject supplementary-plane code points without the layout, out-of-cell baseline controls and corrupt source PNG data. Protected packs whose PNG chunk or zlib checksums are broken are decoded like Java. Content Java rejects or shows broken (malformed font files, unreadable TrueType fonts, sound files, textures or models present in no pack, screen-sized overlay glyphs, vanilla sound events changed without `vanilla-override`) is converted the way Java shows it and reported as a notice in `build-report.json`; it does not stop a strict build. Complete builds of seven production servers passed strict publication with the default configuration. Runtime font limitations are separate: Bedrock does not tint bitmap glyphs with the text colour (titles without a colour use darkened copies; other explicit colours keep the image undarkened), and high-resolution or fractionally scaled glyph textures are reduced to GUI units. Item names and lore keep their raw characters. The latest paired tests cover six metric probes, 36 real glyphs and six additional UI/HUD images. Large images rendering in chat do not establish interactive menu or dynamic HUD parity. Atlas pages can reach 8192 square (256 MiB raw RGBA per page); constrained-device acceptance remains unverified.
 
-Custom blocks on note blocks, mushroom blocks and tripwire (ItemsAdder's `REAL_NOTE` blocks, CraftEngine's
+Custom blocks on note blocks, mushroom blocks, tripwire, cactus, sugar cane, saplings and oak leaves (ItemsAdder's `REAL_NOTE` blocks, CraftEngine's
 blocks) are converted: each Java state with a custom model becomes a Bedrock block (full cubes
 with a texture per face and Java's rotation, other shapes with a block geometry), registered with Geyser at
 start, and the items drawn like a block show it in 3D in the inventory and when dropped. Tested live on Paper
@@ -139,7 +139,7 @@ Discovery counters also cover sounds, blockstates, `.bbmodel` files, and datapac
 
 - shader menus and dynamic HUD state;
 - furniture, mobs, bones, animations, hitboxes, and equipment;
-- custom blocks beyond note blocks, mushroom blocks and tripwire (multipart and chorus states);
+- custom blocks beyond those vanilla states (multipart, chorus, doors, trapdoors, stairs, slabs, anvils and pressure plates);
 - live Bedrock playback acceptance for provider-triggered custom sound events;
 - more than 25 distinct custom biome looks at once (the rest share the closest look);
 - custom skulls and waypoint icons.
