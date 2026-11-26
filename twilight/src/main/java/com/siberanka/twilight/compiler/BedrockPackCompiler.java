@@ -444,7 +444,8 @@ public final class BedrockPackCompiler {
                 if (config.bedrockBiomeMatching()) {
                     var slots = com.siberanka.twilight.world.BiomeSlots.assign(
                             CustomBiomes.read(resources, serverBiomes, matcher), matcher.vanilla().values(), currentBiomes);
-                    if (!slots.isEmpty()) packFiles.putAll(slots.packFiles());
+                    // Written even without slots: a Geyser on a proxy applies biome matching only to packs that carry it.
+                    packFiles.putAll(slots.packFiles());
                 }
             } catch (IOException | RuntimeException failure) {
                 notices.add("vanilla biome appearances are unavailable; custom biomes keep Geyser's fallback: "

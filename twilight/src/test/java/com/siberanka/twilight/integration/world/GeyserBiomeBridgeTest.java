@@ -6,6 +6,7 @@ import org.cloudburstmc.nbt.NbtMap;
 import org.geysermc.mcprotocollib.protocol.data.game.RegistryEntry;
 import org.geysermc.mcprotocollib.protocol.packet.configuration.clientbound.ClientboundRegistryDataPacket;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.util.HashMap;
 import java.util.List;
@@ -77,5 +78,86 @@ class GeyserBiomeBridgeTest {
                 new RegistryEntry(Key.key("demo", "custom"), NbtMap.builder().putFloat("temperature", 1f).build())));
         assertTrue(GeyserBiomeBridge.register(packet, MATCHER, identifiers).isEmpty());
         assertEquals(1, identifiers.size());
+    }
+
+    // --- Geyser on a proxy: every session maps the custom biomes with the tables of its own pack ---------------
+
+    @TempDir java.nio.file.Path temp;
+
+    private java.nio.file.Path pack(String name, BiomeMatcher matcher, com.siberanka.twilight.world.BiomeSlots slots) throws Exception {
+        java.nio.file.Path file = temp.resolve(name);
+        try (var zip = new java.util.zip.ZipOutputStream(java.nio.file.Files.newOutputStream(file))) {
+            if (matcher != null) {
+                zip.putNextEntry(new java.util.zip.ZipEntry(BiomeMatcher.PATH));
+                zip.write(matcher.toJson().toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                zip.closeEntry();
+            }
+            if (slots != null) {
+                zip.putNextEntry(new java.util.zip.ZipEntry(com.siberanka.twilight.world.BiomeSlots.PATH));
+                zip.write(slots.toJson().toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                zip.closeEntry();
+            }
+        }
+        return file;
+    }
+
+    private static com.siberanka.twilight.world.BiomeSlots slotFor(int id, String name, String biome) {
+        var look = new com.siberanka.twilight.world.BiomeLook(0xF29AC0, 0xE36FA4, 0x5DB7EF, 0x2A5C8A, 0xFFD8EC, 0x9CC8FF, 0.7f, 0.8f, 1);
+        return new com.siberanka.twilight.world.BiomeSlots(List.of(
+                new com.siberanka.twilight.world.BiomeSlots.Slot(id, name, look, List.of(biome))));
+    }
+
+    @Test
+    void aPackWithBothTablesGivesTheSessionItsTables() throws Exception {
+        var file = pack("a.zip", MATCHER, slotFor(19, "taiga_hills", "demo:blossom_vale"));
+        var tables = GeyserBiomeBridge.readTables(file, slots -> slots);
+        assertNotNull(tables);
+        assertEquals(MATCHER.vanilla().keySet(), tables.matcher().vanilla().keySet());
+        assertEquals(List.of("demo:blossom_vale"), tables.slots().slots().getFirst().biomes());
+        assertEquals(file, tables.pack());
+    }
+
+    @Test
+    void packsWithoutBiomeDataLeaveTheSessionAlone() throws Exception {
+        // An older backend (no slot table), matching switched off (vanilla table only), no table at all, no file.
+        assertNull(GeyserBiomeBridge.readTables(pack("old.zip", MATCHER, null), slots -> slots));
+        assertNull(GeyserBiomeBridge.readTables(pack("slots-only.zip", null, slotFor(19, "taiga_hills", "demo:x")), slots -> slots));
+        assertNull(GeyserBiomeBridge.readTables(pack("empty.zip", null, null), slots -> slots));
+        assertNull(GeyserBiomeBridge.readTables(temp.resolve("missing.zip"), slots -> slots));
+    }
+
+    @Test
+    void aMatchingBackendWithoutSlotsStillMatchesTheClosestVanillaBiome() throws Exception {
+        var tables = GeyserBiomeBridge.readTables(pack("none.zip", MATCHER, new com.siberanka.twilight.world.BiomeSlots(List.of())), slots -> slots);
+        assertNotNull(tables, "an empty slot table is the backend's 'matching is on' mark");
+        assertTrue(tables.slots().isEmpty());
+    }
+
+    @Test
+    void severalServersKeepTheirOwnMappingsForTheSameBiomeKey() throws Exception {
+        Map<String, Integer> identifiers = new HashMap<>(Map.of("minecraft:plains", 1, "minecraft:snowy_plains", 12,
+                "minecraft:nether_wastes", 8, "minecraft:ocean", 0));
+        var packet = new ClientboundRegistryDataPacket(Key.key("minecraft", "worldgen/biome"), List.of(
+                new RegistryEntry(Key.key("demo", "blossom_vale"), NbtMap.builder().putFloat("temperature", 0.7f).build())));
+        var one = GeyserBiomeBridge.readTables(pack("one.zip", MATCHER, slotFor(19, "taiga_hills", "demo:blossom_vale")), slots -> slots);
+        var two = GeyserBiomeBridge.readTables(pack("two.zip", MATCHER, slotFor(17, "desert_hills", "demo:blossom_vale")), slots -> slots);
+
+        Map<String, String> first = GeyserBiomeBridge.register(packet, one.matcher(), one.slots(), identifiers);
+        assertEquals(19, identifiers.get("demo:blossom_vale"));
+        GeyserBiomeBridge.forget(identifiers, first.keySet());
+        assertFalse(identifiers.containsKey("demo:blossom_vale"), "the session's mapping does not stay behind");
+
+        Map<String, String> second = GeyserBiomeBridge.register(packet, two.matcher(), two.slots(), identifiers);
+        assertEquals(Map.of("demo:blossom_vale", "desert_hills"), second);
+        assertEquals(17, identifiers.get("demo:blossom_vale"));
+        GeyserBiomeBridge.forget(identifiers, second.keySet());
+        assertEquals(4, identifiers.size(), "Geyser's own mappings are never touched");
+    }
+
+    @Test
+    void anUnreadablePackIsAnError() throws Exception {
+        java.nio.file.Path broken = temp.resolve("broken.zip");
+        java.nio.file.Files.writeString(broken, "not a zip");
+        assertThrows(java.io.IOException.class, () -> GeyserBiomeBridge.readTables(broken, slots -> slots));
     }
 }

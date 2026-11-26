@@ -633,6 +633,28 @@ class BedrockPackCompilerTest {
     }
 
     @Test
+    void marksBiomeMatchingInThePackEvenWithoutCustomBiomes() throws Exception {
+        Path source = root.resolve("no-biome-source");
+        write(source, "assets/demo/models/item/x.json", "{}");
+        Path data = root.resolve("no-biome-data");
+        java.awt.image.BufferedImage map = new java.awt.image.BufferedImage(256, 256, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+        java.io.ByteArrayOutputStream png = new java.io.ByteArrayOutputStream();
+        ImageIO.write(map, "PNG", png);
+        seedClientCache(data, Map.of("data/minecraft/worldgen/biome/plains.json", """
+                {"temperature":0.8,"downfall":0.4,"has_precipitation":true,"effects":{"water_color":4159204}}
+                """.getBytes(StandardCharsets.UTF_8),
+                "assets/minecraft/textures/colormap/grass.png", png.toByteArray(),
+                "assets/minecraft/textures/colormap/foliage.png", png.toByteArray()));
+        BuildResult result = new BedrockPackCompiler(data, config(), "26.2").build(List.of(
+                new ContentSource("test", ContentSource.Kind.RESOURCE_PACK, source, 1)), List.of());
+        try (ZipFile zip = new ZipFile(result.outputDirectory().resolve("pack.zip").toFile())) {
+            // A Geyser on a proxy applies biome matching to packs that carry the slot table: this is the mark.
+            assertTrue(com.siberanka.twilight.world.BiomeSlots.fromJson(read(zip, com.siberanka.twilight.world.BiomeSlots.PATH)).isEmpty());
+            assertNotNull(zip.getEntry(com.siberanka.twilight.world.BiomeMatcher.PATH));
+        }
+    }
+
+    @Test
     void writesTheVanillaBiomeAppearanceTableFromTheClient() throws Exception {
         Path source = root.resolve("biome-source");
         write(source, "assets/demo/models/item/x.json", "{}");

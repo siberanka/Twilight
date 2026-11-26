@@ -715,6 +715,10 @@ public final class ProxyCore implements TwilightProxyApi {
         platform.warn(message, null);
     }
 
+    void info(String message) {
+        platform.info(message);
+    }
+
     /**
      * A transferred Bedrock client logs in again a few seconds after it left (four or more, measured). A proxy
      * that refuses logins from the same address within a longer time turns the pack reconnect into a refusal.

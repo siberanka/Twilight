@@ -28,6 +28,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -48,7 +49,10 @@ import java.util.zip.ZipFile;
 public final class GeyserBiomeBridge implements AutoCloseable {
     private static final String BIOME_REGISTRY = "minecraft:worldgen/biome";
 
+    /** The one pack a Geyser on a backend serves; null when the pack depends on the session (proxy). */
     private final Path servedPack;
+    /** Proxy mode: the Twilight pack file a Bedrock session loaded, by XUID (empty for sessions without one). */
+    private final java.util.function.Function<String, Optional<Path>> packOf;
     private final Logger logger;
     private final EventRegistrar registrar;
     private final Wrapper wrapper = new Wrapper();
@@ -59,11 +63,17 @@ public final class GeyserBiomeBridge implements AutoCloseable {
     private volatile BiomeMatcher matcher;
     private volatile BiomeSlots slots = new BiomeSlots(List.of());
     private volatile PacketTranslator<? extends Packet> original;
+    /** Proxy mode: tables read per pack file, reused while the file is unchanged. */
+    private final Map<Path, Parsed> parsed = new java.util.concurrent.ConcurrentHashMap<>();
+    private BiomeDefinitions pristine;
+    private BiomeDefinitions applied;
+    private Path appliedFor;
 
-    private GeyserBiomeBridge(Object owner, Path servedPack, Logger logger,
-                              java.util.function.BiConsumer<java.util.UUID, List<long[]>> resend) {
+    private GeyserBiomeBridge(Object owner, Path servedPack, java.util.function.Function<String, Optional<Path>> packOf,
+                              Logger logger, java.util.function.BiConsumer<java.util.UUID, List<long[]>> resend) {
         this.resend = resend;
         this.servedPack = servedPack;
+        this.packOf = packOf;
         this.logger = logger;
         this.registrar = EventRegistrar.of(owner);
     }
@@ -74,14 +84,47 @@ public final class GeyserBiomeBridge implements AutoCloseable {
      */
     public static GeyserBiomeBridge create(Object owner, Path servedPack, Logger logger,
                                            java.util.function.BiConsumer<java.util.UUID, List<long[]>> resend) {
-        GeyserBiomeBridge bridge = new GeyserBiomeBridge(owner, servedPack, logger, resend);
+        GeyserBiomeBridge bridge = new GeyserBiomeBridge(owner, servedPack, null, logger, resend);
         com.siberanka.twilight.geyser.GeyserEvents.subscribe(bridge.registrar, GeyserPostInitializeEvent.class, event -> bridge.attach());
         com.siberanka.twilight.geyser.GeyserEvents.subscribe(bridge.registrar, GeyserPostReloadEvent.class, event -> bridge.attach());
         if (Registries.JAVA_PACKET_TRANSLATORS.get().get(ClientboundRegistryDataPacket.class) != null) bridge.attach();
         return bridge;
     }
 
+    /**
+     * The bridge of a Geyser on a proxy. There is no single served pack: every Bedrock session maps the custom
+     * biomes of the backend it joined with the tables of the Twilight pack that session loaded ({@code packOf}
+     * gives the file by the session's XUID). Mappings only last while the session's biome registry is read, so
+     * backends with different custom biomes never share them; the biome-only chunk resend of a backend is not
+     * available here.
+     */
+    public static GeyserBiomeBridge createForSessions(Object owner, java.util.function.Function<String, Optional<Path>> packOf,
+                                                      Logger logger) {
+        GeyserBiomeBridge bridge = new GeyserBiomeBridge(owner, null, packOf, logger, null);
+        com.siberanka.twilight.geyser.GeyserEvents.subscribe(bridge.registrar, GeyserPostInitializeEvent.class, event -> bridge.attach());
+        com.siberanka.twilight.geyser.GeyserEvents.subscribe(bridge.registrar, GeyserPostReloadEvent.class, event -> bridge.attach());
+        try {
+            // Geyser may have started already; otherwise its start-up event attaches.
+            if (Registries.JAVA_PACKET_TRANSLATORS.get().get(ClientboundRegistryDataPacket.class) != null) bridge.attach();
+        } catch (RuntimeException | LinkageError notStarted) {
+            // attached by GeyserPostInitializeEvent
+        }
+        return bridge;
+    }
+
+    private boolean perSession() {
+        return packOf != null;
+    }
+
     private synchronized void attach() {
+        if (perSession()) {
+            parsed.clear();
+            pristine = null;
+            applied = null;
+            appliedFor = null;
+            attachTranslators();
+            return;
+        }
         try {
             matcher = readTable(servedPack);
         } catch (IOException | RuntimeException failure) {
@@ -97,24 +140,99 @@ public final class GeyserBiomeBridge implements AutoCloseable {
             logger.log(Level.WARNING, "Could not apply the custom biome slots of the served Twilight pack; "
                     + "custom biomes use their closest vanilla biome", failure);
         }
+        if (!attachTranslators()) return;
+        logger.info(matcher == null ? "Biome matching idle: the served pack has no vanilla biome table."
+                : "Custom biomes are shown on Bedrock with " + slots.slots().size() + " exact biome look(s) and the closest of "
+                + matcher.vanilla().size() + " vanilla appearances otherwise.");
+    }
+
+    /** Installs the registry-data (and, with a resend, the biome update) translators; false without a registry translator. */
+    private boolean attachTranslators() {
         var translators = Registries.JAVA_PACKET_TRANSLATORS.get();
-        PacketTranslator<? extends Packet> existing = translators.get(ClientboundChunksBiomesPacket.class);
-        if (!com.siberanka.twilight.geyser.TranslatorChain.installed(existing, updates)) {
-            originalUpdates = existing;
-            translators.put(ClientboundChunksBiomesPacket.class, updates);
+        if (resend != null) {
+            PacketTranslator<? extends Packet> existing = translators.get(ClientboundChunksBiomesPacket.class);
+            if (!com.siberanka.twilight.geyser.TranslatorChain.installed(existing, updates)) {
+                originalUpdates = existing;
+                translators.put(ClientboundChunksBiomesPacket.class, updates);
+            }
         }
         PacketTranslator<? extends Packet> current = translators.get(ClientboundRegistryDataPacket.class);
         if (current == null) {
             logger.warning("Geyser has no registry-data translator; custom biomes keep Geyser's fallback.");
-            return;
+            return false;
         }
         if (!com.siberanka.twilight.geyser.TranslatorChain.installed(current, wrapper)) {
             original = current;
             translators.put(ClientboundRegistryDataPacket.class, wrapper);
         }
-        logger.info(matcher == null ? "Biome matching idle: the served pack has no vanilla biome table."
-                : "Custom biomes are shown on Bedrock with " + slots.slots().size() + " exact biome look(s) and the closest of "
-                + matcher.vanilla().size() + " vanilla appearances otherwise.");
+        if (perSession()) logger.info("Custom biomes are matched per Bedrock session from the pack of its server.");
+        return true;
+    }
+
+    /** What a session's pack says about biomes. */
+    record Tables(BiomeMatcher matcher, BiomeSlots slots, Path pack) {}
+
+    private record Parsed(long size, long modified, Tables tables) {}
+
+    /**
+     * The biome tables of the pack {@code session} loaded; null when it loaded no Twilight pack, the pack has no
+     * slot table (an older backend, or {@code world.bedrock-biome-matching} is off there) or it cannot be read.
+     */
+    private Tables tablesOf(GeyserSession session) {
+        if (!perSession()) return matcher == null ? null : new Tables(matcher, slots, servedPack);
+        String xuid = session.xuid();
+        if (xuid == null || xuid.isEmpty()) return null;
+        Optional<Path> file = packOf.apply(xuid);
+        if (file.isEmpty()) return null;
+        try {
+            long size = Files.size(file.get()), modified = Files.getLastModifiedTime(file.get()).toMillis();
+            Parsed known = parsed.get(file.get());
+            if (known != null && known.size() == size && known.modified() == modified) return known.tables();
+            Tables tables = readTables(file.get(), this::usableSlots);
+            if (parsed.size() > 64) parsed.clear();
+            parsed.put(file.get(), new Parsed(size, modified, tables));
+            return tables;
+        } catch (IOException | RuntimeException | LinkageError failure) {
+            if (failureLogged.compareAndSet(false, true)) {
+                logger.log(Level.WARNING, "Could not read the biome tables of a session's pack; its custom biomes keep Geyser's fallback.", failure);
+            }
+            return null;
+        }
+    }
+
+    /**
+     * The tables of a pack, or null when it has none: an older backend, a pack without the vanilla table, or no
+     * slot table (the backend writes one, even an empty one, whenever {@code world.bedrock-biome-matching} is on).
+     */
+    static Tables readTables(Path pack, java.util.function.UnaryOperator<BiomeSlots> usable) throws IOException {
+        BiomeMatcher table = readTable(pack);
+        BiomeSlots read = readSlots(pack);
+        return table == null || read == null ? null : new Tables(table, usable.apply(read), pack);
+    }
+
+    private BiomeSlots usableSlots(BiomeSlots read) {
+        try {
+            return usable(read);
+        } catch (IOException failure) {
+            throw new java.io.UncheckedIOException(failure);
+        }
+    }
+
+    /** Takes the mappings of one session back out of Geyser's global biome identifiers. */
+    static void forget(Map<String, Integer> identifiers, java.util.Collection<String> keys) {
+        synchronized (identifiers) {
+            for (String key : keys) identifiers.remove(key);
+        }
+    }
+
+    /** Proxy mode: the Bedrock biome definitions carry the climate of the slots of the session's pack. */
+    private synchronized void climateFor(Tables tables) {
+        if (!perSession() || tables.slots().isEmpty() || tables.pack().equals(appliedFor)) return;
+        BiomeDefinitions current = Registries.BIOMES.get();
+        if (current != applied) pristine = current; // first use, a Geyser reload, or another plugin's change
+        Registries.BIOMES.set(withClimate(pristine, tables.slots()));
+        applied = Registries.BIOMES.get();
+        appliedFor = tables.pack();
     }
 
     static BiomeMatcher readTable(Path pack) throws IOException {
@@ -159,7 +277,10 @@ public final class GeyserBiomeBridge implements AutoCloseable {
 
     /** Gives every slot its custom biome's climate, which Bedrock uses for rain and snow. */
     static void applyClimate(BiomeSlots slots) {
-        BiomeDefinitions current = Registries.BIOMES.get();
+        Registries.BIOMES.set(withClimate(Registries.BIOMES.get(), slots));
+    }
+
+    static BiomeDefinitions withClimate(BiomeDefinitions current, BiomeSlots slots) {
         Map<String, BiomeDefinitionData> definitions = new java.util.LinkedHashMap<>(current.getDefinitions());
         for (BiomeSlots.Slot slot : slots.slots()) {
             String key = definitions.containsKey(slot.name()) ? slot.name() : "minecraft:" + slot.name();
@@ -174,7 +295,7 @@ public final class GeyserBiomeBridge implements AutoCloseable {
                     0f, 0f, 0f, 0f, 0f, old.getDepth(), old.getScale(), new java.awt.Color(look.water()),
                     look.precipitation() != 0, tags == null ? old.getTags() : tags.getTags(), old.getChunkGenData()));
         }
-        Registries.BIOMES.set(new BiomeDefinitions(definitions));
+        return new BiomeDefinitions(definitions);
     }
 
     @SuppressWarnings("unchecked")
@@ -191,8 +312,10 @@ public final class GeyserBiomeBridge implements AutoCloseable {
 
     @Override public synchronized void close() {
         GeyserApi.api().eventBus().unregisterAll(registrar);
+        if (perSession() && applied != null && Registries.BIOMES.get() == applied) Registries.BIOMES.set(pristine);
         if (original != null) Registries.JAVA_PACKET_TRANSLATORS.get().replace(ClientboundRegistryDataPacket.class, wrapper, original);
         var translators = Registries.JAVA_PACKET_TRANSLATORS.get();
+        if (resend == null) return;
         if (originalUpdates != null) translators.replace(ClientboundChunksBiomesPacket.class, updates, originalUpdates);
         else translators.remove(ClientboundChunksBiomesPacket.class, updates);
     }
@@ -285,17 +408,19 @@ public final class GeyserBiomeBridge implements AutoCloseable {
 
         @SuppressWarnings("unchecked")
         @Override public void translate(GeyserSession session, ClientboundRegistryDataPacket packet) {
-            BiomeMatcher current = matcher;
-            if (current != null) {
+            Tables tables = tablesOf(session);
+            Map<String, Integer> identifiers = null;
+            Map<String, String> added = Map.of();
+            if (tables != null) {
                 try {
-                    Map<String, Integer> identifiers = identifiers();
-                    Map<String, String> added;
+                    identifiers = identifiers();
                     synchronized (identifiers) {
-                        added = register(packet, current, slots, identifiers);
+                        added = register(packet, tables.matcher(), tables.slots(), identifiers);
                     }
                     if (!added.isEmpty()) {
                         logger.info("Bedrock biome mapping: " + added.size() + " custom biome(s), e.g. "
                                 + added.entrySet().iterator().next());
+                        climateFor(tables);
                     }
                 } catch (IOException | ReflectiveOperationException | RuntimeException | LinkageError failure) {
                     if (failureLogged.compareAndSet(false, true)) {
@@ -303,7 +428,12 @@ public final class GeyserBiomeBridge implements AutoCloseable {
                     }
                 }
             }
-            ((PacketTranslator<ClientboundRegistryDataPacket>) original).translate(session, packet);
+            try {
+                ((PacketTranslator<ClientboundRegistryDataPacket>) original).translate(session, packet);
+            } finally {
+                // A session's mapping must not leak to sessions of other servers: the registry has been read by now.
+                if (perSession() && identifiers != null) forget(identifiers, added.keySet());
+            }
         }
 
         @Override public boolean shouldExecuteInEventLoop() {

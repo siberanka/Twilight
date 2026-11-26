@@ -49,7 +49,10 @@ final class GeyserBridge implements Sessions {
             // Through GeyserEvents: Floodgate's copy of Geyser's event library must never be linked against.
             GeyserEvents.subscribe(bridge.registrar, SessionLoadResourcePacksEvent.class, event -> {
                 GeyserConnection connection = event.connection();
-                core.packFor(connection.xuid()).ifPresent(pack -> event.register(bridge.loaded(pack)));
+                core.packFor(connection.xuid()).ifPresent(pack -> {
+                    event.register(bridge.loaded(pack));
+                    bridge.remember(connection.xuid(), pack);
+                });
             });
             // After every listener has added its packs, the pack host (when it runs) turns them all into links.
             java.util.function.Consumer<SessionLoadResourcePacksEvent> hostAll = event -> {
@@ -79,11 +82,49 @@ final class GeyserBridge implements Sessions {
             } catch (RuntimeException | LinkageError unknown) {
                 // Geyser's folders are unknown: no item mappings are written and nothing is retired.
             }
+            bridge.attachBiomes(owner, core);
             return Attach.attached(bridge);
         } catch (RuntimeException | LinkageError failure) {
             bridge.close();
             return Attach.failed("Geyser's event API could not be used (" + Sessions.describe(failure) + ")", failure);
         }
+    }
+
+    /** The Twilight pack each Bedrock session loaded, by XUID: its biome tables say how that session maps custom biomes. */
+    private final java.util.Map<String, java.nio.file.Path> sessionPacks = new java.util.concurrent.ConcurrentHashMap<>();
+    private volatile AutoCloseable biomes;
+
+    private void remember(String xuid, java.nio.file.Path pack) {
+        if (xuid == null || xuid.isEmpty()) return;
+        if (sessionPacks.size() > 4096) sessionPacks.clear();
+        sessionPacks.put(xuid, pack);
+    }
+
+    /**
+     * Shows the custom biomes of the backends on Bedrock the way a Geyser on a backend does. Geyser on a proxy gets
+     * the backend's biome registry but only knows vanilla biomes, so every custom biome would look like the ocean.
+     * Sessions whose pack carries no biome tables (older backends, no custom biomes, matching switched off) are untouched.
+     */
+    private void attachBiomes(Object owner, ProxyCore core) {
+        try {
+            biomes = com.siberanka.twilight.integration.world.GeyserBiomeBridge.createForSessions(owner,
+                    xuid -> Optional.ofNullable(sessionPacks.get(xuid)), proxyLog(core));
+        } catch (RuntimeException | LinkageError failure) {
+            core.warn("Custom biome matching is unavailable for this Geyser build (" + Sessions.describe(failure)
+                    + "); custom biomes keep Geyser's fallback.");
+        }
+    }
+
+    /** A logger that writes through the proxy's own log. */
+    private static java.util.logging.Logger proxyLog(ProxyCore core) {
+        return new java.util.logging.Logger("TwilightProxy", null) {
+            @Override public void log(java.util.logging.LogRecord record) {
+                String message = record.getMessage();
+                if (record.getThrown() != null) message += " (" + Sessions.describe(record.getThrown()) + ")";
+                if (record.getLevel().intValue() >= java.util.logging.Level.WARNING.intValue()) core.warn(message);
+                else core.info(message);
+            }
+        };
     }
 
     private volatile java.nio.file.Path folder;
@@ -186,6 +227,10 @@ final class GeyserBridge implements Sessions {
 
     @Override
     public void close() {
+        AutoCloseable running = biomes;
+        if (running != null) {
+            try { running.close(); } catch (Exception | LinkageError ignored) { }
+        }
         try { GeyserEvents.unregisterAll(registrar); } catch (RuntimeException | LinkageError ignored) { }
     }
 }
