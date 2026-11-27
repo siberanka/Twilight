@@ -18,6 +18,11 @@ import java.util.Map;
  */
 public final class Conflicts {
     /** Geyser extension ids and names that render ModelEngine/BetterModel models as Bedrock custom entities. */
+    /**
+     * What {@code model-bones: auto} does when another extension renders the models. The single place to change
+     * when Twilight gets its own entity render mode for them and should be preferred.
+     */
+    static final boolean AUTO_YIELDS_MODEL_BONES = true;
     static final List<String> MODEL_RENDERERS = List.of("geysermodelengineextension", "geysermodelengine");
     /** Geyser extensions that register Geyser's item and block display entities (name fragments). */
     static final List<String> DISPLAY_RENDERERS = List.of("geyserdisplayentity", "scaffolding");
@@ -55,7 +60,7 @@ public final class Conflicts {
 
         boolean showBones = true;
         if (modelRenderer) {
-            boolean yield = settings.modelBones() != Owner.TWILIGHT;
+            boolean yield = settings.modelBones() == Owner.OTHER || (settings.modelBones() == Owner.AUTO && AUTO_YIELDS_MODEL_BONES);
             if (settings.modelBones() == Owner.TWILIGHT) {
                 add(findings, new Finding("model-bones", Level.WARN,
                         "GeyserModelEngine renders ModelEngine/BetterModel models on Bedrock, and Twilight is set to show them too"
