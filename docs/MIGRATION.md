@@ -78,8 +78,8 @@ You can keep either; do not run both on the same models.
 
 Files you wrote yourself stay. Twilight only reports mapping files that name the same Java item selector as one of
 its own mappings (and a copy of Twilight's own pack under another name). Remove or change those entries. Geyser
-keeps one mapping per selector, so the order it reads the files decides which item players get, and it logs an
-error when an identifier repeats.
+keeps the mapping it reads first (files are read in name order, so `geyser_mappings.json` beats `twilight_item_mappings.json`) and logs
+"Not registering custom item definition ... both entries have the same predicates" for the other.
 
 ## What the automatic handling does
 
@@ -197,8 +197,7 @@ Bedrock özel varlıkları olarak çizer. Twilight aynı modelleri Java eşya g�
 
 Kendi yazdığınız dosyalar kalır. Twilight yalnızca kendi eşlemelerinden biriyle aynı Java eşya seçicisini adlandıran
 eşleme dosyalarını (ve başka adla duran Twilight paketi kopyasını) bildirir. O girdileri kaldırın ya da
-değiştirin. Geyser bir seçici için tek eşleme tutar; hangi eşyanın oyunculara ulaşacağını dosyaları okuma sırası
-belirler ve bir kimlik yinelenirse hata yazar.
+değiştirin. Geyser önce okuduğu eşlemeyi tutar (dosyalar ad sırasıyla okunur; `geyser_mappings.json`, `twilight_item_mappings.json` dosyasını geçer) ve ötekini "Not registering custom item definition ... both entries have the same predicates" diye günlüğe yazar.
 
 #### Otomatik yönetim ne yapar
 
