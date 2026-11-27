@@ -713,7 +713,8 @@ CraftEngine's blocks are note block, mushroom block or tripwire states whose mod
 - Breaking, drops and placement stay Java's: the server decides them.
 - Light: CraftEngine's `luminance` (a server setting, not part of the pack) is read when a build starts and the
   Bedrock block gives off the same light (0 to 15), so lit lamps and coils light their surroundings on Bedrock too.
-  Other content plugins' block light is not read.
+  ItemsAdder, Oraxen and Nexo give their blocks light with invisible `minecraft:light` blocks around them, which
+  Bedrock already shows, so nothing has to be read for them.
 - Block names follow the Java state, so a proxy network's single Geyser registry gives a state the same Bedrock
   block on every backend and each server's pack draws it its own way. Where two servers give a state a
   different shape, the first server's shape is used and the proxy log says so.
@@ -1816,7 +1817,8 @@ bloğu veya tuzak teli durumlarıdır. Dönüştürülmezlerse Bedrock vanilla n
 - Kırma, düşen eşyalar ve yerleştirme Java'nın olarak kalır: bunlara sunucu karar verir.
 - Işık: CraftEngine'in `luminance` ayarı (sunucu ayarıdır, paketin parçası değildir) derleme başlarken okunur ve
   Bedrock bloğu aynı ışığı (0 ile 15) yayar; böylece yanan lambalar ve bobinler Bedrock'ta da çevresini aydınlatır.
-  Diğer içerik eklentilerinin blok ışığı okunmaz.
+  ItemsAdder, Oraxen ve Nexo bloklarının ışığını çevresine koydukları görünmez `minecraft:light` blokları ile verir;
+  Bedrock bunları zaten gösterir, bu yüzden onlar için okunacak bir şey yoktur.
 - Blok adları Java durumunu izler; böylece proxy'li bir ağın tek Geyser kaydı bir duruma her arka uçta aynı Bedrock
   bloğunu verir ve her sunucunun paketi onu kendi şekilde çizer. İki sunucu bir duruma farklı şekil verdiğinde ilk
   sunucunun şekli kullanılır ve proxy günlüğü bunu söyler.
