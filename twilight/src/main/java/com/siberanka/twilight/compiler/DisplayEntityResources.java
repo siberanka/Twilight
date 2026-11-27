@@ -234,10 +234,21 @@ final class DisplayEntityResources {
             geometries.addProperty(key, "geometry.twilight.display.sheet" + current.number);
             textures.addProperty(key, "textures/twilight/display_sheet" + current.number);
             files.put("textures/twilight/display_sheet" + current.number + ".png", current.texture());
-            if (current.plan != null) for (int state = 0; state < current.plan.states().size(); state++) {
-                textures.addProperty(key + "f" + state, "textures/twilight/display_sheet" + current.number + "_f" + state);
-                files.put("textures/twilight/display_sheet" + current.number + "_f" + state + ".png",
-                        TextureSet.png(current.plan.states().get(state)));
+            if (current.plan != null) {
+                BufferedImage sheetImage = PngImages.read(files.get("textures/twilight/display_sheet" + current.number + ".png"));
+                int[] sheetPixels = sheetImage.getRGB(0, 0, sheetImage.getWidth(), sheetImage.getHeight(), null, 0, sheetImage.getWidth());
+                for (int state = 0; state < current.plan.states().size(); state++) {
+                    BufferedImage image = current.plan.states().get(state);
+                    if (image.getWidth() == sheetImage.getWidth() && image.getHeight() == sheetImage.getHeight()
+                            && Arrays.equals(sheetPixels, image.getRGB(0, 0, image.getWidth(), image.getHeight(), null, 0, image.getWidth()))) {
+                        textures.addProperty(key + "f" + state, "textures/twilight/display_sheet" + current.number);
+                        continue;
+                    }
+                    byte[] png = TextureSet.pngCompact(image);
+                    String path = BedrockPackCompiler.animationTexture(png);
+                    files.putIfAbsent(path + ".png", png);
+                    textures.addProperty(key + "f" + state, path);
+                }
             }
             JsonObject staticBones = new JsonObject();
             files.put("models/entity/display.sheet" + current.number + ".geo.json",

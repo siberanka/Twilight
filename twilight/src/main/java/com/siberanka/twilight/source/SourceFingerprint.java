@@ -34,6 +34,8 @@ public final class SourceFingerprint {
             else hashFile(digest, source.path(), config.maximumSourceBytes());
         }
         runtimeItems.stream().map(SourceFingerprint::itemToken).sorted().forEach(value -> token(digest, value));
+        // The animation mode changes the pack: a build after switching it is never a duplicate (full adds nothing).
+        if (!config.animatedTextures().equals("full")) token(digest, "animated-textures=" + config.animatedTextures());
         return HexFormat.of().withUpperCase().formatHex(digest.digest());
     }
 

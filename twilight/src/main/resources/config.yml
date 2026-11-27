@@ -13,6 +13,15 @@ generation:
   maximum-archive-entries: 100000
   # Hash-verified Mojang client/asset caches resolve explicit vanilla dependencies.
   download-vanilla-assets: true
+  # Animated textures (.png.mcmeta). Blocks play as Bedrock flipbooks, held items and item displays through
+  # extra texture states that Bedrock cycles; every state is a copy of the whole texture, so this is what makes
+  # a pack larger and slower to load on phones.
+  #   full:   the authored frame order, times and interpolation, within Twilight's limits.
+  #   simple: cheaper: blocks stay the same, items and displays get at most 8 evenly sampled states and no
+  #           pre-rendered interpolation.
+  #   off:    animated textures show their first frame (the pack is as without animation support).
+  # Changing it needs a rebuild.
+  animated-textures: full
 
 sources:
   # Find the content Java players receive without any setup: every installed

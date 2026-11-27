@@ -202,7 +202,7 @@ final class TextureSet {
         List<String> notes = new ArrayList<>();
         TextureAnimation.Parsed parsed = TextureAnimation.parse(identifier, image, animation, notes);
         ANIMATION_NOTES.get().addAll(notes);
-        return new Loaded(parsed.first(), parsed.track());
+        return new Loaded(parsed.first(), TextureAnimation.MODE.get() == TextureAnimation.Mode.OFF ? null : parsed.track());
     }
 
     /** Java's 16x16 missing texture: magenta and black quarters, black in the top-left. */
@@ -225,6 +225,31 @@ final class TextureSet {
         Region region = regions.get(identifier);
         if (region == null) throw new IOException("Texture is outside atlas: " + identifier);
         return region;
+    }
+
+    /**
+     * The same picture as an indexed PNG when it has at most 256 colours (pixel art mostly does): the states of an
+     * animation repeat one palette, and the files are a fraction of the size. Falls back to a plain PNG.
+     */
+    static byte[] pngCompact(BufferedImage image) throws IOException {
+        java.util.LinkedHashMap<Integer, Integer> colours = new java.util.LinkedHashMap<>();
+        for (int y = 0; y < image.getHeight(); y++) for (int x = 0; x < image.getWidth(); x++) {
+            int argb = image.getRGB(x, y);
+            if (!colours.containsKey(argb) && colours.size() == 256) return png(image);
+            colours.putIfAbsent(argb, colours.size());
+        }
+        int size = Math.max(2, colours.size());
+        byte[] a = new byte[size], r = new byte[size], g = new byte[size], b = new byte[size];
+        for (Map.Entry<Integer, Integer> entry : colours.entrySet()) {
+            int argb = entry.getKey(), i = entry.getValue();
+            a[i] = (byte) (argb >>> 24); r[i] = (byte) (argb >> 16); g[i] = (byte) (argb >> 8); b[i] = (byte) argb;
+        }
+        java.awt.image.IndexColorModel model = new java.awt.image.IndexColorModel(8, size, r, g, b, a);
+        BufferedImage indexed = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_BYTE_INDEXED, model);
+        for (int y = 0; y < image.getHeight(); y++) for (int x = 0; x < image.getWidth(); x++) {
+            indexed.getRaster().setSample(x, y, 0, colours.get(image.getRGB(x, y)));
+        }
+        return png(indexed);
     }
 
     static byte[] png(BufferedImage image) throws IOException {

@@ -51,6 +51,21 @@ final class TextureAnimation {
             return sum;
         }
 
+        /** At most {@code count} segments of the cycle, each showing the frame that is current at its start. */
+        Track decimate(int count) {
+            if (image.length <= count) return this;
+            long period = period();
+            int[] sampled = new int[count], times = new int[count];
+            for (int k = 0; k < count; k++) {
+                long from = period * k / count, to = period * (k + 1) / count, at = from;
+                int segment = 0;
+                while (at >= ticks[segment]) at -= ticks[segment++];
+                sampled[k] = image[segment];
+                times[k] = (int) Math.max(1, to - from);
+            }
+            return new Track(name, images, sampled, times, interpolate);
+        }
+
         Track withoutInterpolation() {
             return interpolate ? new Track(name, images, image, ticks, false) : this;
         }
@@ -180,8 +195,40 @@ final class TextureAnimation {
      *                 for entity textures
      */
     static Plan plan(Animated animated, boolean flipbook, int maxStates) {
+        Mode mode = MODE.get();
+        if (mode == Mode.OFF) return null;
         List<String> notes = new ArrayList<>();
         List<Layer> layers = new ArrayList<>(animated.layers());
+        if (mode == Mode.SIMPLE && !flipbook) {
+            // The cheap mode: no pre-rendered interpolation, few states, frames sampled evenly.
+            maxStates = Math.min(maxStates, SIMPLE_STATES);
+            final int states = maxStates;
+            layers.replaceAll(layer -> new Layer(layer.track.withoutInterpolation().decimate(states), layer.x, layer.y));
+        }
+        Plan result = planLayers(animated, layers, flipbook, maxStates, notes);
+        return result == null ? null : compact(result);
+    }
+
+    /** How much of an animation is exported: everything within the limits, a cheaper subset, or the first frame only. */
+    enum Mode {
+        FULL, SIMPLE, OFF;
+
+        static Mode of(String value) {
+            return switch (value == null ? "full" : value.strip().toLowerCase(java.util.Locale.ROOT)) {
+                case "simple" -> SIMPLE;
+                case "off", "none" -> OFF;
+                default -> FULL;
+            };
+        }
+    }
+
+    /** The mode of the build running on this thread (set by the compiler; tests that skip it get FULL). */
+    static final ThreadLocal<Mode> MODE = ThreadLocal.withInitial(() -> Mode.FULL);
+
+    /** Most states of an entity texture in the simple mode. */
+    static final int SIMPLE_STATES = 8;
+
+    private static Plan planLayers(Animated animated, List<Layer> layers, boolean flipbook, int maxStates, List<String> notes) {
         if (flipbook) {
             // Bedrock's flipbook blends whole frames only; one uniformly timed track can use that, others cannot.
             boolean blend = layers.size() == 1 && layers.getFirst().track.interpolate && uniform(layers.getFirst().track);
@@ -202,6 +249,54 @@ final class TextureAnimation {
             layers.remove(slowest);
         }
         return null;
+    }
+
+    /**
+     * Drops what the export would only repeat: states with identical pixels become one, and when every run of equal
+     * states lasts a multiple of some number of units the schedule shrinks by that factor. A plan whose states are
+     * all alike is no animation (null).
+     */
+    static Plan compact(Plan plan) {
+        List<BufferedImage> states = new ArrayList<>();
+        List<int[]> pixels = new ArrayList<>();
+        int[] remap = new int[plan.states().size()];
+        for (int i = 0; i < remap.length; i++) {
+            int[] own = pixels(plan.states().get(i));
+            int found = -1;
+            for (int j = 0; j < pixels.size() && found < 0; j++) if (Arrays.equals(pixels.get(j), own)) found = j;
+            if (found < 0) { states.add(plan.states().get(i)); pixels.add(own); found = states.size() - 1; }
+            remap[i] = found;
+        }
+        int[] schedule = new int[plan.schedule().length];
+        for (int i = 0; i < schedule.length; i++) schedule[i] = remap[plan.schedule()[i]];
+        if (states.size() < 2) return null;
+        if (plan.blend()) return new Plan(plan.unitTicks(), plan.schedule(), plan.states(), true, plan.notes());
+        // Runs of equal entries, cyclic: start the cycle at a run boundary so no run is split.
+        int n = schedule.length, start = 0;
+        while (start < n && schedule[start] == schedule[(start + n - 1) % n]) start++;
+        if (start == n) return null;
+        int[] rotated = new int[n];
+        for (int i = 0; i < n; i++) rotated[i] = schedule[(start + i) % n];
+        List<int[]> runs = new ArrayList<>();
+        long g = 0;
+        for (int i = 0; i < n; ) {
+            int j = i;
+            while (j < n && rotated[j] == rotated[i]) j++;
+            runs.add(new int[]{rotated[i], j - i});
+            g = gcd(g, j - i);
+            i = j;
+        }
+        List<Integer> compact = new ArrayList<>();
+        for (int[] run : runs) for (int k = 0; k < run[1] / g; k++) compact.add(run[0]);
+        int[] result = new int[compact.size()];
+        for (int i = 0; i < result.length; i++) result[i] = compact.get(i);
+        // Renumber the states by first use so equal plans have equal files.
+        Map<Integer, Integer> order = new LinkedHashMap<>();
+        for (int value : result) order.putIfAbsent(value, order.size());
+        List<BufferedImage> ordered = new ArrayList<>();
+        for (int old : order.keySet()) ordered.add(states.get(old));
+        for (int i = 0; i < result.length; i++) result[i] = order.get(result[i]);
+        return new Plan((int) (plan.unitTicks() * g), result, List.copyOf(ordered), false, plan.notes());
     }
 
     private static boolean uniform(Track track) {

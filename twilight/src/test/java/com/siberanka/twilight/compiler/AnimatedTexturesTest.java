@@ -127,8 +127,8 @@ class AnimatedTexturesTest {
                 false, TextureAnimation.MAX_ENTITY_STATES);
         assertFalse(plan.blend());
         assertEquals(1, plan.unitTicks());
-        assertEquals(8, plan.schedule().length, "one state per tick of the cycle");
-        assertEquals(8, plan.states().size());
+        assertEquals(8, plan.schedule().length, "one entry per tick of the cycle");
+        assertEquals(5, plan.states().size(), "the way back repeats the blends of the way there: five distinct pictures");
         int first = plan.states().get(0).getRGB(0, 0), half = plan.states().get(plan.schedule()[2]).getRGB(0, 0);
         assertEquals(color(0), first);
         assertEquals((color(0) >> 16 & 255) + ((color(1) >> 16 & 255) - (color(0) >> 16 & 255)) / 2, half >> 16 & 255, 1);
@@ -370,13 +370,16 @@ class AnimatedTexturesTest {
         assertEquals(DisplayEntityResources.PARTS, moving, "the animated texture starts a sheet of its own");
         assertEquals(DisplayEntityResources.PARTS + 1, variants.getAsJsonArray("twilight:moving_too").get(0).getAsInt(),
                 "variants sharing the animated texture share its sheet");
-        assertTrue(files.containsKey("textures/twilight/display_sheet1_f0.png"));
-        assertTrue(files.containsKey("textures/twilight/display_sheet1_f2.png"));
-        assertFalse(files.containsKey("textures/twilight/display_sheet0_f0.png"), "static sheets stay single textures");
+        assertFalse(files.keySet().stream().anyMatch(name -> name.startsWith("textures/twilight/display_sheet0_")),
+                "static sheets stay single textures");
 
         JsonObject entity = JsonParser.parseString(new String(files.get("entity/twilight_display.entity.json"), StandardCharsets.UTF_8))
                 .getAsJsonObject().getAsJsonObject("minecraft:client_entity").getAsJsonObject("description");
-        assertEquals("textures/twilight/display_sheet1_f1", entity.getAsJsonObject("textures").get("s1f1").getAsString());
+        assertEquals("textures/twilight/display_sheet1", entity.getAsJsonObject("textures").get("s1f0").getAsString(),
+                "the state equal to the picture of the sheet itself reuses its file");
+        String second = entity.getAsJsonObject("textures").get("s1f1").getAsString();
+        assertTrue(second.startsWith("textures/twilight/anim/"), second);
+        assertTrue(files.containsKey(second + ".png"), "states are files named by their content");
         JsonObject controller = JsonParser.parseString(new String(files.get("render_controllers/twilight_display.json"),
                 StandardCharsets.UTF_8)).getAsJsonObject().getAsJsonObject("render_controllers").getAsJsonObject("controller.render.twilight.display");
         JsonArray textures = controller.getAsJsonObject("arrays").getAsJsonObject("textures").getAsJsonArray("Array.textures");
@@ -397,6 +400,124 @@ class AnimatedTexturesTest {
         String controller = new String(files.get("render_controllers/twilight_display.json"), StandardCharsets.UTF_8);
         assertTrue(controller.contains("Array.textures[math.floor(math.floor(q.property('twilight:appearance')/9)/64)]"), controller);
         assertFalse(new String(files.get("entity/twilight_display.entity.json"), StandardCharsets.UTF_8).contains("v.sheet"));
+    }
+
+    // ------------------------------------------------------------------------------------------ modes and size
+
+    @Test
+    void compactMergesEqualStatesAndShrinksTheScheduleByTheCommonRunLength() {
+        BufferedImage a = track("a", 1, 1).images().get(0), b = track("b", 2, 1).images().get(1);
+        BufferedImage aCopy = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+        for (int x = 0; x < 16; x++) for (int y = 0; y < 16; y++) aCopy.setRGB(x, y, a.getRGB(0, 0));
+        TextureAnimation.Plan plan = TextureAnimation.compact(new TextureAnimation.Plan(1, new int[]{0, 0, 1, 1, 2, 2},
+                List.of(a, b, aCopy), false, List.of()));
+        assertEquals(2, plan.states().size(), "the identical copy is one state");
+        assertEquals(2, plan.unitTicks(), "runs of two ticks become one unit of two ticks");
+        assertArrayEquals(new int[]{0, 1, 1}, plan.schedule(), "the cycle starts at a run boundary and states are numbered by first use");
+
+        assertNull(TextureAnimation.compact(new TextureAnimation.Plan(1, new int[]{0, 1}, List.of(a, aCopy), false, List.of())),
+                "states that are all alike are no animation");
+    }
+
+    @Test
+    void simpleModeSamplesFramesEvenlyAndDropsInterpolationStates() {
+        TextureAnimation.MODE.set(TextureAnimation.Mode.SIMPLE);
+        try {
+            TextureAnimation.Plan plan = TextureAnimation.plan(animated(16, 16, "{\"animation\":{\"frametime\":2,\"interpolate\":true}}"),
+                    false, TextureAnimation.MAX_ENTITY_STATES);
+            assertEquals(TextureAnimation.SIMPLE_STATES, plan.states().size(), "16 frames are sampled down to 8, none interpolated");
+            assertEquals(4, plan.unitTicks(), "each sampled state lasts two source frames");
+            assertEquals(color(0), plan.states().get(0).getRGB(0, 0));
+            assertEquals(color(2), plan.states().get(1).getRGB(0, 0), "every second frame");
+            TextureAnimation.Plan flipbook = TextureAnimation.plan(animated(16, 16, "{\"animation\":{\"frametime\":2}}"), true,
+                    TextureAnimation.MAX_BLOCK_STATES);
+            assertEquals(16, flipbook.states().size(), "block flipbooks keep every frame in the simple mode");
+        } finally { TextureAnimation.MODE.remove(); }
+    }
+
+    @Test
+    void offModePlansNothingAndLoadsFirstFramesOnly() throws Exception {
+        TextureAnimation.MODE.set(TextureAnimation.Mode.OFF);
+        try {
+            assertNull(TextureAnimation.plan(animated(16, 3, "{\"animation\":{\"frametime\":2}}"), true, 64));
+            Path source = root.resolve("off-source");
+            writeSheet(source.resolve("assets/demo/textures/item/glow.png"), 16, 3);
+            write(source, "assets/demo/textures/item/glow.png.mcmeta", "{\"animation\":{\"frametime\":5}}");
+            try (var index = com.siberanka.twilight.source.ResourceIndex.build(
+                    List.of(new ContentSource("test", ContentSource.Kind.RESOURCE_PACK, source, 1)), config())) {
+                TextureSet atlas = TextureSet.atlas(index, List.of("demo:item/glow"));
+                assertNull(atlas.animation());
+                assertEquals(16, atlas.height());
+                assertEquals(color(0), TextureSet.layeredIcon(index, List.of("demo:item/glow")).getRGB(1, 1));
+            }
+        } finally { TextureAnimation.MODE.remove(); }
+    }
+
+    @Test
+    void packsAreSmallestWhenOffAndSimpleAndShareIdenticalStateTextures() throws Exception {
+        Path source = root.resolve("sizes");
+        writeSheet(source.resolve("assets/demo/textures/item/glow.png"), 16, 8);
+        write(source, "assets/demo/textures/item/glow.png.mcmeta", "{\"animation\":{\"frametime\":2,\"interpolate\":true}}");
+        write(source, "assets/minecraft/models/item/paper.json", """
+                {"parent":"minecraft:item/generated","overrides":[
+                  {"predicate":{"custom_model_data":1},"model":"demo:item/glow"},
+                  {"predicate":{"custom_model_data":2},"model":"demo:item/glow2"}]}
+                """);
+        write(source, "assets/demo/models/item/glow.json", cubeBlock("demo:item/glow"));
+        write(source, "assets/demo/models/item/glow2.json", cubeBlock("demo:item/glow"));
+        long full = states(buildMode(source, "full", "sizes-full"));
+        long simple = states(buildMode(source, "simple", "sizes-simple"));
+        long off = states(buildMode(source, "off", "sizes-off"));
+        assertEquals(0, off, "off exports no state textures");
+        assertTrue(simple > 0 && simple <= 8, "simple keeps at most 8 states, shared by both items: " + simple);
+        assertTrue(full > simple, "full renders the interpolated states too: " + full + " vs " + simple);
+        assertEquals(full, states(buildMode(source, "full", "sizes-full-again")), "deterministic");
+    }
+
+    private java.io.File buildMode(Path source, String mode, String data) throws Exception {
+        BuildResult result = new BedrockPackCompiler(root.resolve(data), config().withAnimatedTextures(mode))
+                .build(List.of(new ContentSource("test", ContentSource.Kind.RESOURCE_PACK, source, 1)), List.of());
+        assertTrue(result.problems().isEmpty(), result.problems().toString());
+        return result.outputDirectory().resolve("pack.zip").toFile();
+    }
+
+    /** Distinct state texture files of a pack (named by content, so identical states of two items count once). */
+    private static long states(java.io.File zip) throws Exception {
+        try (ZipFile file = new ZipFile(zip)) {
+            return file.stream().map(ZipEntry::getName).filter(name -> name.startsWith("textures/twilight/anim/")).count();
+        }
+    }
+
+    @Test
+    void indexedPngsKeepEveryPixel() throws Exception {
+        BufferedImage image = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
+        for (int y = 0; y < 64; y++) for (int x = 0; x < 64; x++) image.setRGB(x, y, color((x * 7 + y * 13) % 5));
+        image.setRGB(3, 3, 0x80ff0000);
+        byte[] compact = TextureSet.pngCompact(image);
+        BufferedImage back = ImageIO.read(new ByteArrayInputStream(compact));
+        for (int y = 0; y < image.getHeight(); y++) for (int x = 0; x < image.getWidth(); x++) {
+            assertEquals(image.getRGB(x, y), back.getRGB(x, y));
+        }
+        assertTrue(compact.length < TextureSet.png(image).length, "indexed is smaller");
+        BufferedImage many = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
+        for (int x = 0; x < 32; x++) for (int y = 0; y < 32; y++) many.setRGB(x, y, 0xff000000 | x * 1000 + y * 7);
+        assertEquals(many.getRGB(5, 5), ImageIO.read(new ByteArrayInputStream(TextureSet.pngCompact(many))).getRGB(5, 5),
+                "more than 256 colours fall back to a plain PNG");
+    }
+
+    @Test
+    void theModeIsAConfigurationOptionWithValidation() throws Exception {
+        var yaml = new org.bukkit.configuration.file.YamlConfiguration();
+        assertEquals("full", TwilightConfig.read(yaml, root).animatedTextures(), "absent = full");
+        yaml.set("generation.animated-textures", "SIMPLE");
+        assertEquals("simple", TwilightConfig.read(yaml, root).animatedTextures());
+        yaml.set("generation.animated-textures", false);
+        assertEquals("off", TwilightConfig.read(yaml, root).animatedTextures());
+        yaml.set("generation.animated-textures", "bogus");
+        assertThrows(IllegalArgumentException.class, () -> TwilightConfig.read(yaml, root));
+        assertThrows(Exception.class, () -> new com.siberanka.twilight.config.BackendConfigCheck(root)
+                .validate("generation:\n  animated-textures: bogus\n"));
+        new com.siberanka.twilight.config.BackendConfigCheck(root).validate("generation:\n  animated-textures: simple\n");
     }
 
     // ------------------------------------------------------------------------------------------ helpers

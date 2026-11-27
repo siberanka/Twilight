@@ -37,8 +37,29 @@ public record TwilightConfig(
         String nametagBackground,
         Map<String, String> providerSources,
         boolean datapackSources,
-        boolean sendPackToBedrock
+        boolean sendPackToBedrock,
+        String animatedTextures
 ) {
+    /** How animated {@code .mcmeta} textures are exported: everything within limits, a cheaper subset, or not at all. */
+    public static final Set<String> ANIMATED_TEXTURES = Set.of("full", "simple", "off");
+
+    public TwilightConfig(boolean vanillaOverride, boolean strict, boolean autoBuildOnStartup,
+                          boolean syncProviderChanges, long startupDelayTicks, long providerCommandDelayTicks,
+                          long maximumSourceBytes, int maximumArchiveEntries, boolean downloadVanillaAssets,
+                          boolean autoDiscoverSources, List<Path> additionalSources, String geyserDirectory,
+                          boolean deployAfterBuild, boolean reloadAfterDeploy, int backupsToKeep,
+                          boolean javaContainerLayout, boolean javaTextLayout, boolean javaTextSurfaces,
+                          boolean bedrockBiomeMatching, boolean javaGlyphTint, boolean javaTranslations,
+                          boolean javaTextLayers, String nametagBackground, Map<String, String> providerSources,
+                          boolean datapackSources, boolean sendPackToBedrock) {
+        this(vanillaOverride, strict, autoBuildOnStartup, syncProviderChanges, startupDelayTicks,
+                providerCommandDelayTicks, maximumSourceBytes, maximumArchiveEntries, downloadVanillaAssets,
+                autoDiscoverSources, additionalSources, geyserDirectory, deployAfterBuild, reloadAfterDeploy,
+                backupsToKeep, javaContainerLayout, javaTextLayout, javaTextSurfaces, bedrockBiomeMatching,
+                javaGlyphTint, javaTranslations, javaTextLayers, nametagBackground, providerSources, datapackSources,
+                sendPackToBedrock, "full");
+    }
+
     /** How a provider's content is read: as the provider sends it, only its generated pack, only its folders, or not. */
     public static final Set<String> SOURCE_MODES = Set.of("auto", "generated", "contents", "off");
     /** Providers whose packs and data Twilight discovers on its own. */
@@ -50,6 +71,9 @@ public record TwilightConfig(
     public TwilightConfig {
         if (!NAMETAG_BACKGROUNDS.contains(nametagBackground)) {
             throw new IllegalArgumentException("ui.nametag-background must be auto, bedrock or hidden");
+        }
+        if (!ANIMATED_TEXTURES.contains(animatedTextures)) {
+            throw new IllegalArgumentException("generation.animated-textures must be full, simple or off");
         }
         providerSources = Map.copyOf(providerSources);
         providerSources.forEach((provider, mode) -> {
@@ -117,7 +141,18 @@ public record TwilightConfig(
                 providerCommandDelayTicks, maximumSourceBytes, maximumArchiveEntries, downloadVanillaAssets,
                 autoDiscoverSources, additionalSources, geyserDirectory, deployAfterBuild, reloadAfterDeploy, backupsToKeep,
                 javaContainerLayout, javaTextLayout, javaTextSurfaces, bedrockBiomeMatching, javaGlyphTint,
-                javaTranslations, javaTextLayers, nametagBackground, providerSources, datapackSources, sendPackToBedrock);
+                javaTranslations, javaTextLayers, nametagBackground, providerSources, datapackSources, sendPackToBedrock,
+                animatedTextures);
+    }
+
+    /** The same configuration with another animated texture mode. */
+    public TwilightConfig withAnimatedTextures(String value) {
+        return new TwilightConfig(vanillaOverride, strict, autoBuildOnStartup, syncProviderChanges, startupDelayTicks,
+                providerCommandDelayTicks, maximumSourceBytes, maximumArchiveEntries, downloadVanillaAssets,
+                autoDiscoverSources, additionalSources, geyserDirectory, deployAfterBuild, reloadAfterDeploy, backupsToKeep,
+                javaContainerLayout, javaTextLayout, javaTextSurfaces, bedrockBiomeMatching, javaGlyphTint,
+                javaTranslations, javaTextLayers, nametagBackground, providerSources, datapackSources, sendPackToBedrock,
+                value);
     }
 
     public static TwilightConfig read(FileConfiguration source, Path serverRoot) {
@@ -158,8 +193,17 @@ public record TwilightConfig(
                 source.getString("ui.nametag-background", "auto").toLowerCase(java.util.Locale.ROOT),
                 providerSources(source),
                 source.getBoolean("sources.datapacks", true),
-                source.getBoolean("geyser.send-pack-to-bedrock", true)
+                source.getBoolean("geyser.send-pack-to-bedrock", true),
+                animatedTextures(source)
         );
+    }
+
+    /** {@code generation.animated-textures}: full, simple or off (also accepts false/none for off and true for full). */
+    private static String animatedTextures(FileConfiguration source) {
+        Object value = source.get("generation.animated-textures", "full");
+        if (value instanceof Boolean flag) return flag ? "full" : "off";
+        String mode = String.valueOf(value).trim().toLowerCase(java.util.Locale.ROOT);
+        return mode.equals("none") ? "off" : mode;
     }
 
     /** {@code sources.providers}: true (auto), false (off) or a mode per provider. */

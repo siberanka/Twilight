@@ -27,7 +27,8 @@ public final class BackendConfigCheck implements ConfigMaintenance.Validator {
             "geyser.item-display-models", Set.of("auto", "on", "off", "true", "false"),
             "geyser.item-display-variants", Set.of("seen", "all"),
             "geyser.restart-for-item-changes", Set.of("notify", "when-empty"),
-            "ui.pocket-container-layout", Set.of("java", "bedrock"));
+            "ui.pocket-container-layout", Set.of("java", "bedrock"),
+            "generation.animated-textures", Set.of("full", "simple", "off", "true", "false", "none"));
     private static final Map<String, int[]> RANGES = Map.of(
             "geyser.loading-protection-seconds", new int[]{0, 1800},
             "geyser.player-head-skins-of-players", new int[]{0, 4096});

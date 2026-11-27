@@ -209,6 +209,7 @@ public final class BedrockPackCompiler {
 
     private BuildResult build(ResourceIndex resources, List<CustomItemDescriptor> liveItems,
                               VanillaAssetCache vanillaAssets) throws IOException {
+        TextureAnimation.MODE.set(TextureAnimation.Mode.of(config.animatedTextures()));
         List<ItemCandidate> candidates = new ItemCandidateCollector(resources).collect(liveItems);
         JavaModelResolver resolver = new JavaModelResolver(resources, vanillaAssets);
         VanillaItemReference vanillaItems = new VanillaItemReference(resources, vanillaAssets);
@@ -314,7 +315,7 @@ public final class BedrockPackCompiler {
                             : TextureSet.png(GuiIconRenderer.render(model, atlas, geometryElements(model)));
                     packFiles.put("textures/twilight/" + safe + "_icon.png", icon);
                     TextureAnimation.Plan motion = entityPlan(atlas, candidate.baseItem() + " -> " + candidate.visualModels(), notices);
-                    if (motion != null) writeFrames(packFiles, texturePath, motion);
+                    List<String> statePaths = motion == null ? null : writeFrames(packFiles, texturePath, atlas, motion);
                     JsonObject itemGeometry = geometry(safe, model, atlas, bounds);
                     // Bows and crossbows (pull and charge states) keep their measured mapping.
                     boolean tall = !candidate.baseItem().equals("minecraft:bow") && !candidate.baseItem().equals("minecraft:crossbow")
@@ -324,7 +325,7 @@ public final class BedrockPackCompiler {
                     packFiles.put("animations/" + safe + ".animation.json",
                             jsonBytes(animations(safe, model, tall, drawKind(candidate.baseItem()))));
                     JsonObject itemAttachable = attachable(identifier, safe, texturePath, oneSided(model), drawKind(candidate.baseItem()));
-                    if (motion != null) animateAttachable(itemAttachable, safe, texturePath, motion, packFiles);
+                    if (motion != null) animateAttachable(itemAttachable, safe, statePaths, motion, packFiles);
                     packFiles.put("attachables/" + safe + ".json", jsonBytes(itemAttachable));
                     if (itemDisplays && model.isThreeDimensional() && displayed(candidate, displayedItems)) {
                         displays.add(identifier, geometry(safe, model, atlas, bounds), packFiles.get(texturePath + ".png"),
@@ -572,12 +573,14 @@ public final class BedrockPackCompiler {
         report.addProperty("language_locales", languages.locales());
         report.addProperty("language_strings", languages.strings());
         report.addProperty("vanilla_override", config.vanillaOverride());
+        report.addProperty("animated_textures", config.animatedTextures());
         Files.write(staging.resolve("build-report.json"), jsonBytes(report));
         validate(pack, mappings, converted - displayOnly);
         deleteTree(current.resolveSibling("previous"));
         if (Files.exists(current)) Files.move(current, current.resolveSibling("previous"), StandardCopyOption.REPLACE_EXISTING);
         Files.move(staging, current, StandardCopyOption.REPLACE_EXISTING);
         deleteTree(current.resolveSibling("previous"));
+        TextureAnimation.MODE.remove();
         return new BuildResult(current, candidates.size(), converted, threeDimensional, fonts.glyphs(), fonts.pages(),
                 fonts.vanillaFallbackTextures(),
                 fonts.namedFonts(), fonts.namedGlyphs(),
@@ -1039,9 +1042,32 @@ public final class BedrockPackCompiler {
     }
 
     /** The state textures of an animated entity texture: {@code <path>_f<n>.png}. */
-    static void writeFrames(Map<String, byte[]> files, String texturePath, TextureAnimation.Plan plan) throws IOException {
-        for (int state = 0; state < plan.states().size(); state++) {
-            files.put(texturePath + "_f" + state + ".png", TextureSet.png(plan.states().get(state)));
+    static List<String> writeFrames(Map<String, byte[]> files, String texturePath, TextureSet atlas,
+                                    TextureAnimation.Plan plan) throws IOException {
+        List<String> paths = new ArrayList<>();
+        int[] base = atlas.animation().base().getRGB(0, 0, atlas.animation().base().getWidth(),
+                atlas.animation().base().getHeight(), null, 0, atlas.animation().base().getWidth());
+        for (java.awt.image.BufferedImage state : plan.states()) {
+            if (state.getWidth() == atlas.animation().base().getWidth() && state.getHeight() == atlas.animation().base().getHeight()
+                    && java.util.Arrays.equals(base, state.getRGB(0, 0, state.getWidth(), state.getHeight(), null, 0, state.getWidth()))) {
+                paths.add(texturePath);
+                continue;
+            }
+            byte[] png = TextureSet.pngCompact(state);
+            String path = animationTexture(png);
+            files.putIfAbsent(path + ".png", png);
+            paths.add(path);
+        }
+        return paths;
+    }
+
+    /** Pack path of a state texture, named by its content: equal states of any item share one file. */
+    static String animationTexture(byte[] png) {
+        try {
+            return "textures/twilight/anim/" + java.util.HexFormat.of().formatHex(
+                    java.security.MessageDigest.getInstance("SHA-256").digest(png)).substring(0, 16);
+        } catch (java.security.NoSuchAlgorithmException impossible) {
+            throw new IllegalStateException(impossible);
         }
     }
 
@@ -1054,12 +1080,12 @@ public final class BedrockPackCompiler {
      * Gives an attachable a render controller that shows the state textures in turn (a texture array indexed by
      * the time), keeping the item's glint texture and material choice.
      */
-    static void animateAttachable(JsonObject attachable, String safe, String texturePath, TextureAnimation.Plan plan,
+    static void animateAttachable(JsonObject attachable, String safe, List<String> statePaths, TextureAnimation.Plan plan,
                                   Map<String, byte[]> files) {
         JsonObject description = attachable.getAsJsonObject("minecraft:attachable").getAsJsonObject("description");
         JsonObject textures = description.getAsJsonObject("textures");
         JsonArray array = new JsonArray();
-        for (int state = 0; state < plan.states().size(); state++) textures.addProperty("f" + state, texturePath + "_f" + state);
+        for (int state = 0; state < plan.states().size(); state++) textures.addProperty("f" + state, statePaths.get(state));
         for (int unit : plan.schedule()) array.add("Texture.f" + unit);
         JsonObject arrays = new JsonObject();
         arrays.add("Array.twilight_frames", array);

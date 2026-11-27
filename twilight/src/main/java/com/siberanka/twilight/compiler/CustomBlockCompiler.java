@@ -470,7 +470,7 @@ final class CustomBlockCompiler {
      * @param frames the images to stack; the plan's own states when empty
      */
     private String animatedTexture(List<BufferedImage> frames, TextureAnimation.Plan plan) throws IOException {
-        byte[] png = TextureSet.png(TextureAnimation.strip(frames.isEmpty() ? plan.states() : frames));
+        byte[] png = TextureSet.pngCompact(TextureAnimation.strip(frames.isEmpty() ? plan.states() : frames));
         String path = TEXTURE_FOLDER + hash(png) + "_f" + plan.unitTicks() + (plan.blend() ? "b" : "n")
                 + Integer.toHexString(java.util.Arrays.hashCode(plan.schedule()));
         packFiles.putIfAbsent(path + ".png", png);
