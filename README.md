@@ -18,22 +18,22 @@ Twilight is a server-side Java-to-Bedrock custom-content compiler for Geyser. It
 
 **Test server:** `oyna.twilightnw.com` (Java and Bedrock) runs Twilight with real content.
 
-## Beta status and compatibility
+## Status and compatibility
 
-**1.0.1-pre.3 is the current prerelease.** The features are complete for production servers and proxy networks,
-and they run on real networks today. Behaviour can still change between betas. Read this section before
+**1.0.1 is the current stable release.** The features are complete for production servers and proxy networks,
+and they run on real networks today. Read this section before
 installing, keep backups, and [report problems](https://github.com/siberanka/twilight/issues/new/choose)
 ([GitLab](https://gitlab.com/siberanka/twilight/-/issues)).
 
 | Component | Supported | Notes |
 |---|---|---|
 | Java | 21 or newer | Built with Java 25 for release 21 |
-| Server | Paper, Folia, Spigot 1.21.4 or newer, and their forks | Tested on Paper 26.2 and 26.3, Leaf 26.3, 1.21.8 and 1.21.4 |
+| Server | Paper, Folia, Spigot 1.21.4 or newer, and their forks | Tested on Paper 26.2 and 26.3, Leaf 26.3, 1.21.11, 1.21.8 and 1.21.4 |
 | Geyser | 2.x with `enable-custom-content: true` (Geyser's default) | The runtime layers (text layout, translations, biomes, item displays, loading protection) are validated against Geyser 2.11.3, 2.12.0 and 2.12.1 (build 1298, needed by Bedrock 26.6x clients). On another Geyser build, a layer that cannot attach turns itself off with a warning; packs and item mappings still work |
 | Bedrock clients | The current release | Tested with 1.26.5203 on Windows. Phones and consoles are not tested live; large packs load slowly on phones |
 | Java clients | What the server supports | Tested with 26.2 and 1.21.4 |
 | Proxy (optional) | Velocity; BungeeCord, Waterfall and FlameCord, with Geyser on the proxy and `TwilightProxy.jar` | Floodgate on the proxy and on the backends is supported; tested on Velocity 4.2.0, BungeeCord 26.1 and Waterfall 1.21 |
-| Content | ItemsAdder, CraftEngine, Nexo, Oraxen, BetterModel, ModelEngine, RealisticSeasons, CustomNameplates, datapacks and resource packs | Read from their generated files and public APIs; ItemsAdder 5.0.0-beta-2, CraftEngine 26.9 and Oraxen 1.220 are tested on 26.3 and 1.21.4; see [compatibility](docs/COMPATIBILITY.md) |
+| Content | ItemsAdder, CraftEngine, Nexo, Oraxen, BetterModel, ModelEngine, RealisticSeasons, CustomNameplates, datapacks and resource packs | Read from their generated files and public APIs; ItemsAdder 5.0.0-beta-2, CraftEngine 26.9 and Oraxen 1.220 are tested on 26.3 and 1.21.4, ItemsAdder 4.0.18, CraftEngine 26.7 and BetterModel 3.3.0 and 3.4.2 on 1.21.11; see [compatibility](docs/COMPATIBILITY.md) |
 
 Before installing:
 
@@ -352,22 +352,22 @@ sunucunun paketini verir.
 
 **Test sunucusu:** `oyna.twilightnw.com` (Java ve Bedrock) Twilight'ı gerçek içerikle çalıştırır.
 
-#### Beta durumu ve uyumluluk
+#### Durum ve uyumluluk
 
-**1.0.1-pre.3 güncel ön sürümdür.** Özellikler üretim sunucuları ve proxy'li ağlar için tamamdır ve
-bugün gerçek ağlarda çalışıyor. Davranış betalar arasında hâlâ değişebilir. Kurmadan önce bu bölümü okuyun,
+**1.0.1 güncel kararlı sürümdür.** Özellikler üretim sunucuları ve proxy'li ağlar için tamamdır ve
+bugün gerçek ağlarda çalışıyor. Kurmadan önce bu bölümü okuyun,
 yedek alın ve [sorunları bildirin](https://github.com/siberanka/twilight/issues/new/choose)
 ([GitLab](https://gitlab.com/siberanka/twilight/-/issues)).
 
 | Bileşen | Desteklenen | Notlar |
 |---|---|---|
 | Java | 21 veya daha yeni | Java 25 ile release 21 için derlenir |
-| Sunucu | Paper, Folia, Spigot 1.21.4 veya daha yeni ve bunların türevleri | Paper 26.2, 26.3 ve Leaf 26.3, 1.21.8 ve 1.21.4 üzerinde test edildi |
+| Sunucu | Paper, Folia, Spigot 1.21.4 veya daha yeni ve bunların türevleri | Paper 26.2, 26.3 ve Leaf 26.3, 1.21.11, 1.21.8 ve 1.21.4 üzerinde test edildi |
 | Geyser | `enable-custom-content: true` ile 2.x (Geyser'ın varsayılanı) | Çalışma zamanı katmanları (yazı yerleşimi, çeviriler, biyomlar, eşya görüntüleri, yükleme koruması) Geyser 2.11.3, 2.12.0 ve 2.12.1'e (Bedrock 26.6x istemcilerinin gerektirdiği 1298 numaralı derleme) göre doğrulandı. Başka bir Geyser derlemesinde bağlanamayan bir katman uyarıyla kendini kapatır; paketler ve eşya eşlemeleri yine çalışır |
 | Bedrock istemcileri | Güncel sürüm | Windows'ta 1.26.5203 ile test edildi. Telefonlar ve konsollar canlı test edilmedi; büyük paketler telefonlarda yavaş yüklenir |
 | Java istemcileri | Sunucunun desteklediği sürümler | 26.2 ve 1.21.4 ile test edildi |
 | Proxy (isteğe bağlı) | Velocity; BungeeCord, Waterfall ve FlameCord; proxy'de Geyser ve `TwilightProxy.jar` ile | Proxy'de ve arka uçlarda Floodgate desteklenir; Velocity 4.2.0, BungeeCord 26.1 ve Waterfall 1.21 üzerinde test edildi |
-| İçerik | ItemsAdder, CraftEngine, Nexo, Oraxen, BetterModel, ModelEngine, RealisticSeasons, CustomNameplates, datapack'ler ve kaynak paketleri | Ürettikleri dosyalardan ve herkese açık API'lerinden okunur; ItemsAdder 5.0.0-beta-2, CraftEngine 26.9 ve Oraxen 1.220, 26.3 ve 1.21.4 üzerinde test edildi; [uyumluluk](docs/COMPATIBILITY.md) belgesine bakın |
+| İçerik | ItemsAdder, CraftEngine, Nexo, Oraxen, BetterModel, ModelEngine, RealisticSeasons, CustomNameplates, datapack'ler ve kaynak paketleri | Ürettikleri dosyalardan ve herkese açık API'lerinden okunur; ItemsAdder 5.0.0-beta-2, CraftEngine 26.9 ve Oraxen 1.220, 26.3 ve 1.21.4 üzerinde; ItemsAdder 4.0.18, CraftEngine 26.7 ve BetterModel 3.3.0 ile 3.4.2, 1.21.11 üzerinde test edildi; [uyumluluk](docs/COMPATIBILITY.md) belgesine bakın |
 
 Kurmadan önce:
 

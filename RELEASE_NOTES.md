@@ -1,6 +1,65 @@
-# Twilight 1.0.1-pre.3 - prerelease
+# Twilight 1.0.1
 
 > Türkçe: [aşağıda](#türkçe)
+
+1.0.1 is the first stable release after the 1.0.0 betas. It collects the three 1.0.1 prereleases and two fixes
+found while checking them against copies of production servers, with Geyser on the server, on Velocity and on
+BungeeCord.
+
+**New since 1.0.1-pre.3**
+
+- **BetterModel 3.3 models show on Bedrock.** BetterModel 3.3 writes every bone into one item definition that
+  dispatches on custom model data, and Twilight found no display model for those bones, so the models stayed
+  invisible on Bedrock. They now get display models like the bones of BetterModel 3.4 and ModelEngine. Item
+  definitions that dispatch on a number (`range_dispatch`) also pick the highest threshold a value reaches, as on
+  Java; the first entry used to win.
+- **A stray trailing comma in a font file no longer stops the conversion.** Java reads it as a missing provider
+  and drops that pack's definition of the font; Twilight now does the same with a notice instead of rejecting the
+  whole build in strict mode.
+
+**Since 1.0.0-beta.6** (details in the prerelease notes below and in the [changelog](CHANGELOG.md))
+
+- Geyser 2.12.1 build 1298, which current Bedrock clients need, is supported. Update Twilight before Geyser:
+  1.0.0-beta.6 cannot start its display bridge on build 1298 or newer, so furniture models would disappear.
+- Invisible item frames are drawn in every facing; ItemsAdder crates and other frame furniture no longer turn
+  about 90 degrees when a player comes close.
+- Custom datapack biomes show through the proxy (issue #3), per server and across server switches.
+- Bedrock players see other players' custom elytras; `geyser.elytra-override` and the experimental
+  `geyser.elytra-per-player` (also with Geyser on the proxy) cover a player's own elytra.
+- Lit CraftEngine blocks give their light, and CraftEngine blocks built on cactus, sugar cane, sapling and leaves
+  states show their own look.
+- Large 3D handhelds have Java's first person size; single-model custom bows and crossbows move while drawn.
+- Identical content builds a byte-identical pack, so players are not asked to download an unchanged pack again.
+
+**Tested** on copies of production servers (1.21.11 with ItemsAdder 4.0.18, CraftEngine 26.7, BetterModel 3.3.0
+and 3.4.2, MythicMobs, FancyHolograms and CrazyCrates) with Geyser 2.12.1 (build 1298) and Floodgate on the
+server, on Velocity 4.2.0 and on BungeeCord 26.1. Java 1.21.4 and Bedrock 26.6x captures were compared for items
+in hand, blocks, furniture, glyphs in chat and titles, animated model entities, holograms, near and far views
+(5 to 96 blocks and back from 400), relogs, server switches with transfers, and server and proxy restarts.
+
+**Known limits**
+
+- A proxy network registers the custom blocks of all its servers once, while each server's pack draws only its
+  own states: keep the servers on the same custom block states, or set `bedrock.custom-blocks: false` on the proxy
+  (the wiki's Custom blocks section explains it).
+- 3D items held in the off hand are not drawn in Bedrock's first person view (a Bedrock client limit).
+- Phones and consoles were not tested live; large packs load slowly on phones.
+
+Test server: `oyna.twilightnw.com`.
+
+Update both JARs (Twilight before Geyser) and restart the server and the proxy once after the build; new custom
+blocks, items and player heads appear after that restart, as Geyser registers them when it starts.
+
+The [JARs and SHA-256 files](artifacts/) were built locally under siberanka using Java 25; 436 tests
+across 73 suites passed. Both JARs carry `LICENSE` and `NOTICE` in `META-INF`. No hosted CI was run.
+
+Runtime requirements: Java 21+, Paper/Folia/Spigot 1.21.4+, Geyser with custom content enabled;
+for twilight-proxy, Velocity or BungeeCord with Geyser on the proxy. The runtime bridges target
+Geyser 2.11.3, 2.12.0 and 2.12.1; other Geyser core versions require validation.
+
+The notes below describe the prereleases that led to 1.0.1.
+
+## Twilight 1.0.1-pre.3 - prerelease
 
 **Light from lit CraftEngine blocks.** Lamps, the lit copper coil and other CraftEngine blocks with a `luminance`
 setting now light their surroundings on Bedrock as on Java. CraftEngine keeps the light level in its server
@@ -43,8 +102,6 @@ across 72 suites passed. Both JARs carry `LICENSE` and `NOTICE` in `META-INF`. N
 Runtime requirements: Java 21+, Paper/Folia/Spigot 1.21.4+, Geyser with custom content enabled;
 for twilight-proxy, Velocity or BungeeCord with Geyser on the proxy. The runtime bridges target
 Geyser 2.11.3, 2.12.0 and 2.12.1; other Geyser core versions require validation.
-
-The notes below describe previous prereleases.
 
 ## Twilight 1.0.1-pre.2 - prerelease
 
@@ -350,7 +407,70 @@ Geyser 2.11.3; other Geyser core versions require validation.
 
 ## Türkçe
 
-### Twilight 1.0.1-pre.3 - ön sürüm
+### Twilight 1.0.1
+
+1.0.1, 1.0.0 betalarından sonraki ilk kararlı sürümdür. Üç 1.0.1 ön sürümünü ve onları üretim sunucularının
+kopyalarına karşı, Geyser sunucuda, Velocity'de ve BungeeCord'da iken denerken bulunan iki düzeltmeyi bir araya
+getirir.
+
+**1.0.1-pre.3'ten bu yana yeni**
+
+- **BetterModel 3.3 modelleri Bedrock'ta görünür.** BetterModel 3.3 her kemiği özel model verisine göre ayrışan tek
+  bir eşya tanımına yazar; Twilight bu kemikler için görüntü modeli bulamıyordu ve modeller Bedrock'ta görünmez
+  kalıyordu. Artık BetterModel 3.4 ve ModelEngine kemikleri gibi görüntü modeli alırlar. Sayıya göre ayrışan
+  (`range_dispatch`) eşya tanımları da Java'daki gibi değerin ulaştığı en yüksek eşiği seçer; önceden ilk kayıt
+  kazanıyordu.
+- **Yazı tipi dosyasındaki başıboş bir sondaki virgül artık dönüşümü durdurmaz.** Java onu eksik bir sağlayıcı olarak
+  okur ve o paketin yazı tipi tanımını atar; Twilight da artık sıkı modda tüm derlemeyi reddetmek yerine bir
+  bildirimle aynısını yapar.
+
+**1.0.0-beta.6'dan bu yana** (ayrıntılar aşağıdaki ön sürüm notlarında ve [değişiklik günlüğünde](CHANGELOG.md))
+
+- Güncel Bedrock istemcilerinin gerektirdiği Geyser 2.12.1'in 1298 numaralı derlemesi desteklenir. Twilight'ı
+  Geyser'dan önce güncelleyin: 1.0.0-beta.6, 1298 ve sonraki derlemelerde görüntü köprüsünü başlatamaz, bu yüzden
+  mobilya modelleri kaybolur.
+- Görünmez eşya çerçeveleri her yönde çizilir; ItemsAdder kasaları ve diğer çerçeve mobilyaları bir oyuncu yaklaşınca
+  artık yaklaşık 90 derece dönmez.
+- Özel datapack biyomları proxy üzerinden, sunucu başına ve sunucu değiştirmelerde de görünür (issue #3).
+- Bedrock oyuncuları diğer oyuncuların özel elytralarını görür; oyuncunun kendi elytrası için
+  `geyser.elytra-override` ve deneysel `geyser.elytra-per-player` (Geyser proxy'de olduğunda da) vardır.
+- Yanan CraftEngine blokları ışıklarını verir; kaktüs, şeker kamışı, fidan ve yaprak durumları üzerine kurulan
+  CraftEngine blokları kendi görünümlerini gösterir.
+- Büyük 3B el eşyaları Java'nın birinci şahıs boyutundadır; tek modelli özel yaylar ve arbaletler çekilirken hareket
+  eder.
+- Aynı içerik bayt bayt aynı paketi üretir; böylece oyunculardan değişmemiş bir paketi yeniden indirmeleri istenmez.
+
+**Test edildi:** üretim sunucularının kopyalarında (ItemsAdder 4.0.18, CraftEngine 26.7, BetterModel 3.3.0 ve
+3.4.2, MythicMobs, FancyHolograms ve CrazyCrates ile 1.21.11), Geyser 2.12.1 (1298 numaralı derleme) ve Floodgate
+sunucuda, Velocity 4.2.0'da ve BungeeCord 26.1'de iken. Eldeki eşyaların, blokların, mobilyaların, sohbet ve
+başlıklardaki glifler, animasyonlu model varlıklarının, hologramların, yakın ve uzak görünümlerin (5 ile 96 blok
+arası ve 400 bloktan dönüş), yeniden girişlerin, transferle sunucu değiştirmelerin, sunucu ve proxy yeniden
+başlatmalarının Java 1.21.4 ve Bedrock 26.6x görüntüleri karşılaştırıldı.
+
+**Bilinen sınırlar**
+
+- Proxy'li bir ağ tüm sunucularının özel bloklarını bir kez kaydeder, her sunucunun paketi ise yalnızca kendi
+  durumlarını çizer: sunucuları aynı özel blok durumlarında tutun ya da proxy'de `bedrock.custom-blocks: false`
+  yapın (wiki'nin Özel bloklar bölümü açıklar).
+- Sol elde tutulan 3B eşyalar Bedrock'un birinci şahıs görünümünde çizilmez (Bedrock istemcisinin bir sınırı).
+- Telefonlar ve konsollar canlı test edilmedi; büyük paketler telefonlarda yavaş yüklenir.
+
+Test sunucusu: `oyna.twilightnw.com`.
+
+İki JAR'ı da güncelleyin (Twilight'ı Geyser'dan önce) ve derlemeden sonra sunucuyu ve proxy'yi bir kez yeniden
+başlatın; yeni özel bloklar, eşyalar ve oyuncu kafaları, Geyser onları açılışta kaydettiği için bu yeniden
+başlatmadan sonra görünür.
+
+[JAR'lar ve SHA-256 dosyaları](artifacts/) siberanka adına Java 25 ile yerelde derlendi; 73 paketteki
+436 test geçti. İki JAR da `META-INF` içinde `LICENSE` ve `NOTICE` taşır. Barındırılan CI çalıştırılmadı.
+
+Çalışma zamanı gereksinimleri: Java 21+, Paper/Folia/Spigot 1.21.4+, özel içeriği açık Geyser; twilight-proxy
+için proxy'de Geyser bulunan Velocity veya BungeeCord. Çalışma zamanı köprüleri Geyser 2.11.3, 2.12.0 ve
+2.12.1'i hedefler; diğer Geyser çekirdek sürümleri doğrulama gerektirir.
+
+Aşağıdaki notlar 1.0.1'e giden ön sürümleri anlatır.
+
+#### Twilight 1.0.1-pre.3 - ön sürüm
 
 **Yanan CraftEngine bloklarının ışığı.** Lambalar, yanan bakır bobin ve `luminance` ayarı olan diğer CraftEngine
 blokları artık Bedrock'ta da Java'daki gibi çevrelerini aydınlatır. CraftEngine ışık seviyesini kaynak paketinde
@@ -395,8 +515,6 @@ eşyalar ve oyuncu kafaları, Geyser onları açılışta kaydettiği için bu y
 Çalışma zamanı gereksinimleri: Java 21+, Paper/Folia/Spigot 1.21.4+, özel içeriği açık Geyser; twilight-proxy
 için proxy'de Geyser bulunan Velocity veya BungeeCord. Çalışma zamanı köprüleri Geyser 2.11.3, 2.12.0 ve
 2.12.1'i hedefler; diğer Geyser çekirdek sürümleri doğrulama gerektirir.
-
-Aşağıdaki notlar önceki ön sürümleri anlatır.
 
 #### Twilight 1.0.1-pre.2 - ön sürüm
 

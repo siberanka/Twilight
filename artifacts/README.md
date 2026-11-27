@@ -1,4 +1,4 @@
-# Twilight 1.0.1-pre.3 prerelease build
+# Twilight 1.0.1 release build
 
 > Türkçe: [aşağıda](#türkçe)
 
@@ -8,7 +8,7 @@
 
 Built locally by siberanka using Java 25.0.2 and Gradle 9.6.0, with
 `:twilight:build :twilight-proxy:build --offline --no-daemon --no-configuration-cache`.
-429 tests across 72 suites passed. No hosted CI was used.
+436 tests across 73 suites passed. No hosted CI was used.
 
 The corresponding source is in this commit under `twilight/`, `twilight-proxy/` and `protocol/`, with build files
 at the repository root. Licensed under the [Twilight License](../LICENSE) (the PolyForm Noncommercial
@@ -16,16 +16,16 @@ License 1.0.0 with additional terms): it may run on any server or network, inclu
 selling it is not permitted, and copied or adapted parts must credit Twilight ([NOTICE](../NOTICE)).
 
 Read the [release notes](../RELEASE_NOTES.md), the [wiki](../WIKI.md) and the
-[beta status and compatibility](../README.md#beta-status-and-compatibility) summary before deployment.
+[status and compatibility](../README.md#status-and-compatibility) summary before deployment.
 Install the same version of both JARs and restart once after the first build.
-1.0.1-pre.3 gives lit CraftEngine blocks their light on Bedrock, moves single-model custom bows and crossbows
-while drawn in first person and brings per-player elytras to Geyser on the proxy.
+1.0.1 is the first stable release after the 1.0.0 betas: it collects the 1.0.1 prereleases and shows
+BetterModel 3.3 models on Bedrock.
 
 ---
 
 ## Türkçe
 
-### Twilight 1.0.1-pre.3 ön sürüm derlemesi
+### Twilight 1.0.1 sürüm derlemesi
 
 [Twilight.jar indir](Twilight.jar?raw=true) | [SHA-256](Twilight.jar.sha256) (arka uç sunucuları)
 
@@ -33,7 +33,7 @@ while drawn in first person and brings per-player elytras to Geyser on the proxy
 
 siberanka tarafından Java 25.0.2 ve Gradle 9.6.0 ile yerel olarak
 `:twilight:build :twilight-proxy:build --offline --no-daemon --no-configuration-cache`
-komutuyla derlendi. 72 paketteki 429 test geçti. Barındırılan CI kullanılmadı.
+komutuyla derlendi. 73 paketteki 436 test geçti. Barındırılan CI kullanılmadı.
 
 İlgili kaynak kod bu commit içinde `twilight/`, `twilight-proxy/` ve `protocol/` altında, derleme
 dosyaları depo kökündedir. [Twilight License](../LICENSE) ile (ek koşullarla birlikte PolyForm
@@ -42,7 +42,7 @@ satılması yasaktır ve kopyalanan veya uyarlanan parçalar Twilight'ı kaynak 
 ([NOTICE](../NOTICE)).
 
 Dağıtımdan önce [sürüm notlarını](../RELEASE_NOTES.md), [wiki'yi](../WIKI.md) ve
-[beta durumu ve uyumluluk](../README.md#beta-durumu-ve-uyumluluk) özetini okuyun. İki JAR'ın aynı sürümünü
+[durum ve uyumluluk](../README.md#durum-ve-uyumluluk) özetini okuyun. İki JAR'ın aynı sürümünü
 kurun ve ilk derlemeden sonra bir kez yeniden başlatın.
-1.0.1-pre.3; yanan CraftEngine bloklarına Bedrock'ta ışıklarını verir, tek modelli özel yay ve arbaletleri
-birinci şahısta çekilirken hareket ettirir ve oyuncu başına elytraları proxy'deki Geyser'a getirir.
+1.0.1, 1.0.0 betalarından sonraki ilk kararlı sürümdür: 1.0.1 ön sürümlerini bir araya getirir ve BetterModel 3.3
+modellerini Bedrock'ta gösterir.

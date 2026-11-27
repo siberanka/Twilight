@@ -4,9 +4,9 @@
 
 All notable changes in Twilight are documented here.
 
-## 1.0.1 (unreleased)
+## 1.0.1 - 2026-11-27
 
-- BetterModel 3.3 models (the version SkyBlock and Survival run) show on Bedrock. 3.3 writes every bone into one
+- BetterModel 3.3 models show on Bedrock. 3.3 writes every bone into one
   item definition that dispatches on the bone's custom model data; Twilight made a Bedrock item out of each bone
   (over a thousand, none of them the one Geyser picked for an item display) and the display bridge found nothing to
   show. Such bones now get display models like the bones of BetterModel 3.4 and ModelEngine, found by item model and
@@ -212,9 +212,9 @@ First public beta of Twilight and twilight-proxy.
 
 Twilight'taki tüm önemli değişiklikler burada belgelenir.
 
-#### 1.0.1 (yayınlanmadı)
+#### 1.0.1 - 2026-11-27
 
-- BetterModel 3.3 modelleri (SkyBlock ve Survival'ın çalıştırdığı sürüm) Bedrock'ta görünür. 3.3 her kemiği, kemiğin
+- BetterModel 3.3 modelleri Bedrock'ta görünür. 3.3 her kemiği, kemiğin
   özel model verisine göre ayrışan tek bir eşya tanımına yazar; Twilight her kemikten bir Bedrock eşyası üretiyordu
   (bin üzerinde, hiçbiri Geyser'ın eşya ekranı için seçtiği değil) ve ekran köprüsü gösterecek bir şey bulamıyordu.
   Bu kemikler artık BetterModel 3.4 ve ModelEngine kemikleri gibi ekran modeli alır ve eşya modeli ile özel model
