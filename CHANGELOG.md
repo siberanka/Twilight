@@ -6,6 +6,10 @@ All notable changes in Twilight are documented here.
 
 ## 1.0.1-pre.3 (unreleased)
 
+- Custom bows and crossbows with a single model (no pull states) now move in first person while drawn on Bedrock,
+  like Java: the weapon swings to the middle of the view with Java's own drawing pose, combined with the model's
+  `firstperson_righthand` transform. Weapons with pull states and vanilla-looking ones are unchanged. The slight
+  growth Java adds with the charge is not shown.
 - Lit CraftEngine blocks (lamps, the lit copper coil) give off their light on Bedrock. CraftEngine keeps the
   `luminance` of a block in its server settings, not in the resource pack, so Twilight reads it from CraftEngine
   when a build starts and the Bedrock block emits the same light level. Needs a Geyser restart after the build
@@ -191,6 +195,10 @@ Twilight'taki tüm önemli değişiklikler burada belgelenir.
 
 #### 1.0.1-pre.3 (yayınlanmadı)
 
+- Tek modelli (çekme durumu olmayan) özel yaylar ve tatar yayları Bedrock'ta çekilirken birinci şahıs görünümde
+  artık Java gibi hareket eder: silah, Java'nın kendi çekme duruşuyla ve modelin `firstperson_righthand`
+  dönüşümüyle birleştirilerek görüşün ortasına gelir. Çekme durumlu ve vanilla görünümlü silahlar değişmedi.
+  Java'nın şarjla eklediği hafif büyüme gösterilmez.
 - Yanan CraftEngine blokları (lambalar, yanan bakır bobin) Bedrock'ta ışık yayar. CraftEngine bir bloğun
   `luminance` değerini kaynak paketinde değil sunucu ayarlarında tutar; Twilight bunu derleme başlarken
   CraftEngine'den okur ve Bedrock bloğu aynı ışık seviyesini yayar. Işığı ekleyen derlemeden sonra, diğer blok

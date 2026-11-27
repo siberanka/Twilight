@@ -32,6 +32,7 @@ import java.util.zip.ZipFile;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -2093,6 +2094,81 @@ class BedrockPackCompilerTest {
         }
     }
 
+    /** Compiles one single-model 3D item on the given vanilla item and returns its animations and attachable. */
+    private JsonObject[] compileHeld(String name, String base) throws Exception {
+        Path source = root.resolve(name + "-source");
+        JsonObject model = JsonParser.parseString(cube("demo:item/held")).getAsJsonObject();
+        model.add("display", JsonParser.parseString("{\"firstperson_righthand\":{\"rotation\":[0,-90,25],\"translation\":[1,2,3]}}"));
+        write(source, "assets/demo/models/item/held.json", model.toString());
+        png(source.resolve("assets/demo/textures/item/held.png"), Color.ORANGE);
+        BuildResult result = new BedrockPackCompiler(root.resolve(name + "-data"), config()).build(
+                List.of(new ContentSource("test", ContentSource.Kind.RESOURCE_PACK, source, 1)),
+                List.of(new CustomItemDescriptor("test", base, Optional.of("demo:item/held"),
+                        OptionalInt.empty(), "Held test")));
+        assertEquals(1, result.converted());
+        try (ZipFile zip = new ZipFile(result.outputDirectory().resolve("pack.zip").toFile())) {
+            String animations = zip.stream().map(ZipEntry::getName).filter(n -> n.startsWith("animations/")).findFirst().orElseThrow();
+            String attachable = zip.stream().map(ZipEntry::getName).filter(n -> n.startsWith("attachables/")).findFirst().orElseThrow();
+            return new JsonObject[]{read(zip, animations).getAsJsonObject("animations"),
+                    read(zip, attachable).getAsJsonObject("minecraft:attachable").getAsJsonObject("description")};
+        }
+    }
+
+    private static boolean animates(JsonObject description, String name) {
+        for (JsonElement entry : description.getAsJsonObject("scripts").getAsJsonArray("animate")) {
+            if (entry.isJsonObject() && entry.getAsJsonObject().has(name)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Java's hand renderer moves a drawn bow or crossbow to the middle of the view; the attachable plays that pose
+     * only for those two items, only in first person main hand and while the item is in use.
+     */
+    @Test
+    void drawnBowsAndCrossbowsGetTheirFirstPersonPullPose() throws Exception {
+        for (String base : List.of("minecraft:bow", "minecraft:crossbow")) {
+            JsonObject[] held = compileHeld("draw-" + base.substring(10), base);
+            assertTrue(held[0].keySet().stream().anyMatch(key -> key.endsWith(".first_person_pull")), base);
+            assertTrue(animates(held[1], "first_person_pull"), base);
+            assertTrue(held[1].getAsJsonObject("animations").has("first_person_pull"), base);
+            String pull = held[1].getAsJsonObject("scripts").getAsJsonArray("animate").toString();
+            assertTrue(pull.contains(BedrockPackCompiler.DRAW_CONDITION), "pull starts with the use duration, first person, main hand");
+            assertTrue(pull.contains("context.item_slot == 'main_hand' && !(" + BedrockPackCompiler.USING + ")"),
+                    "the held pose stops while the item is drawn");
+            // The pose differs from the held one: the use transform moves it.
+            assertNotEquals(poseBone(held[0], "first_person_right").toString(), poseBone(held[0], "first_person_pull").toString());
+        }
+        for (String base : List.of("minecraft:iron_sword", "minecraft:paper", "minecraft:fishing_rod", "minecraft:trident")) {
+            JsonObject[] other = compileHeld("nodraw-" + base.substring(10), base);
+            assertTrue(other[0].keySet().stream().noneMatch(key -> key.endsWith(".first_person_pull")), base);
+            assertFalse(animates(other[1], "first_person_pull"), base);
+            assertFalse(other[1].toString().contains("item_remaining_use_duration"), base);
+        }
+        assertEquals("bow", BedrockPackCompiler.drawKind("minecraft:bow"));
+        assertEquals("crossbow", BedrockPackCompiler.drawKind("minecraft:crossbow"));
+        assertNull(BedrockPackCompiler.drawKind("minecraft:shield"));
+    }
+
+    /** With no display transform the draw pose is Java's use transform alone: translation in pixels, turns composed. */
+    @Test
+    void theDrawPoseComposesJavasUseTransformWithTheDisplayTransform() {
+        JsonObject plain = JsonParser.parseString("{\"translation\":[0,0,0],\"rotation\":[0,0,0],\"scale\":[1,1,1]}").getAsJsonObject();
+        JsonObject bow = BedrockPackCompiler.drawn(plain, false);
+        assertVector(bow.getAsJsonArray("translation"), -0.2785682 * 16, 0.18344387 * 16, 0.15731531 * 16);
+        JsonObject crossbow = BedrockPackCompiler.drawn(plain, true);
+        assertVector(crossbow.getAsJsonArray("translation"), -0.4785682 * 16, -0.094387 * 16, 0.05731531 * 16);
+        // Turning the item by its own display rotation, then the use turn on top: the display rotation is the
+        // inner one, so a pure y display turn of +45 cancels the use transform's final -45 about y.
+        JsonObject turned = JsonParser.parseString("{\"translation\":[0,0,0],\"rotation\":[0,45,0],\"scale\":[1,1,1]}").getAsJsonObject();
+        JsonObject composed = BedrockPackCompiler.drawn(turned, false);
+        double[] angles = {composed.getAsJsonArray("rotation").get(0).getAsDouble(),
+                composed.getAsJsonArray("rotation").get(1).getAsDouble(), composed.getAsJsonArray("rotation").get(2).getAsDouble()};
+        // x, y, z as Java composes them: Rx(-13.935) Ry(35.3) Rz(-9.785) Ry(-45) Ry(45) = Rx Ry Rz
+        assertArrayEquals(new double[]{-13.935, 35.3, -9.785}, angles, 1.0e-6);
+        assertVector(composed.getAsJsonArray("scale"), 1, 1, 1);
+    }
+
     private static JsonObject poseBone(JsonObject animations, String context) {
         return animations.entrySet().stream().filter(e -> e.getKey().endsWith("." + context))
                 .findFirst().orElseThrow().getValue().getAsJsonObject()
@@ -2222,8 +2298,8 @@ class BedrockPackCompilerTest {
 
     @Test
     void leavesBowCrossbowFlatAndSmallModelOutputUnchangedByTheTallCorrection() throws Exception {
-        // Recorded with the correction switched off, i.e. the master a605f27 output for this fixture (the small cube is held at scale 0.4).
-        assertEquals("f6425b39a129e291e2d248f0a87febb82d004824fab0eb5b8a928c444c4752b0", untouchedClassesDigest("untouched"));
+        // Recorded with the correction switched off (master a605f27 output) plus the first person draw pose that the fixture's charged crossbow (a static bow-class item) now carries; every other file is byte-identical to that output. The small cube is held at scale 0.4.
+        assertEquals("aa5eccbc23f3d60ff26cc47042c0acc456a8f02f75ca9e38d0144ece6fa5795f", untouchedClassesDigest("untouched"));
     }
 
     /** Compiles one held bar and returns the pack's geometry and first person animations of that item. */

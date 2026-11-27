@@ -312,9 +312,9 @@ public final class BedrockPackCompiler {
                     if (tall) addViewBone(itemGeometry);
                     packFiles.put("models/entity/geometry." + safe + ".geo.json", jsonBytes(itemGeometry));
                     packFiles.put("animations/" + safe + ".animation.json",
-                            jsonBytes(animations(safe, model, tall)));
+                            jsonBytes(animations(safe, model, tall, drawKind(candidate.baseItem()))));
                     packFiles.put("attachables/" + safe + ".json",
-                            jsonBytes(attachable(identifier, safe, texturePath, oneSided(model))));
+                            jsonBytes(attachable(identifier, safe, texturePath, oneSided(model), drawKind(candidate.baseItem()))));
                     if (itemDisplays && model.isThreeDimensional() && displayed(candidate, displayedItems)) {
                         displays.add(identifier, geometry(safe, model, atlas, bounds), packFiles.get(texturePath + ".png"),
                                 model.renderParts().stream().map(ResolvedJavaModel::display).toList(), oneSided(model));
@@ -933,7 +933,24 @@ public final class BedrockPackCompiler {
         };
     }
 
-    private static JsonObject attachable(String identifier, String safe, String texturePath, boolean oneSided) {
+    /** "bow" or "crossbow" for the vanilla items whose drawing Java shows with its own first person pose, else null. */
+    static String drawKind(String baseItem) {
+        return switch (baseItem) {
+            case "minecraft:bow" -> "bow";
+            case "minecraft:crossbow" -> "crossbow";
+            default -> null;
+        };
+    }
+
+    /** The condition that starts the first person draw pose of bows and crossbows. */
+    static final String USING = "q.is_using_item && q.item_remaining_use_duration(c.item_slot) > 0.0";
+    static final String DRAW_CONDITION = "context.is_first_person == 1.0 && context.item_slot == 'main_hand' && " + USING;
+
+    /**
+     * @param draw "bow" or "crossbow" adds Java's first person draw pose (see {@link #drawn}): the pose replaces the
+     *             held pose while the main hand item is in use; other items are not given it
+     */
+    static JsonObject attachable(String identifier, String safe, String texturePath, boolean oneSided, String draw) {
         JsonObject description = new JsonObject(); description.addProperty("identifier", identifier);
         JsonObject materials = new JsonObject(); materials.addProperty("default", oneSided ? ONE_SIDED : "entity_alphatest"); materials.addProperty("enchanted", "entity_alphatest_glint"); description.add("materials", materials);
         JsonObject textures = new JsonObject(); textures.addProperty("default", texturePath); textures.addProperty("enchanted", "textures/misc/enchanted_item_glint"); description.add("textures", textures);
@@ -943,7 +960,12 @@ public final class BedrockPackCompiler {
             animationNames.addProperty(view, "animation.twilight." + safe + "." + view);
         description.add("animations", animationNames);
         JsonArray animate = new JsonArray();
-        animate.add(condition("first_person_right", "context.is_first_person == 1.0 && context.item_slot == 'main_hand'"));
+        animate.add(condition("first_person_right", "context.is_first_person == 1.0 && context.item_slot == 'main_hand'"
+                + (draw == null ? "" : " && !(" + USING + ")")));
+        if (draw != null) {
+            animationNames.addProperty("first_person_pull", "animation.twilight." + safe + ".first_person_pull");
+            animate.add(condition("first_person_pull", DRAW_CONDITION));
+        }
         animate.add(condition("first_person_left", "context.is_first_person == 1.0 && context.item_slot == 'off_hand'"));
         animate.add(condition("third_person_right", "context.is_first_person == 0.0 && context.item_slot == 'main_hand'"));
         animate.add(condition("third_person_left", "context.is_first_person == 0.0 && context.item_slot == 'off_hand'"));
@@ -1087,9 +1109,17 @@ public final class BedrockPackCompiler {
     }
 
     private static JsonObject animations(String safe, ResolvedJavaModel model, boolean tallView) {
+        return animations(safe, model, tallView, null);
+    }
+
+    static JsonObject animations(String safe, ResolvedJavaModel model, boolean tallView, String draw) {
         if (model.parts().isEmpty()) {
             JsonObject result = animations(safe, model.display());
             if (tallView) addViewAnimation(result, tallCorrection(model));
+            if (draw != null) {
+                result.getAsJsonObject("animations").add("animation.twilight." + safe + ".first_person_pull",
+                        animation(mapFirst(drawn(transform(model.display(), "firstperson_righthand", null), draw.equals("crossbow")))));
+            }
             return result;
         }
         JsonObject result = null;
@@ -1239,6 +1269,27 @@ public final class BedrockPackCompiler {
             view.add("scale", numberArray(correction[0], correction[0], correction[0]));
             entry.getValue().getAsJsonObject().getAsJsonObject("bones").add("bone_view", view);
         }
+    }
+
+    /**
+     * The pose of a bow or crossbow Java's first person view shows while it is drawn: Java's hand renderer moves it
+     * to the middle of the screen before the model's own {@code firstperson_righthand} transform applies (the
+     * constants are ItemInHandRenderer's: a translation, then x, y and z turns, then a turn of 45 degrees back
+     * about y). The charge-dependent 4 percent shift and 20 percent stretch along the item's depth are left out.
+     *
+     * @return the composed transform in {@code firstperson_righthand} form (translation in pixels, degrees)
+     */
+    static JsonObject drawn(JsonObject held, boolean crossbow) {
+        double[] use = crossbow ? new double[]{-0.4785682, -0.094387, 0.05731531} : new double[]{-0.2785682, 0.18344387, 0.15731531};
+        Quaternion turn = Quaternion.axis(crossbow ? -11.935 : -13.935, 1, 0, 0).mul(Quaternion.axis(crossbow ? 65.3 : 35.3, 0, 1, 0))
+                .mul(Quaternion.axis(-9.785, 0, 0, 1)).mul(Quaternion.axis(-45, 0, 1, 0));
+        double[] t = vector(held.getAsJsonArray("translation"), 0, 0, 0), r = vector(held.getAsJsonArray("rotation"), 0, 0, 0);
+        double[] moved = turn.rotate(t);
+        Quaternion rotation = turn.mul(Quaternion.axis(r[0], 1, 0, 0)).mul(Quaternion.axis(r[1], 0, 1, 0)).mul(Quaternion.axis(r[2], 0, 0, 1));
+        JsonObject result = held.deepCopy();
+        result.add("translation", numberArray(use[0] * 16 + moved[0], use[1] * 16 + moved[1], use[2] * 16 + moved[2]));
+        result.add("rotation", numberArray(rotation.eulerJava()));
+        return result;
     }
 
     private static MappedTransform mapFirst(JsonObject transform) {
@@ -1642,6 +1693,22 @@ public final class BedrockPackCompiler {
         double[] rotate(double[] v) {
             Quaternion p = mul(new Quaternion(v[0], v[1], v[2], 0)).mul(inverse());
             return new double[]{p.x, p.y, p.z};
+        }
+        /** Angles (degrees) of the turn as Java composes them: x, then y, then z (rotationXYZ). */
+        double[] eulerJava() {
+            double xx = x * x, yy = y * y, zz = z * z;
+            double m00 = 1 - 2 * (yy + zz), m01 = 2 * (x * y - z * w), m02 = 2 * (x * z + y * w);
+            double m12 = 2 * (y * z - x * w), m22 = 1 - 2 * (xx + yy);
+            double m11 = 1 - 2 * (xx + zz), m10 = 2 * (x * y + z * w);
+            double yAngle = Math.asin(Math.max(-1, Math.min(1, m02))), xAngle, zAngle;
+            if (Math.abs(Math.cos(yAngle)) > 1.0e-7) {
+                xAngle = Math.atan2(-m12, m22);
+                zAngle = Math.atan2(-m01, m00);
+            } else {
+                xAngle = Math.atan2(m10, m11);
+                zAngle = 0;
+            }
+            return new double[]{Math.toDegrees(xAngle), Math.toDegrees(yAngle), Math.toDegrees(zAngle)};
         }
         double[] eulerXYZ() {
             double xx = x * x, yy = y * y, zz = z * z;
