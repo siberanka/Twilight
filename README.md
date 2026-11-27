@@ -46,8 +46,9 @@ Before installing:
 - With Geyser on the proxy, text layout, translations, loading protection, custom blocks, item displays
   (furniture, ModelEngine, BetterModel and MythicMobs mobs and NPCs) and Java's rule that hides the name of
   ridden entities run on the proxy. Custom biome colours still need Geyser on the backend.
-- Known limits: item names and lore keep raw font characters, animated item textures show their first
-  frame, and full animation and UI parity are not complete ([compatibility](docs/COMPATIBILITY.md)).
+- Known limits: item names and lore keep raw font characters, inventory icons and armour layers show the first
+  frame of an animated texture (blocks, held items and displays animate), and full UI parity is not complete
+  ([compatibility](docs/COMPATIBILITY.md)).
 - Coming from an earlier development build: its update check does not announce this beta. Replace both
   JARs by hand once; later versions are announced as usual.
 
@@ -276,7 +277,7 @@ Each operation writes a dedicated UTF-8 log under `plugins/Twilight/logs`, for e
 
 - Modern Java item-definition trees support plain models, conditions, range dispatch, selects, static composites, and special-model bases where Geyser has an equivalent predicate.
 - Legacy numeric custom-model-data overrides remain supported.
-- Animated item textures currently export the first authored frame. Full `.mcmeta` animation playback is not implemented.
+- Animated `.mcmeta` textures play on custom blocks (Bedrock flipbooks), held items and item displays (timed texture frames); frame order, per-frame times and interpolation follow Java within Bedrock's limits (long cycles or many states freeze the slowest texture on its first frame, with a notice). Inventory icons, armour layers and glyphs show the first frame.
 - Layered 2D textures are composed without smoothing. Java cuboids remain volumetric Bedrock geometry with separate first/third-person left/right and head transforms. Handheld presentation follows the resolved Java model parent, while authored hand translation, rotation, and scale are preserved without implicit fitting.
 - Single-layer texture-only bows and crossbows reuse Bedrock's native pose, pull geometry, and animation controllers. Volumetric legacy pull stages retain separate Java geometry and display transforms behind one runtime-selected Bedrock attachable. Crossbow arrow/rocket loads and fishing-rod cast models become explicit Geyser predicates, preserving their distinct states.
 - Supported bitmap providers use adaptive 16-to-512-pixel cells with measured Java height/ascent alignment. Atlas growth preserves authored display dimensions; overflow beyond the supported bounds and custom spacing fail strict conversion. Six metric probes, 36 real glyphs and six further UI/HUD images were compared in both clients. Chest titles use Java font metrics (spacing, negative shifts, bearings and remapped characters); fractional sampling remains a limitation. Large atlases also increase memory use; see the wide glyph review. Named fonts contribute only globally safe, collision-free BMP private-use glyphs.
@@ -381,8 +382,9 @@ Kurmadan önce:
 - Geyser proxy'deyken yazı yerleşimi, çeviriler, yükleme koruması, özel bloklar, eşya görüntüleri
   (mobilyalar, ModelEngine, BetterModel ve MythicMobs mobları ve NPC'leri) ve binilen varlıkların adını
   gizleyen Java kuralı proxy'de çalışır. Özel biyom renkleri hâlâ arka uçta Geyser gerektirir.
-- Bilinen sınırlar: eşya adları ve açıklamaları ham font karakterlerini korur, animasyonlu eşya dokuları ilk
-  karelerini gösterir, tam animasyon ve arayüz eşdeğerliği tamamlanmadı ([uyumluluk](docs/COMPATIBILITY.md)).
+- Bilinen sınırlar: eşya adları ve açıklamaları ham font karakterlerini korur, envanter simgeleri ve zırh katmanları
+  animasyonlu bir dokunun ilk karesini gösterir (bloklar, elde tutulan eşyalar ve görüntüler oynar), tam arayüz
+  eşdeğerliği tamamlanmadı ([uyumluluk](docs/COMPATIBILITY.md)).
 - Daha önceki bir geliştirme derlemesinden geliyorsanız: onun güncelleme denetimi bu betayı duyurmaz. İki
   JAR'ı bir kez elle değiştirin; sonraki sürümler her zamanki gibi duyurulur.
 
@@ -586,8 +588,10 @@ dönüşüm sorunlarını, çalışan iş parçacığını ve tam yığın izler
 - Modern Java eşya tanımı ağaçları, Geyser'ın eşdeğer bir belirteci olduğu yerlerde düz modelleri,
   koşulları, aralık dağıtımını, seçimleri, durağan bileşikleri ve özel model tabanlarını destekler.
 - Eski sayısal custom-model-data override'ları desteklenmeye devam eder.
-- Animasyonlu eşya dokuları şu an yazarın verdiği ilk kareyi dışa aktarır. Tam `.mcmeta` animasyon oynatımı
-  uygulanmadı.
+- Animasyonlu `.mcmeta` dokuları özel bloklarda (Bedrock flipbook), elde tutulan eşyalarda ve eşya görüntülerinde
+  (zamanlı doku kareleri) oynar; kare sırası, kare başına süreler ve ara geçiş Bedrock'un sınırları içinde Java'yı
+  izler (uzun döngüler veya çok sayıda durum en yavaş dokuyu bildirimle ilk karesinde dondurur). Envanter
+  simgeleri, zırh katmanları ve glifler ilk kareyi gösterir.
 - Katmanlı 2B dokular yumuşatma olmadan birleştirilir. Java küboidleri ayrı birinci/üçüncü şahıs sol/sağ ve
   kafa dönüşümleriyle hacimli Bedrock geometrisi olarak kalır. Elde tutma sunumu çözülmüş Java model üst
   öğesini izler; yazarın verdiği el ötelemesi, dönüşü ve ölçeği örtük sığdırma olmadan korunur.

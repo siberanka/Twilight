@@ -28,14 +28,15 @@ are in the [reports](docs/); limits per feature are in [docs/COMPATIBILITY.md](d
 7. [Bedrock network](#bedrock-network)
 8. [Player heads](#player-heads)
 9. [Custom blocks](#custom-blocks)
-10. [Pack hosting](#pack-hosting)
-11. [Updates](#updates)
-12. [Files and folders](#files-and-folders)
-13. [Developer API](#developer-api)
-14. [Plugin-message protocol](#plugin-message-protocol)
-15. [Security model](#security-model)
-16. [Troubleshooting](#troubleshooting)
-17. [Building from source](#building-from-source)
+10. [Animated textures](#animated-textures)
+11. [Pack hosting](#pack-hosting)
+12. [Updates](#updates)
+13. [Files and folders](#files-and-folders)
+14. [Developer API](#developer-api)
+15. [Plugin-message protocol](#plugin-message-protocol)
+16. [Security model](#security-model)
+17. [Troubleshooting](#troubleshooting)
+18. [Building from source](#building-from-source)
 
 ## Requirements
 
@@ -730,12 +731,38 @@ CraftEngine's blocks are note block, mushroom block or tripwire states whose mod
   also works on BungeeCord forks that start Geyser before enabling other plugins (FlameCord). After a build that changes blocks, the log and admins are told to
   restart (`restart-for-item-changes` and twilight-proxy's `item-mappings.restart` apply).
 - Not converted: multipart blockstates, chorus plants and blocks other than note blocks, mushroom blocks and
-  tripwire; block light of content plugins other than CraftEngine; animated block textures
-  show their first frame. Shapes that reach past Bedrock's block bounds (2 pixels less than Java on each side)
+  tripwire; block light of content plugins other than CraftEngine. Animated block textures play as
+  flipbooks (see [Animated textures](#animated-textures)). Shapes that reach past Bedrock's block bounds (2 pixels less than Java on each side)
   are pulled in.
 
 The build report counts them (`custom_blocks`, `block_items`); the server or proxy log says
 "Registered N custom block(s) for Bedrock players" and "N custom item(s) show their block in 3D".
+
+## Animated textures
+
+A texture with a `.png.mcmeta` file that has an `animation` object animates on Java. Twilight reads it like
+Java's sprite loader: the frame size (`width`/`height`; without them the frames are squares of the shorter image
+side, also non-square frames work), the frame order and repeats (`frames`), a time per frame (`frametime` and the
+`time` of a frame), and `interpolate`. A frame that points outside the image or has a time below one is skipped, as
+on Java; a frame size that does not divide the image makes Java draw its missing texture, and so does Twilight
+(with a notice). A texture without an `animation` object is a plain texture, however tall the image is.
+
+| Where | How it plays on Bedrock |
+|---|---|
+| Custom blocks (ItemsAdder, CraftEngine, Nexo and Oraxen blocks drawn through note, mushroom and tripwire states) | A Bedrock flipbook (`textures/flipbook_textures.json` and a strip of the frames). The authored order and times become one frame list in the common tick unit. A texture with `interpolate` and equal frame times uses Bedrock's own blending; interpolation Bedrock cannot blend (unequal frame times, several interpolated textures in one block model) shows the nearest frame and a notice says so. A cube face that shows only a non-square part of an animated texture stays on its first frame (Bedrock flipbooks need square frames). |
+| Held items (first and third person, head) | A render controller picks one of the texture states by time. A flat item with an animated texture is drawn by an attachable (like items with a custom display transform) so that its held model can animate. |
+| Item displays: furniture, BetterModel and ModelEngine bones, displayed items and blocks | Every animated texture gets its own display sheet and the display entity's render controller picks the state by time. |
+| Inventory, hotbar and creative icons, armour layers, glyphs | The first frame. Bedrock cannot animate item icons. |
+
+Entity textures have no frame blending, so an `interpolate` texture gets its blended frames as extra states.
+Because every state is a copy of the whole texture the limits are: 64 states for a block flipbook (and a strip of
+at most 8192 pixels), 32 states and 16 million pixels for an entity texture, a schedule of at most 1024 steps, a
+combined cycle of at most 20 minutes and 48 animated display textures per pack. Textures that animate together in
+one model are played over their common cycle; when a combination does not fit, the slowest texture stays on its
+first frame and a notice names it. An animation never fails a build, not even in strict mode.
+
+Java's animation clock is global; Bedrock entity textures follow the time since the entity (the player holding an
+item, the furniture) appeared, so two furniture pieces placed at different times are in different phases.
 
 ## Pack hosting
 
@@ -1127,14 +1154,15 @@ Bu sayfa yöneticiler ve eklenti geliştiricileri için başvuru kaynağıdır. 
 7. [Bedrock ağı](#bedrock-ağı)
 8. [Oyuncu kafaları](#oyuncu-kafaları)
 9. [Özel bloklar](#özel-bloklar)
-10. [Paket sunucusu](#paket-sunucusu)
-11. [Güncellemeler](#güncellemeler)
-12. [Dosyalar ve klasörler](#dosyalar-ve-klasörler)
-13. [Geliştirici API'si](#geliştirici-apisi)
-14. [Eklenti mesajı protokolü](#eklenti-mesajı-protokolü)
-15. [Güvenlik modeli](#güvenlik-modeli)
-16. [Sorun giderme](#sorun-giderme)
-17. [Kaynaktan derleme](#kaynaktan-derleme)
+10. [Animasyonlu dokular](#animasyonlu-dokular)
+11. [Paket sunucusu](#paket-sunucusu)
+12. [Güncellemeler](#güncellemeler)
+13. [Dosyalar ve klasörler](#dosyalar-ve-klasörler)
+14. [Geliştirici API'si](#geliştirici-apisi)
+15. [Eklenti mesajı protokolü](#eklenti-mesajı-protokolü)
+16. [Güvenlik modeli](#güvenlik-modeli)
+17. [Sorun giderme](#sorun-giderme)
+18. [Kaynaktan derleme](#kaynaktan-derleme)
 
 #### Gereksinimler
 
@@ -1844,11 +1872,37 @@ bloğu veya tuzak teli durumlarıdır. Dönüştürülmezlerse Bedrock vanilla n
   başlatmaları için bilgilendirilir (`restart-for-item-changes` ve twilight-proxy'nin `item-mappings.restart`
   ayarı geçerlidir).
 - Dönüştürülmeyenler: multipart blok durumları, chorus bitkileri ve nota bloğu, mantar bloğu ve tuzak teli dışındaki
-  bloklar; CraftEngine dışındaki içerik eklentilerinin blok ışığı; animasyonlu blok dokuları ilk
-  karelerini gösterir. Bedrock'un blok sınırlarını aşan şekiller (Java'dan her yanda 2 piksel daha az) içeri çekilir.
+  bloklar; CraftEngine dışındaki içerik eklentilerinin blok ışığı. Animasyonlu blok dokuları flipbook olarak oynar
+  (bkz. [Animasyonlu dokular](#animasyonlu-dokular)). Bedrock'un blok sınırlarını aşan şekiller (Java'dan her yanda 2 piksel daha az) içeri çekilir.
 
 Derleme raporu bunları sayar (`custom_blocks`, `block_items`); sunucu veya proxy günlüğü "Registered N
 custom block(s) for Bedrock players" ve "N custom item(s) show their block in 3D" yazar.
+
+#### Animasyonlu dokular
+
+Java'da `animation` nesnesi olan bir `.png.mcmeta` dosyasına sahip doku animasyon oynar. Twilight bunu Java'nın
+sprite yükleyicisi gibi okur: kare boyutu (`width`/`height`; yoksa kareler görüntünün kısa kenarı kadar karedir,
+kare olmayan kareler de çalışır), kare sırası ve tekrarları (`frames`), kare başına süre (`frametime` ve bir
+karenin `time` değeri) ve `interpolate`. Görüntünün dışını gösteren veya süresi birin altında olan kare Java'daki
+gibi atlanır; kare boyutu görüntüyü bölmüyorsa Java eksik dokusunu çizer, Twilight da öyle yapar (bildirimle).
+`animation` nesnesi olmayan doku, görüntü ne kadar uzun olursa olsun düz bir dokudur.
+
+| Nerede | Bedrock'ta nasıl oynar |
+|---|---|
+| Özel bloklar (nota, mantar ve tuzak teli durumlarıyla çizilen ItemsAdder, CraftEngine, Nexo ve Oraxen blokları) | Bir Bedrock flipbook'u (`textures/flipbook_textures.json` ve karelerin şeridi). Yazarın sırası ve süreleri ortak tik biriminde tek bir kare listesine dönüşür. `interpolate` olan ve kare süreleri eşit bir doku Bedrock'un kendi harmanlamasını kullanır; Bedrock'un harmanlayamadığı ara geçiş (eşit olmayan kare süreleri, bir blok modelinde birden çok ara geçişli doku) en yakın kareyi gösterir ve bir bildirim söyler. Animasyonlu dokunun yalnızca kare olmayan bir parçasını gösteren küp yüzü ilk karesinde kalır (Bedrock flipbook'ları kare kareler ister). |
+| Elde tutulan eşyalar (birinci ve üçüncü şahıs, baş) | Bir çizim denetleyicisi doku durumlarından birini zamana göre seçer. Animasyonlu dokulu düz bir eşya, elde tutulan modeli oynayabilsin diye (özel görüntü dönüşümlü eşyalar gibi) bir attachable ile çizilir. |
+| Eşya görüntüleri: mobilya, BetterModel ve ModelEngine kemikleri, gösterilen eşya ve bloklar | Her animasyonlu doku kendi görüntü sayfasını alır ve görüntü varlığının çizim denetleyicisi durumu zamana göre seçer. |
+| Envanter, hızlı çubuk ve yaratıcı mod simgeleri, zırh katmanları, glifler | İlk kare. Bedrock eşya simgelerini oynatamaz. |
+
+Varlık dokularında kare harmanlama yoktur; bu yüzden `interpolate` olan dokunun harmanlanmış kareleri ek durum olarak
+üretilir. Her durum dokunun tam bir kopyası olduğundan sınırlar şunlardır: blok flipbook'u için 64 durum (ve en çok
+8192 piksellik şerit), varlık dokusu için 32 durum ve 16 milyon piksel, en çok 1024 adımlık program, en çok 20
+dakikalık birleşik döngü ve pakette 48 animasyonlu görüntü dokusu. Bir modelde birlikte oynayan dokular ortak
+döngülerinde oynatılır; bir birleşim sığmazsa en yavaş doku ilk karesinde kalır ve bir bildirim onu adıyla söyler.
+Animasyon derlemeyi asla başarısız kılmaz, sıkı modda da.
+
+Java'nın animasyon saati geneldir; Bedrock varlık dokuları varlığın (eşyayı tutan oyuncu, mobilya) göründüğünden
+beri geçen zamanı izler, bu yüzden farklı zamanlarda yerleştirilen iki mobilya farklı evrelerdedir.
 
 #### Paket sunucusu
 

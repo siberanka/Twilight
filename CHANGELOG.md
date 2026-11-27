@@ -4,6 +4,23 @@
 
 All notable changes in Twilight are documented here.
 
+## 1.0.2 (unreleased)
+
+- Animated textures (`.png.mcmeta`) play on Bedrock where Bedrock can show them. Java's frame order, per-frame
+  times, frame size (also non-square frames) and `interpolate` are read like Java's sprite loader (frames with a
+  missing index or a time below one are skipped; a frame size that does not divide the image draws the missing
+  texture, as on Java, instead of failing the item).
+  - Custom blocks play as Bedrock flipbooks (`textures/flipbook_textures.json`): the sequence and the per-frame
+    times become a frame list with the common tick unit, and an interpolated texture with equal frame times uses
+    Bedrock's own frame blending. Interpolation that Bedrock cannot blend (unequal frame times, several
+    interpolated textures in one block model) shows the nearest frame and a notice says so.
+  - Held items and item displays (furniture, model bones, vanilla items and blocks shown as displays) play through
+    texture frames that a render controller picks by time. Interpolated frames are rendered into extra states, within
+    limits. Flat animated items are drawn by an attachable instead of the item icon so their held model can
+    animate; the inventory icon of any item stays its first frame, because Bedrock's item atlas cannot animate.
+  - Limits never fail a build: very long cycles, many states or very large textures freeze the slowest animation on
+    its first frame with a notice. Armour layers, fonts and glyphs still show the first frame.
+
 ## 1.0.1 - 2026-11-27
 
 - BetterModel 3.3 models show on Bedrock. 3.3 writes every bone into one
@@ -211,6 +228,25 @@ First public beta of Twilight and twilight-proxy.
 ### Değişiklik günlüğü
 
 Twilight'taki tüm önemli değişiklikler burada belgelenir.
+
+#### 1.0.2 (yayınlanmadı)
+
+- Animasyonlu dokular (`.png.mcmeta`), Bedrock'un gösterebildiği her yerde Bedrock'ta oynar. Java'nın kare sırası,
+  kare başına süreleri, kare boyutu (kare olmayan kareler dahil) ve `interpolate` değeri Java'nın sprite
+  yükleyicisi gibi okunur (eksik indeksli veya süresi birin altındaki kareler atlanır; kare boyutu görüntüyü
+  bölmüyorsa, eşyayı hatayla düşürmek yerine Java'daki gibi eksik doku çizilir).
+  - Özel bloklar Bedrock flipbook'u olarak oynar (`textures/flipbook_textures.json`): sıra ve kare başına süreler,
+    ortak tik birimiyle bir kare listesine dönüşür; kare süreleri eşit olan ara geçişli doku Bedrock'un kendi kare
+    harmanlamasını kullanır. Bedrock'un harmanlayamadığı ara geçiş (eşit olmayan kare süreleri, bir blok modelinde
+    birden çok ara geçişli doku) en yakın kareyi gösterir ve bir bildirim bunu söyler.
+  - Elde tutulan eşyalar ve eşya görüntüleri (mobilya, model kemikleri, görüntü olarak gösterilen vanilla eşya ve
+    bloklar) bir çizim denetleyicisinin zamana göre seçtiği doku kareleriyle oynar. Ara geçişli kareler sınırlar
+    içinde ek durumlara çizilir. Düz animasyonlu eşyalar, elde tutulan modelleri oynayabilsin diye eşya simgesi
+    yerine bir attachable ile çizilir; Bedrock'un eşya atlası animasyon oynatamadığı için herhangi bir eşyanın
+    envanter simgesi ilk kare kalır.
+  - Sınırlar derlemeyi asla başarısız kılmaz: çok uzun döngüler, çok sayıda durum veya çok büyük dokular en yavaş
+    animasyonu ilk karesinde dondurur ve bir bildirim ekler. Zırh katmanları, yazı tipleri ve glifler ilk kareyi
+    göstermeye devam eder.
 
 #### 1.0.1 - 2026-11-27
 
