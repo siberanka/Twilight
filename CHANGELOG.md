@@ -4,7 +4,7 @@
 
 All notable changes in Twilight are documented here.
 
-## 1.0.1-pre.3 (unreleased)
+## 1.0.1-pre.3 - 2026-11-27
 
 - `geyser.elytra-per-player` also works with Geyser on the proxy: twilight-proxy reads the wings table of the pack
   each Bedrock player loaded, so every backend keeps its own elytras. Set the option on the backends; the proxy
@@ -196,7 +196,7 @@ First public beta of Twilight and twilight-proxy.
 
 Twilight'taki tüm önemli değişiklikler burada belgelenir.
 
-#### 1.0.1-pre.3 (yayınlanmadı)
+#### 1.0.1-pre.3 - 2026-11-27
 
 - `geyser.elytra-per-player` proxy'deki Geyser ile de çalışır: twilight-proxy her Bedrock oyuncusunun yüklediği
   paketin kanat tablosunu okur, böylece her arka uç kendi elytralarını korur. Seçeneği arka uçlarda açın; proxy'de
