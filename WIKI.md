@@ -481,8 +481,10 @@ well.
   once they appear in an item display: Twilight learns them as chunks load and as displays spawn, and
   twilight-proxy reports the ones its players saw that the pack could not show yet (displays sent only
   as packets never exist on the server). The next build, at most a minute later, adds them, and Bedrock
-  players who join after it see them without a restart; the list is kept in `displayed-items.txt`.
-  ModelEngine and BetterModel bones always get one.
+  players who join after it see them without a restart; the list is kept in `displayed-items.txt`. Until
+  then a newly seen item shows nothing on Bedrock, and when the new model also needs a new Bedrock item
+  (Twilight then logs that Bedrock custom items changed), it appears after the next server restart. Use
+  `all` to have every custom item ready from the start. ModelEngine and BetterModel bones always get one.
 - **Bones without items.** Model bones only appear in displays, so they get no Bedrock item, attachable
   or icon: the pack is smaller and Geyser registers fewer items.
 - **On a proxy network.** Twilight on each backend learns from twilight-proxy that it shows item
@@ -1579,7 +1581,10 @@ hareket eder. Eklentilerin yalnızca paket olarak gönderdiği görüntüler de 
   öğrenir, twilight-proxy da oyuncularının gördüğü ama paketin henüz gösteremediği eşyaları bildirir
   (yalnızca paket olarak gönderilen görüntüler sunucuda hiç var olmaz). En geç bir dakika sonraki derleme
   onları ekler ve ondan sonra giren Bedrock oyuncuları onları yeniden başlatma olmadan görür; liste
-  `displayed-items.txt` içinde tutulur. ModelEngine ve BetterModel kemikleri her zaman bir model alır.
+  `displayed-items.txt` içinde tutulur. O zamana kadar yeni görülen bir eşya Bedrock'ta hiçbir şey göstermez;
+  yeni model yeni bir Bedrock eşyası da gerektiriyorsa (Twilight o zaman Bedrock özel eşyalarının değiştiğini
+  günlüğe yazar) bir sonraki sunucu yeniden başlatmasından sonra görünür. Her özel eşyanın baştan hazır olması
+  için `all` kullanın. ModelEngine ve BetterModel kemikleri her zaman bir model alır.
 - **Eşyasız kemikler.** Model kemikleri yalnızca görüntülerde görünür; bu yüzden Bedrock eşyası, eklentisi
   (attachable) veya simgesi olmaz: paket küçülür ve Geyser daha az eşya kaydeder.
 - **Proxy'li bir ağda.** Her arka uçtaki Twilight, twilight-proxy'den eşya görüntülerini gösterdiğini öğrenir
