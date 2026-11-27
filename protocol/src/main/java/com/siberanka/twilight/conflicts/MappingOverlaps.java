@@ -91,8 +91,8 @@ public final class MappingOverlaps {
             boolean retire = settings.foreignMappings() == ConflictSettings.Foreign.RETIRE;
             findings.add(new Finding("mapping-overlap:" + overlap.file(), Level.WARN,
                     overlap.file() + " maps " + overlap.count() + " Java item selector(s) that Twilight maps too (for example "
-                            + String.join(", ", overlap.examples()) + "): Geyser registers the first one it reads and rejects the other,"
-                            + " so Bedrock players see a mix of both tools' items.",
+                            + String.join(", ", overlap.examples()) + "): Geyser keeps one of the two (the order it reads the files decides, and"
+                            + " it logs an error when an identifier repeats), so Bedrock players may get the other tool's item instead of Twilight's.",
                     retire ? "Twilight moves it out of Geyser (integrations.conflicts.foreign-mappings: retire)."
                             : "Remove the file, or set integrations.conflicts.foreign-mappings: retire to let Twilight move it out."));
         }

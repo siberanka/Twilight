@@ -4,6 +4,27 @@
 
 All notable changes in Twilight are documented here.
 
+## 1.0.2 (unreleased)
+
+- Conflicts with other Bedrock content tools are detected at start and resolved automatically
+  (`integrations.conflicts`, backend and proxy). With the GeyserModelEngine extension in Geyser's folder, Twilight
+  leaves ModelEngine and BetterModel bones to it, so each model shows once (before, Bedrock players saw both
+  GeyserModelEngine's entity and Twilight's display models). With GeyserDisplayEntity or ScaffoldingExtension,
+  Twilight's display bridge stays off instead of racing it for Geyser's `item_display`. Each decision is logged
+  once with the setting that changes it (`model-bones`, `display-entities`: `auto`, `twilight`, `other`).
+- Mapping files of other tools (java2bedrock.sh, Rainbow, hand-written) that map the same Java items as Twilight
+  and a copy of Twilight's pack under another name are reported once per file (at most `max-notices`, then one
+  summary line). `foreign-mappings: retire` moves them out of Geyser to `retired/`; the default only reports.
+- New `/twilight diagnose` and `/twilightproxy diagnose`: which layers run and why the others do not (Geyser
+  options such as `enable-custom-content: false`, Floodgate, Via, Folia and forks, missing GeyserModelEngine
+  parts), plus every conflict finding; also saved to `reports/diagnostics.txt`.
+- twilight-proxy announces its version with its capabilities (the flag bits stay compatible with older backends);
+  a backend warns when the minor versions differ.
+- New migration guide: [docs/MIGRATION.md](docs/MIGRATION.md).
+- Documentation: the compatibility table no longer says MythicMobs mobs are not implemented; ModelEngine,
+  BetterModel and MythicMobs mobs show through the item-display bridge (verified live on a backend and through a
+  proxy), without a custom Bedrock entity.
+
 ## 1.0.1 - 2026-11-27
 
 - BetterModel 3.3 models show on Bedrock. 3.3 writes every bone into one
@@ -211,6 +232,29 @@ First public beta of Twilight and twilight-proxy.
 ### Değişiklik günlüğü
 
 Twilight'taki tüm önemli değişiklikler burada belgelenir.
+
+#### 1.0.2 (yayınlanmadı)
+
+- Diğer Bedrock içerik araçlarıyla çakışmalar başlangıçta algılanır ve otomatik çözülür
+  (`integrations.conflicts`, arka uç ve proxy). Geyser klasöründe GeyserModelEngine uzantısı varsa Twilight
+  ModelEngine ve BetterModel kemiklerini ona bırakır; böylece her model bir kez görünür (öncesinde Bedrock
+  oyuncuları hem GeyserModelEngine'in varlığını hem Twilight'ın görüntü modellerini görüyordu). GeyserDisplayEntity
+  ya da ScaffoldingExtension varsa Twilight'ın görüntü köprüsü, Geyser'ın `item_display` türü için onunla yarışmak
+  yerine kapalı kalır. Her karar, değiştiren ayarla (`model-bones`, `display-entities`: `auto`, `twilight`,
+  `other`) bir kez günlüğe yazılır.
+- Diğer araçların (java2bedrock.sh, Rainbow, elle yazılmış) Twilight ile aynı Java eşyaları eşleyen eşleme
+  dosyaları ve başka adla duran Twilight paketi kopyası dosya başına bir kez bildirilir (en fazla
+  `max-notices`, sonra tek özet satırı). `foreign-mappings: retire` onları Geyser'dan `retired/` içine taşır;
+  varsayılan yalnızca bildirir.
+- Yeni `/twilight diagnose` ve `/twilightproxy diagnose`: hangi katmanlar çalışıyor, diğerleri neden çalışmıyor
+  (`enable-custom-content: false` gibi Geyser ayarları, Floodgate, Via, Folia ve fork'lar, eksik GeyserModelEngine
+  parçaları) ve her çakışma bulgusu; `reports/diagnostics.txt` dosyasına da yazılır.
+- twilight-proxy sürümünü yeteneklerle birlikte duyurur (bayrak bitleri eski arka uçlarla uyumlu kalır); küçük
+  sürümler ayrışırsa arka uç uyarır.
+- Yeni geçiş rehberi: [docs/MIGRATION.md](docs/MIGRATION.md).
+- Belgeler: uyumluluk tablosu artık MythicMobs moblarının uygulanmadığını söylemiyor; ModelEngine, BetterModel ve
+  MythicMobs mobları eşya görüntüsü köprüsüyle gösterilir (bir arka uçta ve proxy üzerinden canlı doğrulandı),
+  özel Bedrock varlığı olmadan.
 
 #### 1.0.1 - 2026-11-27
 
