@@ -88,6 +88,27 @@ class BackendConfigCheckTest {
         assertFalse(maintain(file).written());
     }
 
+    @Test void conflictSettingsAreAddedToOlderFilesAndCheckedLikeTheRest() throws Exception {
+        String defaults = resource("/config.yml");
+        String older = defaults.substring(0, defaults.indexOf("integrations:")) + defaults.substring(defaults.indexOf("update-check:"));
+        Path file = root.resolve("config.yml");
+        Files.writeString(file, older);
+        assertTrue(maintain(file).written());
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.loadFromString(Files.readString(file));
+        assertEquals("auto", yaml.getString("integrations.conflicts.model-bones"));
+        assertEquals("report", yaml.getString("integrations.conflicts.foreign-mappings"));
+        assertEquals(10, yaml.getInt("integrations.conflicts.max-notices"));
+
+        Files.writeString(file, defaults.replace("    model-bones: auto", "    model-bones: both")
+                .replace("    max-notices: 10", "    max-notices: 500"));
+        var report = maintain(file);
+        assertEquals(2, report.repaired().size(), report.repaired().toString());
+        yaml.loadFromString(Files.readString(file));
+        assertEquals("auto", yaml.getString("integrations.conflicts.model-bones"));
+        assertEquals(10, yaml.getInt("integrations.conflicts.max-notices"));
+    }
+
     @Test void unreadableYamlIsRestoredAndTheBrokenFileKept() throws Exception {
         String defaults = resource("/config.yml");
         String mine = defaults.replace("  backups-to-keep: 3", "  backups-to-keep: 6");

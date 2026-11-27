@@ -111,8 +111,8 @@ public final class MappingOverlaps {
         if (overlaps.isEmpty()) return moved;
         Path target = retiredRoot.resolve(LocalDateTime.now().format(FOLDER));
         for (Overlap overlap : overlaps) {
-            Path source = geyserFolder.resolve(overlap.file()).normalize();
-            if (!source.startsWith(geyserFolder.resolve("custom_mappings")) || !Files.isRegularFile(source)) continue;
+            Path source = geyserFolder.toAbsolutePath().normalize().resolve(overlap.file()).normalize();
+            if (!source.startsWith(geyserFolder.toAbsolutePath().normalize().resolve("custom_mappings")) || !Files.isRegularFile(source)) continue;
             Path destination = target.resolve(overlap.file().replace('/', java.io.File.separatorChar));
             Files.createDirectories(destination.getParent());
             for (int index = 2; Files.exists(destination); index++) destination = destination.resolveSibling(source.getFileName() + "." + index);
