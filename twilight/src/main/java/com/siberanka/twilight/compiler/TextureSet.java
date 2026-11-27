@@ -1,6 +1,5 @@
 package com.siberanka.twilight.compiler;
 
-import com.google.gson.JsonParser;
 import com.siberanka.twilight.source.ResourceIndex;
 
 import javax.imageio.ImageIO;
@@ -18,11 +17,43 @@ import java.util.Map;
 final class TextureSet {
     private final BufferedImage image;
     private final Map<String, Region> regions;
+    private final TextureAnimation.Animated animated;
 
-    private TextureSet(BufferedImage image, Map<String, Region> regions) {
+    private TextureSet(BufferedImage image, Map<String, Region> regions, TextureAnimation.Animated animated) {
         this.image = image;
         this.regions = regions;
+        this.animated = animated;
     }
+
+    /** The animation of this atlas's sprites ({@code .mcmeta}), or null when nothing in it moves. */
+    TextureAnimation.Animated animation() { return animated; }
+
+    /** The atlas on a square canvas (Bedrock flipbooks are strips of square frames); regions stay where they are. */
+    TextureSet squared() {
+        if (animated == null) return this;
+        TextureAnimation.Animated square = animated.squared();
+        return new TextureSet(square.base(), regions, square);
+    }
+
+    /** Animation notes of the current conversion (invalid frame sizes, skipped frames), like {@link #MISSING_FILES}. */
+    static final ThreadLocal<java.util.Set<String>> ANIMATION_NOTES = ThreadLocal.withInitial(java.util.LinkedHashSet::new);
+
+    /** The animation of one sprite as a whole image (block faces are cut from it), or null for a still sprite. */
+    static TextureAnimation.Animated animatedSprite(ResourceIndex resources, String sprite, VanillaAssetCache vanillaAssets)
+            throws IOException {
+        Loaded loaded = load(resources, sprite, vanillaAssets);
+        if (loaded.track() == null) return null;
+        return new TextureAnimation.Animated(loaded.first(), List.of(new TextureAnimation.Layer(loaded.track(), 0, 0)));
+    }
+
+    /** Whether any of the sprites has an animation. */
+    static boolean anyAnimated(ResourceIndex resources, java.util.Collection<String> sprites, VanillaAssetCache vanillaAssets)
+            throws IOException {
+        for (String sprite : sprites) if (load(resources, sprite, vanillaAssets).track() != null) return true;
+        return false;
+    }
+
+    private record Loaded(BufferedImage first, TextureAnimation.Track track) {}
 
     static TextureSet atlas(ResourceIndex resources, List<String> identifiers) throws IOException {
         return atlas(resources, identifiers, null);
@@ -30,9 +61,12 @@ final class TextureSet {
 
     static TextureSet atlas(ResourceIndex resources, List<String> identifiers, VanillaAssetCache vanillaAssets) throws IOException {
         Map<String, BufferedImage> images = new LinkedHashMap<>();
+        Map<String, TextureAnimation.Track> tracks = new LinkedHashMap<>();
         for (String identifier : identifiers) {
             if (images.containsKey(identifier)) continue;
-            images.put(identifier, loadFrame(resources, identifier, vanillaAssets));
+            Loaded loaded = load(resources, identifier, vanillaAssets);
+            images.put(identifier, loaded.first());
+            if (loaded.track() != null) tracks.put(identifier, loaded.track());
         }
         if (images.isEmpty()) throw new IOException("Model has no resolved textures");
         int width = images.values().stream().mapToInt(BufferedImage::getWidth).sum();
@@ -40,6 +74,7 @@ final class TextureSet {
         BufferedImage atlas = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = atlas.createGraphics();
         Map<String, Region> regions = new LinkedHashMap<>();
+        List<TextureAnimation.Layer> layers = new ArrayList<>();
         try {
             graphics.setComposite(AlphaComposite.Src);
             int x = 0;
@@ -47,10 +82,12 @@ final class TextureSet {
                 BufferedImage source = entry.getValue();
                 graphics.drawImage(source, x, 0, null);
                 regions.put(entry.getKey(), new Region(x, 0, source.getWidth(), source.getHeight()));
+                if (tracks.containsKey(entry.getKey())) layers.add(new TextureAnimation.Layer(tracks.get(entry.getKey()), x, 0));
                 x += source.getWidth();
             }
         } finally { graphics.dispose(); }
-        return new TextureSet(atlas, Map.copyOf(regions));
+        return new TextureSet(atlas, Map.copyOf(regions),
+                layers.isEmpty() ? null : new TextureAnimation.Animated(atlas, List.copyOf(layers)));
     }
 
     static BufferedImage layeredIcon(ResourceIndex resources, List<String> identifiers) throws IOException {
@@ -111,25 +148,34 @@ final class TextureSet {
     static final String SKIN = "skin#";
 
     private static BufferedImage loadFrame(ResourceIndex resources, String sprite, VanillaAssetCache vanillaAssets) throws IOException {
+        return load(resources, sprite, vanillaAssets).first();
+    }
+
+    private static BufferedImage tint(BufferedImage base, int argb) {
+        BufferedImage tinted = new BufferedImage(base.getWidth(), base.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        int ta = argb >>> 24, tr = argb >> 16 & 255, tg = argb >> 8 & 255, tb = argb & 255;
+        for (int y = 0; y < base.getHeight(); y++) for (int x = 0; x < base.getWidth(); x++) {
+            int pixel = base.getRGB(x, y);
+            tinted.setRGB(x, y, ((pixel >>> 24) * ta / 255) << 24 | ((pixel >> 16 & 255) * tr / 255) << 16
+                    | ((pixel >> 8 & 255) * tg / 255) << 8 | (pixel & 255) * tb / 255);
+        }
+        return tinted;
+    }
+
+    private static Loaded load(ResourceIndex resources, String sprite, VanillaAssetCache vanillaAssets) throws IOException {
         if (sprite.startsWith(TINT)) {
             int split = sprite.indexOf('#', TINT.length());
             int argb = (int) Long.parseLong(sprite.substring(TINT.length(), split), 16);
-            BufferedImage base = loadFrame(resources, sprite.substring(split + 1), vanillaAssets);
-            BufferedImage tinted = new BufferedImage(base.getWidth(), base.getHeight(), BufferedImage.TYPE_INT_ARGB);
-            int ta = argb >>> 24, tr = argb >> 16 & 255, tg = argb >> 8 & 255, tb = argb & 255;
-            for (int y = 0; y < base.getHeight(); y++) for (int x = 0; x < base.getWidth(); x++) {
-                int pixel = base.getRGB(x, y);
-                tinted.setRGB(x, y, ((pixel >>> 24) * ta / 255) << 24 | ((pixel >> 16 & 255) * tr / 255) << 16
-                        | ((pixel >> 8 & 255) * tg / 255) << 8 | (pixel & 255) * tb / 255);
-            }
-            return tinted;
+            Loaded base = load(resources, sprite.substring(split + 1), vanillaAssets);
+            return new Loaded(tint(base.first(), argb),
+                    base.track() == null ? null : base.track().map(frame -> tint(frame, argb)));
         }
         if (sprite.startsWith(SKIN)) {
             byte[] skin = SKINS.get().get(sprite.substring(SKIN.length()));
             BufferedImage image = skin == null ? null : PngImages.read(skin);
-            return image == null ? missingTexture() : image;
+            return new Loaded(image == null ? missingTexture() : image, null);
         }
-        if (sprite.equals(MISSING)) return missingTexture();
+        if (sprite.equals(MISSING)) return new Loaded(missingTexture(), null);
         String identifier = spriteTexture(resources, sprite);
         String path = JavaModelResolver.texturePath(identifier);
         var custom = resources.find(path);
@@ -141,9 +187,9 @@ final class TextureSet {
         } else {
             // Recoloured sprites Java's atlases generate (armour trims) have no file of their own.
             var generated = PalettedSprites.sprite(resources, vanillaAssets, identifier);
-            if (generated.isPresent()) return generated.get();
+            if (generated.isPresent()) return new Loaded(generated.get(), null);
             MISSING_FILES.get().add(identifier);
-            return missingTexture();
+            return new Loaded(missingTexture(), null);
         }
         BufferedImage image = PngImages.read(bytes);
         if (image == null || image.getWidth() <= 0 || image.getHeight() <= 0) throw new IOException("Invalid PNG " + identifier);
@@ -153,7 +199,10 @@ final class TextureSet {
             var vanillaMetadata = vanillaAssets.readTexture(path + ".mcmeta");
             if (vanillaMetadata.isPresent()) animation = new String(vanillaMetadata.get(), java.nio.charset.StandardCharsets.UTF_8);
         }
-        return firstFrame(identifier, image, animation);
+        List<String> notes = new ArrayList<>();
+        TextureAnimation.Parsed parsed = TextureAnimation.parse(identifier, image, animation, notes);
+        ANIMATION_NOTES.get().addAll(notes);
+        return new Loaded(parsed.first(), parsed.track());
     }
 
     /** Java's 16x16 missing texture: magenta and black quarters, black in the top-left. */
@@ -165,36 +214,6 @@ final class TextureSet {
         return image;
     }
 
-    // Static item export samples the authored first frame. Never map an entire
-    // animation sheet onto one face or guess animation from a PNG's aspect ratio.
-    private static BufferedImage firstFrame(String identifier, BufferedImage image, String metadata) throws IOException {
-        if (metadata == null) return image;
-        try {
-            var root = JsonParser.parseString(metadata).getAsJsonObject();
-            if (!root.has("animation")) return image;
-            var animation = root.getAsJsonObject("animation");
-            int width = animation.has("width") ? animation.get("width").getAsInt() : -1;
-            int height = animation.has("height") ? animation.get("height").getAsInt() : -1;
-            if (width == -1 && height == -1) width = height = Math.min(image.getWidth(), image.getHeight());
-            else {
-                if (width == -1) width = image.getWidth();
-                if (height == -1) height = image.getHeight();
-            }
-            if (width < 1 || height < 1 || image.getWidth() % width != 0 || image.getHeight() % height != 0)
-                throw new IOException("Invalid animation frame dimensions for " + identifier);
-            int frame = 0;
-            if (animation.has("frames") && !animation.getAsJsonArray("frames").isEmpty()) {
-                var first = animation.getAsJsonArray("frames").get(0);
-                frame = first.isJsonObject() ? first.getAsJsonObject().get("index").getAsInt() : first.getAsInt();
-            }
-            int columns = image.getWidth() / width;
-            if (frame < 0 || frame >= (long) columns * (image.getHeight() / height))
-                throw new IOException("Invalid first animation frame for " + identifier);
-            return image.getSubimage((frame % columns) * width, (frame / columns) * height, width, height);
-        } catch (RuntimeException invalid) {
-            throw new IOException("Invalid animation metadata for " + identifier, invalid);
-        }
-    }
     int width() { return image.getWidth(); }
     int sample(Region region, double u, double v) {
         int x = Math.clamp((int) Math.floor(u * region.width() / 16), 0, region.width() - 1);

@@ -198,6 +198,11 @@ final class CustomBlockCompiler {
             atlas.add("texture_data", terrain);
             packFiles.put("textures/terrain_texture.json", BedrockPackCompiler.jsonBytes(atlas));
         }
+        if (flipbookEntries.size() > 0) {
+            packFiles.put("textures/flipbook_textures.json", BedrockPackCompiler.jsonBytes(flipbookEntries));
+        }
+        for (String note : TextureSet.ANIMATION_NOTES.get()) notices.add("custom block textures: " + note);
+        TextureSet.ANIMATION_NOTES.get().clear();
         JsonObject file = new JsonObject();
         file.addProperty("format", FORMAT);
         file.add("blocks", blocks);
@@ -290,9 +295,26 @@ final class CustomBlockCompiler {
                     JsonObject javaFace = cube.getAsJsonObject("faces").getAsJsonObject(face);
                     BufferedImage image = faceImage(model, javaFace, face);
                     int alpha = alphaKind(image);
+                    String path = null;
+                    TextureAnimation.Animated animated = TextureSet.animatedSprite(resources, faceSprite(model, javaFace), vanilla);
+                    if (animated != null) {
+                        TextureAnimation.Plan plan = TextureAnimation.plan(animated, true, TextureAnimation.MAX_BLOCK_STATES);
+                        if (plan != null) {
+                            List<BufferedImage> crops = new ArrayList<>();
+                            for (BufferedImage state : plan.states()) crops.add(faceImage(model, javaFace, face, state));
+                            if (crops.getFirst().getWidth() == crops.getFirst().getHeight()) {
+                                for (String note : plan.notes()) notices.add("custom block model " + variant.model() + ": " + note);
+                                for (BufferedImage crop : crops) alpha = Math.max(alpha, alphaKind(crop));
+                                path = animatedTexture(crops, plan);
+                            } else {
+                                notices.add("custom block model " + variant.model() + ": its " + face + " face shows a part of an"
+                                        + " animated texture that is not square; Bedrock flipbooks need square frames, so it shows the first frame");
+                            }
+                        }
+                    }
                     translucent |= alpha == 2;
                     cutout |= alpha == 1;
-                    faces.put(face, texture(image));
+                    faces.put(face, path != null ? path : texture(image));
                 }
                 return new Look(true, faces, null, null, translucent ? "blend" : cutout ? "alpha_test" : "opaque",
                         signature(resources, untinted), model.ambientOcclusion(), dimming);
@@ -311,8 +333,19 @@ final class CustomBlockCompiler {
             }
             if (used.isEmpty()) used.add(TextureSet.MISSING);
             TextureSet atlas = TextureSet.atlas(resources, used, vanilla);
+            TextureAnimation.Plan plan = null;
+            if (atlas.animation() != null) {
+                // Bedrock flipbooks are strips of square frames: the atlas gets a square canvas for every frame.
+                TextureSet square = atlas.squared();
+                plan = TextureAnimation.plan(square.animation(), true, TextureAnimation.MAX_BLOCK_STATES);
+                if (plan != null) {
+                    atlas = square;
+                    for (String note : plan.notes()) notices.add("custom block model " + variant.model() + ": " + note);
+                }
+            }
             BufferedImage image = PngImages.read(atlas.png());
             int alpha = alphaKind(image);
+            if (plan != null) for (BufferedImage state : plan.states()) alpha = Math.max(alpha, alphaKind(state));
             boolean[] clamped = new boolean[1];
             JsonObject geometry = geometry(model, atlas, clamped);
             if (clamped[0]) {
@@ -329,7 +362,7 @@ final class CustomBlockCompiler {
                     anyShaded |= shaded(element.getAsJsonObject(), face.getValue().getAsJsonObject());
                 }
             }
-            return new Look(false, Map.of(), texture(image), geometry,
+            return new Look(false, Map.of(), plan == null ? texture(image) : animatedTexture(List.of(), plan), geometry,
                     alpha == 2 ? "blend" : "alpha_test", signature(resources, untinted), model.ambientOcclusion(),
                     Map.of("*", anyShaded || !anyFace));
         } catch (IOException | RuntimeException failure) {
@@ -410,6 +443,47 @@ final class CustomBlockCompiler {
         JsonObject value = new JsonObject();
         value.addProperty("textures", path);
         terrain.add(key, value);
+        Flipbook flipbook = flipbooks.get(path);
+        if (flipbook != null) {
+            JsonObject entry = new JsonObject();
+            entry.addProperty("flipbook_texture", path);
+            entry.addProperty("atlas_tile", key);
+            entry.addProperty("ticks_per_frame", flipbook.ticksPerFrame());
+            JsonArray frames = new JsonArray();
+            for (int frame : flipbook.frames()) frames.add(frame);
+            entry.add("frames", frames);
+            entry.addProperty("blend_frames", flipbook.blend());
+            flipbookEntries.add(entry);
+        }
+    }
+
+    /** A Bedrock flipbook of a strip texture: Bedrock plays {@code frames} (strip positions), one per tick unit. */
+    private record Flipbook(int ticksPerFrame, int[] frames, boolean blend) {}
+
+    private final Map<String, Flipbook> flipbooks = new LinkedHashMap<>();
+    private final JsonArray flipbookEntries = new JsonArray();
+
+    /**
+     * Stores the states of an animation as one vertical strip and registers its flipbook (written with the terrain
+     * entries that use the strip).
+     *
+     * @param frames the images to stack; the plan's own states when empty
+     */
+    private String animatedTexture(List<BufferedImage> frames, TextureAnimation.Plan plan) throws IOException {
+        byte[] png = TextureSet.png(TextureAnimation.strip(frames.isEmpty() ? plan.states() : frames));
+        String path = TEXTURE_FOLDER + hash(png) + "_f" + plan.unitTicks() + (plan.blend() ? "b" : "n")
+                + Integer.toHexString(java.util.Arrays.hashCode(plan.schedule()));
+        packFiles.putIfAbsent(path + ".png", png);
+        flipbooks.putIfAbsent(path, new Flipbook(plan.unitTicks(), plan.schedule(), plan.blend()));
+        return path;
+    }
+
+    /** The sprite a face of a model draws. */
+    private static String faceSprite(ResolvedJavaModel model, JsonObject face) {
+        String reference = face.get("texture").getAsString();
+        String sprite = reference.startsWith("#") ? model.textures().get(reference.substring(1))
+                : JavaModelResolver.qualified(reference, "minecraft");
+        return sprite == null ? TextureSet.MISSING : sprite;
     }
 
     /** Stores an image once and returns its pack path without extension. */
@@ -458,10 +532,11 @@ final class CustomBlockCompiler {
 
     /** The part of the face's texture Java draws (its UV rectangle, flipped and rotated as given). */
     private BufferedImage faceImage(ResolvedJavaModel model, JsonObject face, String name) throws IOException {
-        String reference = face.get("texture").getAsString();
-        String sprite = reference.startsWith("#") ? model.textures().get(reference.substring(1))
-                : JavaModelResolver.qualified(reference, "minecraft");
-        BufferedImage source = TextureSet.frame(resources, sprite == null ? TextureSet.MISSING : sprite, vanilla);
+        return faceImage(model, face, name, TextureSet.frame(resources, faceSprite(model, face), vanilla));
+    }
+
+    /** The part of a frame (the sprite or one state of its animation) a face draws. */
+    private BufferedImage faceImage(ResolvedJavaModel model, JsonObject face, String name, BufferedImage source) throws IOException {
         double[] uv = face.has("uv") ? uv(face.getAsJsonArray("uv")) : new double[]{0, 0, 16, 16};
         int x0 = (int) Math.round(Math.min(uv[0], uv[2]) * source.getWidth() / 16.0);
         int x1 = (int) Math.round(Math.max(uv[0], uv[2]) * source.getWidth() / 16.0);

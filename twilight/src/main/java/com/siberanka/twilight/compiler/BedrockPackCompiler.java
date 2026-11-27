@@ -229,6 +229,7 @@ public final class BedrockPackCompiler {
         Map<String, List<String>> gliderWings = new java.util.TreeMap<>();
         for (ItemCandidate candidate : candidates) {
             TextureSet.MISSING_FILES.get().clear();
+            flushAnimationNotes(notices);
             try {
                 // A custom selector may show a vanilla model (menu buttons often use a barrier).
                 boolean customSelector = candidate.customModelData().isPresent() || !candidate.predicates().isEmpty();
@@ -255,7 +256,7 @@ public final class BedrockPackCompiler {
                     // item, attachable and icon each, a model-heavy pack loads faster and Geyser registers fewer items.
                     TextureSet atlas = TextureSet.atlas(resources, List.copyOf(usedTextures(model)), vanillaAssets);
                     displays.addModel(boneKey, geometry(safe, model, atlas, geometryBounds(model)), atlas.png(),
-                            model.renderParts().stream().map(ResolvedJavaModel::display).toList(), oneSided(model));
+                            model.renderParts().stream().map(ResolvedJavaModel::display).toList(), oneSided(model), atlas.animation());
                     converted++;
                     threeDimensional++;
                     displayOnly++;
@@ -270,8 +271,12 @@ public final class BedrockPackCompiler {
                 List<String> layers = flatLayers(model);
                 NativeWeapon nativeWeapon = nativeWeapon(candidate, model, resolver, resources, vanillaItems, vanillaAssets);
                 DynamicWeapon dynamicWeapon = nativeWeapon == null ? dynamicWeapon(candidate, resolver) : null;
+                // Bedrock draws a plain flat item from its icon, which cannot animate: an animated one is drawn by
+                // an attachable, whose texture can (its icon keeps the first frame).
+                boolean animatedFlat = !model.isThreeDimensional() && nativeWeapon == null && dynamicWeapon == null
+                        && TextureSet.anyAnimated(resources, layers, vanillaAssets);
                 boolean customFlat = !model.isThreeDimensional() && nativeWeapon == null &&
-                        requiresCustomFlat(candidate, model, vanillaItems);
+                        (animatedFlat || requiresCustomFlat(candidate, model, vanillaItems));
                 byte[] icon;
                 if (dynamicWeapon != null) {
                     Set<String> stateTextures = new LinkedHashSet<>();
@@ -304,8 +309,12 @@ public final class BedrockPackCompiler {
                     TextureSet atlas = TextureSet.atlas(resources, List.copyOf(usedTextures), vanillaAssets);
                     GeometryBounds bounds = geometryBounds(model);
                     packFiles.put(texturePath + ".png", atlas.png());
-                    icon = TextureSet.png(GuiIconRenderer.render(model, atlas, geometryElements(model)));
+                    icon = animatedFlat && !requiresCustomFlat(candidate, model, vanillaItems)
+                            ? TextureSet.png(TextureSet.layeredIcon(resources, layers, vanillaAssets))
+                            : TextureSet.png(GuiIconRenderer.render(model, atlas, geometryElements(model)));
                     packFiles.put("textures/twilight/" + safe + "_icon.png", icon);
+                    TextureAnimation.Plan motion = entityPlan(atlas, candidate.baseItem() + " -> " + candidate.visualModels(), notices);
+                    if (motion != null) writeFrames(packFiles, texturePath, motion);
                     JsonObject itemGeometry = geometry(safe, model, atlas, bounds);
                     // Bows and crossbows (pull and charge states) keep their measured mapping.
                     boolean tall = !candidate.baseItem().equals("minecraft:bow") && !candidate.baseItem().equals("minecraft:crossbow")
@@ -314,11 +323,13 @@ public final class BedrockPackCompiler {
                     packFiles.put("models/entity/geometry." + safe + ".geo.json", jsonBytes(itemGeometry));
                     packFiles.put("animations/" + safe + ".animation.json",
                             jsonBytes(animations(safe, model, tall, drawKind(candidate.baseItem()))));
-                    packFiles.put("attachables/" + safe + ".json",
-                            jsonBytes(attachable(identifier, safe, texturePath, oneSided(model), drawKind(candidate.baseItem()))));
+                    JsonObject itemAttachable = attachable(identifier, safe, texturePath, oneSided(model), drawKind(candidate.baseItem()));
+                    if (motion != null) animateAttachable(itemAttachable, safe, texturePath, motion, packFiles);
+                    packFiles.put("attachables/" + safe + ".json", jsonBytes(itemAttachable));
                     if (itemDisplays && model.isThreeDimensional() && displayed(candidate, displayedItems)) {
                         displays.add(identifier, geometry(safe, model, atlas, bounds), packFiles.get(texturePath + ".png"),
-                                model.renderParts().stream().map(ResolvedJavaModel::display).toList(), oneSided(model));
+                                model.renderParts().stream().map(ResolvedJavaModel::display).toList(), oneSided(model),
+                                atlas.animation());
                     } else if (itemDisplays && displayedFlat(candidate, displayedItems)) {
                         flatDisplay(displayModels, identifier, model, displays, candidate, notices);
                     }
@@ -369,6 +380,7 @@ public final class BedrockPackCompiler {
             }
         }
         TextureSet.MISSING_FILES.remove();
+        flushAnimationNotes(notices);
         if (elytraPerPlayer) perPlayerElytra(gliderWings, packFiles, notices);
         else if (elytraOverride) overrideVanillaElytra(gliderWings, packFiles, notices);
 
@@ -390,6 +402,8 @@ public final class BedrockPackCompiler {
             }
         }
         displays.finish(packFiles);
+        notices.addAll(displays.notes());
+        flushAnimationNotes(notices);
         packFiles.put(SHULKER_CONTROLLER, jsonBytes(invisibleShulkers()));
         TextureSet.SKINS.remove();
         if (!headSkins.isEmpty() || !headNames.isEmpty()) {
@@ -1001,6 +1015,82 @@ public final class BedrockPackCompiler {
         JsonArray controllers = new JsonArray(); controllers.add("controller.render.item_default"); description.add("render_controllers", controllers);
         JsonObject attachable = new JsonObject(); attachable.add("description", description);
         JsonObject root = new JsonObject(); root.addProperty("format_version", "1.21.0"); root.add("minecraft:attachable", attachable); return root;
+    }
+
+    /** Moves the animation notes the texture loader collected into the pack's notices. */
+    static void flushAnimationNotes(List<String> notices) {
+        notices.addAll(TextureSet.ANIMATION_NOTES.get());
+        TextureSet.ANIMATION_NOTES.get().clear();
+    }
+
+    /**
+     * How an atlas with animated sprites plays as an entity texture (Bedrock has no flipbook for entities): one
+     * texture per state and a schedule, or null when nothing moves or the animation does not fit the limits.
+     */
+    static TextureAnimation.Plan entityPlan(TextureSet atlas, String label, List<String> notices) {
+        if (atlas.animation() == null) return null;
+        TextureAnimation.Plan plan = TextureAnimation.plan(atlas.animation(), false, TextureAnimation.MAX_ENTITY_STATES);
+        if (plan == null) {
+            notices.add(label + ": its animated texture does not fit the Bedrock limits; it shows its first frame");
+            return null;
+        }
+        for (String note : plan.notes()) notices.add(label + ": " + note);
+        return plan;
+    }
+
+    /** The state textures of an animated entity texture: {@code <path>_f<n>.png}. */
+    static void writeFrames(Map<String, byte[]> files, String texturePath, TextureAnimation.Plan plan) throws IOException {
+        for (int state = 0; state < plan.states().size(); state++) {
+            files.put(texturePath + "_f" + state + ".png", TextureSet.png(plan.states().get(state)));
+        }
+    }
+
+    /** The molang that picks the state of the current tick: Bedrock steps entities at 20 ticks per second. */
+    static String frameExpression(String array, TextureAnimation.Plan plan) {
+        return array + "[math.mod(math.floor(q.life_time * 20 / " + plan.unitTicks() + "), " + plan.schedule().length + ")]";
+    }
+
+    /**
+     * Gives an attachable a render controller that shows the state textures in turn (a texture array indexed by
+     * the time), keeping the item's glint texture and material choice.
+     */
+    static void animateAttachable(JsonObject attachable, String safe, String texturePath, TextureAnimation.Plan plan,
+                                  Map<String, byte[]> files) {
+        JsonObject description = attachable.getAsJsonObject("minecraft:attachable").getAsJsonObject("description");
+        JsonObject textures = description.getAsJsonObject("textures");
+        JsonArray array = new JsonArray();
+        for (int state = 0; state < plan.states().size(); state++) textures.addProperty("f" + state, texturePath + "_f" + state);
+        for (int unit : plan.schedule()) array.add("Texture.f" + unit);
+        JsonObject arrays = new JsonObject();
+        arrays.add("Array.twilight_frames", array);
+        JsonObject controller = new JsonObject();
+        controller.add("arrays", property("textures", arrays));
+        controller.addProperty("geometry", "geometry.default");
+        JsonArray materials = new JsonArray();
+        JsonObject material = new JsonObject();
+        material.addProperty("*", "variable.is_enchanted ? material.enchanted : material.default");
+        materials.add(material);
+        controller.add("materials", materials);
+        JsonArray used = new JsonArray();
+        used.add(frameExpression("Array.twilight_frames", plan));
+        used.add("texture.enchanted");
+        controller.add("textures", used);
+        String name = "controller.render.twilight." + safe + "_animated";
+        JsonObject controllers = new JsonObject();
+        controllers.add(name, controller);
+        JsonObject root = new JsonObject();
+        root.addProperty("format_version", "1.10");
+        root.add("render_controllers", controllers);
+        files.put("render_controllers/" + safe + ".animated.render_controllers.json", jsonBytes(root));
+        JsonArray references = new JsonArray();
+        references.add(name);
+        description.add("render_controllers", references);
+    }
+
+    private static JsonObject property(String key, JsonElement value) {
+        JsonObject object = new JsonObject();
+        object.add(key, value);
+        return object;
     }
 
     private static JsonObject nativeWeaponAttachable(String identifier, String type, List<String> framePaths) {

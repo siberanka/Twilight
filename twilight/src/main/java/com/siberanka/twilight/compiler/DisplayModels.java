@@ -604,7 +604,8 @@ final class DisplayModels {
                      DisplayEntityResources.Section section, String key) throws IOException {
         TextureSet atlas = TextureSet.atlas(resources, List.copyOf(BedrockPackCompiler.modelTextures(model)), vanilla);
         displays.add(section, key, BedrockPackCompiler.displayGeometry(safe, model, atlas), atlas.png(),
-                model.renderParts().stream().map(ResolvedJavaModel::display).toList(), flat, BedrockPackCompiler.oneSided(model));
+                model.renderParts().stream().map(ResolvedJavaModel::display).toList(), flat, BedrockPackCompiler.oneSided(model),
+                atlas.animation());
     }
 
     /** Java's 3D model with its item tints baked into texture copies. */

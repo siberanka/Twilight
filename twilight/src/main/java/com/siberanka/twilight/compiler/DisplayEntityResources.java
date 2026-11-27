@@ -64,7 +64,17 @@ final class DisplayEntityResources {
      * Java draws it flat (Bedrock then draws it as a dropped item itself).
      */
     private record Variant(String identifier, Section section, byte[] geometry, byte[] texture, List<JsonObject> displays,
-                           boolean flat, boolean oneSided) {}
+                           boolean flat, boolean oneSided, TextureAnimation.Animated animation) {}
+
+    private final List<String> notes = new ArrayList<>();
+
+    /** What the last {@link #finish} could not play as authored (animations beyond the Bedrock limits). */
+    List<String> notes() {
+        return List.copyOf(notes);
+    }
+
+    /** Animated sheets (one animated texture each) a pack may hold; more would slow its loading. */
+    static final int MAX_ANIMATED_SHEETS = 48;
 
     void add(String identifier, JsonObject itemGeometry, byte[] texturePng, JsonObject display) {
         add(identifier, itemGeometry, texturePng, Collections.singletonList(display));
@@ -77,7 +87,7 @@ final class DisplayEntityResources {
 
     /** @param oneSided Java's one-sided faces (models with inverted elements, see BedrockPackCompiler.oneSided) */
     void add(String identifier, JsonObject itemGeometry, byte[] texturePng, List<JsonObject> displays, boolean oneSided) {
-        add(Section.ITEM, identifier, itemGeometry, texturePng, displays, false, oneSided);
+        add(Section.ITEM, identifier, itemGeometry, texturePng, displays, false, oneSided, null);
     }
 
     /**
@@ -89,7 +99,17 @@ final class DisplayEntityResources {
     }
 
     void addModel(String itemModel, JsonObject itemGeometry, byte[] texturePng, List<JsonObject> displays, boolean oneSided) {
-        add(Section.MODEL, itemModel, itemGeometry, texturePng, displays, false, oneSided);
+        add(Section.MODEL, itemModel, itemGeometry, texturePng, displays, false, oneSided, null);
+    }
+
+    void addModel(String itemModel, JsonObject itemGeometry, byte[] texturePng, List<JsonObject> displays, boolean oneSided,
+                  TextureAnimation.Animated animation) {
+        add(Section.MODEL, itemModel, itemGeometry, texturePng, displays, false, oneSided, animation);
+    }
+
+    void add(String identifier, JsonObject itemGeometry, byte[] texturePng, List<JsonObject> displays, boolean oneSided,
+             TextureAnimation.Animated animation) {
+        add(Section.ITEM, identifier, itemGeometry, texturePng, displays, false, oneSided, animation);
     }
 
     boolean contains(Section section, String key) {
@@ -102,13 +122,19 @@ final class DisplayEntityResources {
 
     void add(Section section, String key, JsonObject itemGeometry, byte[] texturePng, List<JsonObject> displays, boolean flat,
              boolean oneSided) {
+        add(section, key, itemGeometry, texturePng, displays, flat, oneSided, null);
+    }
+
+    /** @param animation the animated sprites of the texture (their first frames are in {@code texturePng}), or null */
+    void add(Section section, String key, JsonObject itemGeometry, byte[] texturePng, List<JsonObject> displays, boolean flat,
+             boolean oneSided, TextureAnimation.Animated animation) {
         if (!keys.computeIfAbsent(section, ignored -> new HashSet<>()).add(key)) return;
         JsonArray meshes = body(itemGeometry).getAsJsonArray("bones");
         if (meshes.size() != displays.size()) throw new IllegalArgumentException("Composite mesh/pose count mismatch");
         List<JsonObject> copies = new ArrayList<>();
         for (JsonObject display : displays) copies.add(display == null ? new JsonObject() : display.deepCopy());
         variants.add(new Variant(key, section, JSON.toJson(itemGeometry).getBytes(StandardCharsets.UTF_8), texturePng,
-                List.copyOf(copies), flat, oneSided));
+                List.copyOf(copies), flat, oneSided, animation));
     }
 
     int size() {
@@ -118,8 +144,38 @@ final class DisplayEntityResources {
     void finish(Map<String, byte[]> files) throws IOException {
         if (variants.isEmpty()) return;
         // Items with the same texture (the bones of one model) share a sheet and its texture region.
+        notes.clear();
         Map<String, List<Variant>> byTexture = new LinkedHashMap<>();
-        for (Variant variant : variants) byTexture.computeIfAbsent(digest(variant.texture), key -> new ArrayList<>()).add(variant);
+        // Animated textures get sheets of their own (one animated texture per sheet): their states are whole sheet
+        // copies, which stay small and independent of each other that way.
+        Map<String, List<Variant>> animatedGroups = new LinkedHashMap<>();
+        Map<String, TextureAnimation.Plan> plans = new HashMap<>();
+        for (Variant variant : variants) {
+            if (variant.animation == null) byTexture.computeIfAbsent(digest(variant.texture), key -> new ArrayList<>()).add(variant);
+            else animatedGroups.computeIfAbsent(digest(variant.texture) + variant.animation.fingerprint(), key -> new ArrayList<>())
+                    .add(variant);
+        }
+        int animatedCount = 0;
+        for (Map.Entry<String, List<Variant>> group : animatedGroups.entrySet()) {
+            Variant first = group.getValue().getFirst();
+            TextureAnimation.Plan plan = animatedCount < MAX_ANIMATED_SHEETS
+                    ? TextureAnimation.plan(first.animation, false, TextureAnimation.MAX_ENTITY_STATES) : null;
+            if (plan != null) {
+                plans.put(group.getKey(), plan);
+                animatedCount++;
+                for (String note : plan.notes()) notes.add(first.identifier + ": " + note);
+            } else {
+                notes.add(first.identifier + ": its animated texture does not fit the Bedrock limits"
+                        + (animatedCount >= MAX_ANIMATED_SHEETS ? " (at most " + MAX_ANIMATED_SHEETS + " animated display textures)" : "")
+                        + "; it shows its first frame");
+            }
+        }
+        for (Map.Entry<String, List<Variant>> group : animatedGroups.entrySet()) {
+            if (plans.containsKey(group.getKey())) continue;
+            for (Variant variant : group.getValue()) {
+                byTexture.computeIfAbsent(digest(variant.texture), key -> new ArrayList<>()).add(variant);
+            }
+        }
 
         Map<Section, JsonObject> sections = new EnumMap<>(Section.class);
         for (Section section : Section.values()) sections.put(section, new JsonObject());
@@ -147,6 +203,29 @@ final class DisplayEntityResources {
             }
         }
         if (!sheet.parts.isEmpty()) sheets.add(sheet);
+        for (Map.Entry<String, List<Variant>> group : animatedGroups.entrySet()) {
+            TextureAnimation.Plan plan = plans.get(group.getKey());
+            if (plan == null) continue;
+            Sheet animated = null;
+            for (Variant variant : group.getValue()) {
+                if (animated == null || animated.parts.size() >= PARTS) {
+                    if (animated != null) sheets.add(animated);
+                    animated = new Sheet(sheets.size());
+                    animated.plan = plan;
+                    int[] size = dimensions(variant.texture);
+                    if (!animated.place(group.getKey(), variant.texture, size[0], size[1])) throw new IOException("Unplaceable texture");
+                }
+                int ordinal = animated.number * PARTS + animated.parts.size();
+                if (ordinal >= MAX_VARIANTS) throw new IOException("More than " + MAX_VARIANTS + " display variants");
+                animated.parts.add(new Part(variant, group.getKey()));
+                JsonArray entry = new JsonArray();
+                entry.add(ordinal);
+                entry.add(sharedTransform(variant, transforms, transformIds));
+                sections.get(variant.section).add(variant.identifier, entry);
+                if (variant.flat) flat.add(ordinal);
+            }
+            if (animated != null) sheets.add(animated);
+        }
 
         JsonObject geometries = new JsonObject(), textures = new JsonObject(), animations = new JsonObject();
         JsonArray animate = new JsonArray();
@@ -155,6 +234,11 @@ final class DisplayEntityResources {
             geometries.addProperty(key, "geometry.twilight.display.sheet" + current.number);
             textures.addProperty(key, "textures/twilight/display_sheet" + current.number);
             files.put("textures/twilight/display_sheet" + current.number + ".png", current.texture());
+            if (current.plan != null) for (int state = 0; state < current.plan.states().size(); state++) {
+                textures.addProperty(key + "f" + state, "textures/twilight/display_sheet" + current.number + "_f" + state);
+                files.put("textures/twilight/display_sheet" + current.number + "_f" + state + ".png",
+                        TextureSet.png(current.plan.states().get(state)));
+            }
             JsonObject staticBones = new JsonObject();
             files.put("models/entity/display.sheet" + current.number + ".geo.json",
                     jsonBytes(current.geometry(staticBones)));
@@ -185,7 +269,7 @@ final class DisplayEntityResources {
         if (!flat.isEmpty()) index.add("flat", flat);
         index.add("transforms", transforms);
         files.put(INDEX, jsonBytes(index));
-        writeEntity(files, sheets.size(), geometries, textures, animations, animate);
+        writeEntity(files, sheets, geometries, textures, animations, animate);
     }
 
     static final int MAX_VARIANTS = com.siberanka.twilight.integration.display.DisplayIndex.MAX_VARIANTS;
@@ -269,6 +353,8 @@ final class DisplayEntityResources {
         final Map<String, int[]> placed = new LinkedHashMap<>();
         final Map<String, byte[]> images = new LinkedHashMap<>();
         final List<int[]> shelves = new ArrayList<>(); // y, height, used width
+        /** How the single animated texture of the sheet plays; null for static sheets. */
+        TextureAnimation.Plan plan;
         int width, height;
 
         Sheet(int number) {
@@ -431,8 +517,9 @@ final class DisplayEntityResources {
         return geometry.getAsJsonArray("minecraft:geometry").get(0).getAsJsonObject();
     }
 
-    private static void writeEntity(Map<String, byte[]> files, int sheetCount, JsonObject geometries, JsonObject textures,
+    private static void writeEntity(Map<String, byte[]> files, List<Sheet> sheets, JsonObject geometries, JsonObject textures,
                                     JsonObject animations, JsonArray animate) {
+        int sheetCount = sheets.size();
         JsonObject description = new JsonObject();
         description.addProperty("identifier", "twilight:item_display");
         JsonObject entityMaterials = stringProperty("default", "entity_alphatest");
@@ -455,7 +542,10 @@ final class DisplayEntityResources {
         }
         initialize.append("v.t0=0;v.t1=0;v.t2=0;v.t3=1;v.t4=1;v.t5=1;v.lex=0;v.ley=0;v.lez=0;v.rex=0;v.rey=0;v.rez=0;");
         scripts.add("initialize", strings(initialize.toString()));
-        scripts.add("pre_animation", strings(preAnimation().toArray(String[]::new)));
+        List<String> pre = preAnimation();
+        boolean animatedSheets = sheets.stream().anyMatch(sheet -> sheet.plan != null);
+        if (animatedSheets) pre.add("v.sheet=math.floor(v.var/" + PARTS + ");");
+        scripts.add("pre_animation", strings(pre.toArray(String[]::new)));
         description.add("scripts", scripts);
         // A brightness override replaces the world's light at the display (Java's lightmap at that light level).
         JsonArray controllers = new JsonArray();
@@ -471,13 +561,30 @@ final class DisplayEntityResources {
             geo.add("Geometry.s" + i);
             tex.add("Texture.s" + i);
         }
+        // The picture of an animated sheet follows the time: its texture slots come after the static ones, one per
+        // schedule unit, and the index adds the current unit to the first slot of the sheet.
+        String picked = "math.floor(math.floor(q.property('twilight:appearance')/9)/" + PARTS + ")";
+        if (animatedSheets) {
+            int base = sheetCount;
+            StringBuilder chain = new StringBuilder();
+            int open = 0;
+            for (Sheet current : sheets) {
+                if (current.plan == null) continue;
+                chain.append("(v.sheet==").append(current.number).append('?').append(base).append("+math.mod(math.floor(q.life_time*20/")
+                        .append(current.plan.unitTicks()).append("),").append(current.plan.schedule().length).append("):");
+                open++;
+                for (int unit : current.plan.schedule()) tex.add("Texture.s" + current.number + "f" + unit);
+                base += current.plan.schedule().length;
+            }
+            picked = chain + "v.sheet" + ")".repeat(open);
+        }
         arrays.add("geometries", property("Array.models", geo));
         arrays.add("textures", property("Array.textures", tex));
         String sheet = "math.floor(math.floor(q.property('twilight:appearance')/9)/" + PARTS + ")";
         JsonObject controller = new JsonObject();
         controller.add("arrays", arrays);
         controller.addProperty("geometry", "Array.models[" + sheet + "]");
-        controller.add("textures", strings("Array.textures[" + sheet + "]"));
+        controller.add("textures", strings("Array.textures[" + picked + "]"));
         JsonArray materials = new JsonArray();
         materials.add(stringProperty("*", "Material.default"));
         materials.add(stringProperty("twc*", "Material.one_sided"));

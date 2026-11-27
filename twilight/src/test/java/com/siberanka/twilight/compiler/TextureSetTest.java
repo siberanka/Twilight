@@ -95,12 +95,30 @@ class TextureSetTest {
     }
 
     @Test
-    void rejectsOutOfBoundsAnimationFrames() throws Exception {
+    void skipsOutOfBoundsAnimationFramesLikeJavaAndKeepsTheSpriteStill() throws Exception {
         texture();
         Files.writeString(root.resolve("assets/demo/textures/item/test.png.mcmeta"),
                 "{\"animation\":{\"frames\":[2]}}");
         try (ResourceIndex index = index()) {
-            assertThrows(java.io.IOException.class, () -> TextureSet.atlas(index, List.of("demo:item/test")));
+            TextureSet atlas = TextureSet.atlas(index, List.of("demo:item/test"));
+            assertNull(atlas.animation());
+            assertEquals(8, atlas.height());
+            assertTrue(TextureSet.ANIMATION_NOTES.get().stream().anyMatch(note -> note.contains("missing index")));
+            TextureSet.ANIMATION_NOTES.get().clear();
+        }
+    }
+
+    @Test
+    void drawsTheMissingTextureWhenTheFrameSizeDoesNotDivideTheImage() throws Exception {
+        texture();
+        Files.writeString(root.resolve("assets/demo/textures/item/test.png.mcmeta"),
+                "{\"animation\":{\"width\":5,\"height\":5}}");
+        try (ResourceIndex index = index()) {
+            TextureSet atlas = TextureSet.atlas(index, List.of("demo:item/test"));
+            assertEquals(16, atlas.width());
+            assertNull(atlas.animation());
+            assertTrue(TextureSet.ANIMATION_NOTES.get().stream().anyMatch(note -> note.contains("does not divide")));
+            TextureSet.ANIMATION_NOTES.get().clear();
         }
     }
 
