@@ -55,6 +55,24 @@ class DisplayIndexTest {
         assertFalse(DisplayKeys.custom("item=minecraft:apple"));
     }
 
+    /** Bones told apart by custom model data (BetterModel 3.3) are keyed by their item model and the number or text. */
+    @Test void readsModelBonesKeyedByCustomModelData() throws IOException {
+        DisplayIndex index = DisplayIndex.parse("""
+                {"format":2,"parts":64,"variants":{},"models":{"bettermodel:bm_models|cmd=437":[0,-1],
+                 "bettermodel:bm_models|str=wing":[1,-1],"modelengine:crab/body":[2,-1]},"transforms":[]}
+                """);
+        assertEquals(0, index.models().get("bettermodel:bm_models|cmd=437").ordinal());
+        assertEquals(1, index.models().get("bettermodel:bm_models|str=wing").ordinal());
+        assertEquals("bettermodel:bm_models|cmd=437", DisplayKeys.modelCustomModelData("bettermodel:bm_models", 437.0f));
+        assertEquals("bettermodel:bm_models|cmd=-2", DisplayKeys.modelCustomModelData("bettermodel:bm_models", -1.5f));
+        assertTrue(DisplayKeys.validModelVariant("bettermodel:bm_models|cmd=-2"));
+        assertFalse(DisplayKeys.validModelVariant("bettermodel:bm_models|cmd=x"));
+        assertFalse(DisplayKeys.validModelVariant("Bad Key|cmd=1"));
+        assertThrows(IOException.class, () -> DisplayIndex.parse("""
+                {"format":2,"variants":{},"models":{"bettermodel:bm_models|cmd=1.5":[1,-1]},"transforms":[]}
+                """));
+    }
+
     @Test void readsItemsModelsAndTheirTransforms() throws IOException {
         DisplayIndex index = DisplayIndex.parse("""
                 {"format":2,"parts":64,"variants":{"twilight:chair":[0,0],"twilight:lamp":[1,-1]},

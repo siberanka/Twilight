@@ -6,6 +6,12 @@ All notable changes in Twilight are documented here.
 
 ## 1.0.1 (unreleased)
 
+- BetterModel 3.3 models (the version SkyBlock and Survival run) show on Bedrock. 3.3 writes every bone into one
+  item definition that dispatches on the bone's custom model data; Twilight made a Bedrock item out of each bone
+  (over a thousand, none of them the one Geyser picked for an item display) and the display bridge found nothing to
+  show. Such bones now get display models like the bones of BetterModel 3.4 and ModelEngine, found by item model and
+  custom model data. In item definitions that dispatch on a number (`range_dispatch`) the highest threshold a value
+  reaches now wins, as on Java; the first entry used to win, which showed the wrong model of ascending lists.
 - A font file with a stray trailing comma (an add-on pack's `font/default.json`, for example ItemsAdder's
   AddonTextures/MinionGUI) no longer stops the whole conversion in strict mode. Java reads the comma as a missing
   provider, logs an error and drops that pack's definition of the font; Twilight now does the same, with a notice
@@ -205,6 +211,12 @@ Twilight'taki tüm önemli değişiklikler burada belgelenir.
 
 #### 1.0.1 (yayınlanmadı)
 
+- BetterModel 3.3 modelleri (SkyBlock ve Survival'ın çalıştırdığı sürüm) Bedrock'ta görünür. 3.3 her kemiği, kemiğin
+  özel model verisine göre ayrışan tek bir eşya tanımına yazar; Twilight her kemikten bir Bedrock eşyası üretiyordu
+  (bin üzerinde, hiçbiri Geyser'ın eşya ekranı için seçtiği değil) ve ekran köprüsü gösterecek bir şey bulamıyordu.
+  Bu kemikler artık BetterModel 3.4 ve ModelEngine kemikleri gibi ekran modeli alır ve eşya modeli ile özel model
+  verisiyle bulunur. Sayıya göre ayrışan (`range_dispatch`) eşya tanımlarında artık değerin ulaştığı en yüksek eşik
+  kazanır, Java'daki gibi; önceden ilk kayıt kazanıyordu ve artan listelerde yanlış model görünüyordu.
 - Başıboş bir sondaki virgül içeren yazı tipi dosyası (bir eklenti paketinin `font/default.json` dosyası, örneğin
   ItemsAdder'ın AddonTextures/MinionGUI klasörü) artık sıkı modda dönüşümün tamamını durdurmaz. Java virgülü eksik
   bir sağlayıcı olarak okur, hata kaydeder ve o paketin yazı tipi tanımını atar; Twilight da aynısını yapar ve

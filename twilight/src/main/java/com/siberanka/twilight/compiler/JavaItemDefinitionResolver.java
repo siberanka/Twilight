@@ -86,9 +86,13 @@ final class JavaItemDefinitionResolver {
                     if (usual != null) visit(usual, namespace, predicates, priority, output, depth + 1);
                     return;
                 }
-                int rank = entries.size();
-                for (JsonElement entryValue : entries) {
-                    JsonObject entry = entryValue.getAsJsonObject();
+                // Java takes the entry with the highest threshold the value reaches; Geyser matches every threshold
+                // the value reaches and takes the highest priority, so the highest threshold gets it.
+                List<JsonObject> ordered = new ArrayList<>(entries.size());
+                for (JsonElement entryValue : entries) ordered.add(entryValue.getAsJsonObject());
+                ordered.sort(java.util.Comparator.comparingDouble(entry -> entry.has("threshold") ? entry.get("threshold").getAsDouble() : 0));
+                int rank = 1;
+                for (JsonObject entry : ordered) {
                     JsonObject predicate = new JsonObject();
                     predicate.addProperty("type", "range_dispatch");
                     predicate.addProperty("property", property);
@@ -97,7 +101,7 @@ final class JavaItemDefinitionResolver {
                     if (node.has("scale") && node.get("scale").getAsDouble() != 0) {
                         predicate.addProperty("threshold", entry.get("threshold").getAsDouble() / node.get("scale").getAsDouble());
                     }
-                    visit(requiredObject(entry, "model"), namespace, append(predicates, predicate), priority + rank--,
+                    visit(requiredObject(entry, "model"), namespace, append(predicates, predicate), priority + rank++,
                             output, depth + 1);
                 }
                 if (node.has("fallback") && node.get("fallback").isJsonObject()) {

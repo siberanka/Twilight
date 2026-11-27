@@ -144,6 +144,13 @@ final class TwilightItemDisplay extends Entity {
         // Model bones have no Bedrock item: their item_model names them.
         String model = DisplayItems.itemModel(stack);
         DisplayIndex.Variant selected = model == null ? null : index.models().get(model);
+        if (selected == null && model != null && !index.models().isEmpty()) {
+            // One item model for every bone (BetterModel 3.3): the bone is the custom model data.
+            for (String key : DisplayItems.boneKeys(stack)) {
+                selected = index.models().get(key);
+                if (selected != null) break;
+            }
+        }
         if (selected == null && !index.items().isEmpty()) {
             var item = ItemTranslator.translateToBedrock(session, stack);
             selected = index.items().get(item.getDefinition().getIdentifier());

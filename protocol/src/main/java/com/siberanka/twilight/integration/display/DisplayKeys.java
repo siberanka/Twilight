@@ -20,6 +20,9 @@ public final class DisplayKeys {
             + "|item=[a-z0-9_.-]{1,64}:[a-z0-9_./-]{1,128}|head=[0-9a-f]{16,64}"
             + "|block=[a-z0-9_.-]{1,64}:[a-z0-9_./-]{1,128}(\\[" + NAME + "(," + NAME + "){0,15}])?");
 
+    private static final Pattern MODEL_VARIANT = Pattern.compile("[a-z0-9_.-]{1,64}:[a-z0-9_./-]{1,256}"
+            + "(\\|(cmd=-?\\d{1,10}|str=[\\x21-\\x7b\\x7d\\x7e]{1,128}))?");
+
     private DisplayKeys() {}
 
     /** Whether {@code key} is well formed (anything else is ignored wherever keys arrive from). */
@@ -37,6 +40,24 @@ public final class DisplayKeys {
 
     public static String customModelString(String baseItem, String value) {
         return baseItem + "|str=" + value;
+    }
+
+    /**
+     * A model bone told apart by its custom model data (BetterModel 3.3 and ModelEngine give every bone the same item
+     * model and a number): {@code <item model>|cmd=<n>}, the key of its variant in a pack's model section.
+     */
+    public static String modelCustomModelData(String itemModel, float value) {
+        return itemModel + "|cmd=" + (int) Math.floor(value);
+    }
+
+    /** As {@link #modelCustomModelData}, for a bone told apart by a custom model data string. */
+    public static String modelCustomModelString(String itemModel, String value) {
+        return itemModel + "|str=" + value;
+    }
+
+    /** Whether a key of a pack's model section is well formed (an item model, optionally with its custom model data). */
+    public static boolean validModelVariant(String key) {
+        return key != null && key.length() <= 400 && MODEL_VARIANT.matcher(key).matches();
     }
 
     /** An item shown with its own model (no custom model data, no item model of its own). */

@@ -131,7 +131,7 @@ public record DisplayIndex(Map<String, Variant> items, Map<String, Variant> mode
             int ordinal = entry.get(0).getAsInt(), transform = entry.get(1).getAsInt();
             if (ordinal < 0 || ordinal >= MAX_VARIANTS || !used.add(ordinal)
                     || transform < -1 || transform >= transforms.size()
-                    || !(IDENTIFIER.matcher(value.getKey()).matches()
+                    || !(IDENTIFIER.matcher(value.getKey()).matches() || DisplayKeys.validModelVariant(value.getKey())
                          || value.getKey().startsWith("block=") && DisplayKeys.valid(value.getKey())
                          || com.siberanka.twilight.geyser.HeadTextures.valid(value.getKey()))) {
                 throw new IOException("Invalid display variant index");

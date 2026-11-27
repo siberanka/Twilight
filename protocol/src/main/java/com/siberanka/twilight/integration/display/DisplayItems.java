@@ -48,6 +48,24 @@ final class DisplayItems {
         return key.toString();
     }
 
+    /**
+     * The model-section keys of a model bone told apart by its custom model data ({@code <item model>|cmd=<n>}, then
+     * {@code |str=}), in the order they are tried; empty for a stack without an item model or custom model data.
+     */
+    static List<String> boneKeys(ItemStack stack) {
+        List<String> keys = new ArrayList<>(2);
+        String model = itemModel(stack);
+        if (model == null) return keys;
+        DataComponents components = stack.getDataComponentsPatch();
+        var data = components == null ? null : components.get(DataComponentTypes.CUSTOM_MODEL_DATA);
+        if (data != null) {
+            if (!data.floats().isEmpty()) keys.add(DisplayKeys.modelCustomModelData(model, data.floats().getFirst()));
+            if (!data.strings().isEmpty()) keys.add(DisplayKeys.modelCustomModelString(model, data.strings().getFirst()));
+        }
+        keys.removeIf(key -> !DisplayKeys.validModelVariant(key));
+        return keys;
+    }
+
     /** The {@link DisplayKeys} of a stack: its item model and its custom model data on the base item. */
     static List<String> keys(ItemStack stack) {
         List<String> keys = new ArrayList<>(3);

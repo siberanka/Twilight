@@ -250,10 +250,11 @@ public final class BedrockPackCompiler {
                 }
                 String safe = identifier.substring(identifier.indexOf(':') + 1);
                 if (itemDisplays && modelBone(candidate) && model.isThreeDimensional()) {
+                    String boneKey = boneKey(candidate);
                     // Only item displays show model bones: the display variant is all they need. Without a Bedrock
                     // item, attachable and icon each, a model-heavy pack loads faster and Geyser registers fewer items.
                     TextureSet atlas = TextureSet.atlas(resources, List.copyOf(usedTextures(model)), vanillaAssets);
-                    displays.addModel(candidate.mappingModel(), geometry(safe, model, atlas, geometryBounds(model)), atlas.png(),
+                    displays.addModel(boneKey, geometry(safe, model, atlas, geometryBounds(model)), atlas.png(),
                             model.renderParts().stream().map(ResolvedJavaModel::display).toList(), oneSided(model));
                     converted++;
                     threeDimensional++;
@@ -761,7 +762,33 @@ public final class BedrockPackCompiler {
 
     static boolean modelBone(ItemCandidate candidate) {
         return (candidate.source().equals("ModelEngine") || candidate.source().equals("BetterModel"))
-                && candidate.customModelData().isEmpty() && candidate.predicates().isEmpty();
+                && candidate.customModelData().isEmpty() && boneKey(candidate) != null;
+    }
+
+    /**
+     * Where a model bone's display variant is found: its item model, or, when one item model dispatches on the custom
+     * model data (BetterModel 3.3 writes every bone into one {@code range_dispatch}), the item model with the number
+     * or text of the bone ({@code <item model>|cmd=<n>}, see {@code DisplayKeys.modelCustomModelData}). Null when
+     * the candidate depends on anything else.
+     */
+    static String boneKey(ItemCandidate candidate) {
+        JsonArray predicates = candidate.predicates();
+        if (predicates.isEmpty()) return candidate.mappingModel();
+        if (predicates.size() != 1 || !predicates.get(0).isJsonObject()) return null;
+        JsonObject predicate = predicates.get(0).getAsJsonObject();
+        String property = predicate.has("property") ? predicate.get("property").getAsString() : "";
+        if (!property.equals("custom_model_data") && !property.equals("minecraft:custom_model_data")) return null;
+        if (predicate.has("index") && predicate.get("index").getAsInt() != 0) return null;
+        String type = predicate.has("type") ? predicate.get("type").getAsString() : "";
+        String key;
+        if (type.equals("range_dispatch") && predicate.has("threshold")) {
+            key = candidate.mappingModel() + "|cmd=" + (int) Math.floor(predicate.get("threshold").getAsDouble());
+        } else if (type.equals("match") && predicate.has("value")) {
+            key = candidate.mappingModel() + "|str=" + predicate.get("value").getAsString();
+        } else {
+            return null;
+        }
+        return com.siberanka.twilight.integration.display.DisplayKeys.validModelVariant(key) ? key : null;
     }
 
     private static boolean requiresCustomFlat(ItemCandidate candidate, ResolvedJavaModel model,
