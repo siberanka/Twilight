@@ -16,6 +16,9 @@ All notable changes in Twilight are documented here.
   AddonTextures/MinionGUI) no longer stops the whole conversion in strict mode. Java reads the comma as a missing
   provider, logs an error and drops that pack's definition of the font; Twilight now does the same, with a notice
   ("font definitions are malformed and ignored, as on Java"), instead of rejecting the build.
+- Documented that the custom blocks of a proxy network are one registry while each server's pack draws only its own
+  states: a state another server turns into a block shows as a missing-texture cube or an invisible block on a
+  server whose pack lacks it (see the wiki, Custom blocks).
 
 ## 1.0.1-pre.3 - 2026-11-27
 
@@ -221,6 +224,9 @@ Twilight'taki tüm önemli değişiklikler burada belgelenir.
   ItemsAdder'ın AddonTextures/MinionGUI klasörü) artık sıkı modda dönüşümün tamamını durdurmaz. Java virgülü eksik
   bir sağlayıcı olarak okur, hata kaydeder ve o paketin yazı tipi tanımını atar; Twilight da aynısını yapar ve
   derlemeyi reddetmek yerine bir bildirim ekler ("font definitions are malformed and ignored, as on Java").
+- Bir proxy ağının özel bloklarının tek bir kayıt olduğu, her sunucunun paketinin ise yalnızca kendi durumlarını çizdiği
+  belgelendi: başka bir sunucunun bloğa çevirdiği bir durum, paketinde bulunmayan sunucuda eksik doku küpü ya da
+  görünmez blok olarak görünür (wiki, Özel bloklar bölümüne bakın).
 
 #### 1.0.1-pre.3 - 2026-11-27
 

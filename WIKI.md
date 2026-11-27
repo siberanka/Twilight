@@ -720,6 +720,12 @@ CraftEngine's blocks are note block, mushroom block or tripwire states whose mod
 - Block names follow the Java state, so a proxy network's single Geyser registry gives a state the same Bedrock
   block on every backend and each server's pack draws it its own way. Where two servers give a state a
   different shape, the first server's shape is used and the proxy log says so.
+- The registry is shared, the packs are not: a state that one server's content plugin turns into a block is a
+  custom block for every Bedrock player of the proxy, but a server's pack only draws the states its own plugin
+  defines. On a server whose pack lacks such a state (a natural huge mushroom, a sugar cane of age 1 to 7 or a
+  sapling in stage 1 where another server's ItemsAdder or CraftEngine put a block), Bedrock shows its
+  missing-texture cube or an invisible block, where Java shows the vanilla block. Keep the servers of a network on
+  the same custom block states, or set `bedrock.custom-blocks: false` on the proxy when they cannot agree.
 - Geyser registers blocks when it starts. twilight-proxy subscribes in the proxy's plugin load phase, so this
   also works on BungeeCord forks that start Geyser before enabling other plugins (FlameCord). After a build that changes blocks, the log and admins are told to
   restart (`restart-for-item-changes` and twilight-proxy's `item-mappings.restart` apply).
@@ -1827,6 +1833,12 @@ bloğu veya tuzak teli durumlarıdır. Dönüştürülmezlerse Bedrock vanilla n
 - Blok adları Java durumunu izler; böylece proxy'li bir ağın tek Geyser kaydı bir duruma her arka uçta aynı Bedrock
   bloğunu verir ve her sunucunun paketi onu kendi şekilde çizer. İki sunucu bir duruma farklı şekil verdiğinde ilk
   sunucunun şekli kullanılır ve proxy günlüğü bunu söyler.
+- Kayıt ortaktır, paketler ortak değildir: bir sunucunun içerik eklentisinin bloğa çevirdiği bir durum, proxy'nin her
+  Bedrock oyuncusu için özel bloktur; ama bir sunucunun paketi yalnızca kendi eklentisinin tanımladığı durumları çizer.
+  Paketinde böyle bir durum olmayan sunucuda (başka bir sunucunun ItemsAdder'ı veya CraftEngine'inin blok koyduğu
+  doğal dev mantar, 1 ile 7 arası yaşta şeker kamışı ya da 1. evrede fidan) Bedrock eksik doku küpünü ya da görünmez
+  bir blok gösterir; Java ise sade bloğu gösterir. Bir ağın sunucularını aynı özel blok durumlarında tutun;
+  anlaşamıyorlarsa proxy'de `bedrock.custom-blocks: false` yapın.
 - Geyser blokları açılışta kaydeder. twilight-proxy proxy'nin eklenti yükleme aşamasında abone olur; böylece
   Geyser'ı diğer eklentileri etkinleştirmeden önce başlatan BungeeCord türevlerinde (FlameCord) de çalışır. Blokları değiştiren bir derlemeden sonra günlük ve yöneticiler yeniden
   başlatmaları için bilgilendirilir (`restart-for-item-changes` ve twilight-proxy'nin `item-mappings.restart`
