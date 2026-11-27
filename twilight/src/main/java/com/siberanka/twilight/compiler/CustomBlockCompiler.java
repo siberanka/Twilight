@@ -99,6 +99,13 @@ final class CustomBlockCompiler {
     private final Map<String, byte[]> packFiles;
     private final List<String> notices;
     private final JsonObject terrain = new JsonObject();
+    private Map<String, Integer> lights = Map.of();
+
+    /** Light levels (1..15) of Java block states, from the content plugin's settings; the pack carries them to Geyser. */
+    CustomBlockCompiler withLights(Map<String, Integer> lights) {
+        this.lights = lights == null ? Map.of() : lights;
+        return this;
+    }
 
     CustomBlockCompiler(ResourceIndex resources, JavaModelResolver resolver, VanillaAssetCache vanilla,
                         boolean vanillaOverride, Map<String, byte[]> packFiles, List<String> notices) {
@@ -359,6 +366,8 @@ final class CustomBlockCompiler {
         entry.add("materials", materials);
         if (variant.x() != 0 || variant.y() != 0) entry.add("rotation", BedrockPackCompiler.intArray(variant.x(), variant.y()));
         shape(block, properties, entry);
+        int light = lights.getOrDefault(javaState, 0);
+        if (light > 0) entry.addProperty("light", Math.min(light, 15));
         return entry;
     }
 

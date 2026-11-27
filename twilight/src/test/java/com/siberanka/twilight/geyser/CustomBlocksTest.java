@@ -42,6 +42,21 @@ final class CustomBlocksTest {
         assertTrue(CustomBlocks.read(List.of()).blocks().isEmpty());
     }
 
+    /** The light a content plugin gives a block reaches Geyser's custom block; unlit blocks keep Bedrock's default. */
+    @Test
+    void lightReachesTheBedrockBlock() {
+        JsonObject lit = JsonParser.parseString(RUBY).getAsJsonObject();
+        assertEquals(0, CustomBlocks.light(lit));
+        lit.addProperty("light", 8);
+        assertEquals(8, CustomBlocks.light(lit));
+        lit.addProperty("light", 40);
+        assertEquals(15, CustomBlocks.light(lit));
+        lit.addProperty("light", -3);
+        assertEquals(0, CustomBlocks.light(lit));
+        lit.addProperty("light", "bright");
+        assertEquals(0, CustomBlocks.light(lit));
+    }
+
     /** Pack content is untrusted on a proxy: malformed entries are skipped, never registered with Geyser. */
     @Test
     void rejectsMalformedEntries() {

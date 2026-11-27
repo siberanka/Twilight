@@ -486,6 +486,7 @@ public final class TwilightPlugin extends JavaPlugin {
         Set<Path> runtimeWorlds = Bukkit.getWorlds().stream().map(World::getWorldFolder).map(java.io.File::toPath)
                 .collect(Collectors.toUnmodifiableSet());
         BukkitItemCollector.CollectionResult runtimeCollection = collectRuntimeItems();
+        java.util.Map<String, Integer> blockLights = collectBlockLights();
         if (skipUnchanged && buildRequested && config.strict() && !runtimeCollection.issues().isEmpty()
                 && java.nio.file.Files.isRegularFile(servedPack())) {
             // An automatic build can come before a provider has loaded its items (ItemsAdder answers with errors
@@ -547,6 +548,7 @@ public final class TwilightPlugin extends JavaPlugin {
                         + "|own=" + Integer.toHexString(new java.util.TreeSet<>(shownOwn).hashCode())
                         + "|heads=" + Integer.toHexString(java.util.Objects.hash(headSkins, headNames)) + "|pocket=" + pocketContainerLayout()
                         + "|blocks=" + getConfig().getBoolean("geyser.custom-blocks", true)
+                        + "|lights=" + Integer.toHexString(new java.util.TreeMap<>(blockLights).hashCode())
                         + "|cell=" + getConfig().getInt("ui.max-glyph-cell", 512);
                 operationLog.info("input-fingerprint", inputFingerprint);
                 ContentReport report = new ContentInspector(config).inspect(sources);
@@ -573,7 +575,7 @@ public final class TwilightPlugin extends JavaPlugin {
                                 .withElytraOverride(getConfig().getBoolean("geyser.elytra-override", false)).withElytraPerPlayer(getConfig().getBoolean("geyser.elytra-per-player", false))
                                 .withMaxGlyphCell(getConfig().getInt("ui.max-glyph-cell", 512))
                                 .withPocketContainerLayout(pocketContainerLayout())
-                                .withCustomBlocks(getConfig().getBoolean("geyser.custom-blocks", true))
+                                .withCustomBlocks(getConfig().getBoolean("geyser.custom-blocks", true)).withBlockLights(blockLights)
                                 .build(sources, liveItems);
                     } catch (ConversionException rejected) {
                         if (!firstPack) throw rejected;
@@ -589,7 +591,7 @@ public final class TwilightPlugin extends JavaPlugin {
                                 .withElytraOverride(getConfig().getBoolean("geyser.elytra-override", false)).withElytraPerPlayer(getConfig().getBoolean("geyser.elytra-per-player", false))
                                 .withMaxGlyphCell(getConfig().getInt("ui.max-glyph-cell", 512))
                                 .withPocketContainerLayout(pocketContainerLayout())
-                                .withCustomBlocks(getConfig().getBoolean("geyser.custom-blocks", true))
+                                .withCustomBlocks(getConfig().getBoolean("geyser.custom-blocks", true)).withBlockLights(blockLights)
                                 .build(sources, liveItems);
                     }
                 }
@@ -1208,6 +1210,15 @@ public final class TwilightPlugin extends JavaPlugin {
             getLogger().log(Level.WARNING, "Runtime items could not be read; this build uses the packs only", failure);
             return new BukkitItemCollector.CollectionResult(List.of(), List.of(),
                     List.of("runtime items could not be read: " + rootMessage(failure)));
+        }
+    }
+
+    /** Light levels of the content plugins' custom blocks; cosmetic, so a failure only means no glow on Bedrock. */
+    private java.util.Map<String, Integer> collectBlockLights() {
+        try {
+            return com.siberanka.twilight.source.BlockLights.collect();
+        } catch (RuntimeException | LinkageError failure) {
+            return java.util.Map.of();
         }
     }
 

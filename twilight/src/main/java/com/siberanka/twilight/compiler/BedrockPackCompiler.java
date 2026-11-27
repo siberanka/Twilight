@@ -162,6 +162,13 @@ public final class BedrockPackCompiler {
     }
     private boolean pocketJavaLayout = true;
     private boolean customBlocks = true;
+    private Map<String, Integer> blockLights = Map.of();
+
+    /** Light levels of custom block states (Java state string to 1..15) that Bedrock's custom blocks emit. */
+    public BedrockPackCompiler withBlockLights(Map<String, Integer> lights) {
+        this.blockLights = lights == null ? Map.of() : Map.copyOf(lights);
+        return this;
+    }
 
     /** {@code geyser.custom-blocks}: convert content plugins' custom blocks (note blocks, mushroom blocks, tripwire). */
     public BedrockPackCompiler withCustomBlocks(boolean value) {
@@ -410,7 +417,7 @@ public final class BedrockPackCompiler {
         if (customBlocks) {
             try {
                 blocks = new CustomBlockCompiler(resources, resolver, vanillaAssets, config.vanillaOverride(), packFiles, notices)
-                        .compile(itemModels);
+                        .withLights(blockLights).compile(itemModels);
             } catch (IOException | RuntimeException failure) {
                 problems.add("custom blocks: " + failure.getMessage());
             }

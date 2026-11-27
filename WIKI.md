@@ -711,6 +711,9 @@ CraftEngine's blocks are note block, mushroom block or tripwire states whose mod
 - The item that places a block (an item drawn with the same shape and art) shows the block in 3D in the
   inventory and when dropped, as on Java.
 - Breaking, drops and placement stay Java's: the server decides them.
+- Light: CraftEngine's `luminance` (a server setting, not part of the pack) is read when a build starts and the
+  Bedrock block gives off the same light (0 to 15), so lit lamps and coils light their surroundings on Bedrock too.
+  Other content plugins' block light is not read.
 - Block names follow the Java state, so a proxy network's single Geyser registry gives a state the same Bedrock
   block on every backend and each server's pack draws it its own way. Where two servers give a state a
   different shape, the first server's shape is used and the proxy log says so.
@@ -718,7 +721,7 @@ CraftEngine's blocks are note block, mushroom block or tripwire states whose mod
   also works on BungeeCord forks that start Geyser before enabling other plugins (FlameCord). After a build that changes blocks, the log and admins are told to
   restart (`restart-for-item-changes` and twilight-proxy's `item-mappings.restart` apply).
 - Not converted: multipart blockstates, chorus plants and blocks other than note blocks, mushroom blocks and
-  tripwire; block light from content plugins (they place light blocks themselves); animated block textures
+  tripwire; block light of content plugins other than CraftEngine; animated block textures
   show their first frame. Shapes that reach past Bedrock's block bounds (2 pixels less than Java on each side)
   are pulled in.
 
@@ -1810,6 +1813,9 @@ bloğu veya tuzak teli durumlarıdır. Dönüştürülmezlerse Bedrock vanilla n
 - Bir bloğu yerleştiren eşya (aynı şekil ve görselle çizilen eşya), Java'daki gibi bloğu envanterde ve yere
   düştüğünde 3B gösterir.
 - Kırma, düşen eşyalar ve yerleştirme Java'nın olarak kalır: bunlara sunucu karar verir.
+- Işık: CraftEngine'in `luminance` ayarı (sunucu ayarıdır, paketin parçası değildir) derleme başlarken okunur ve
+  Bedrock bloğu aynı ışığı (0 ile 15) yayar; böylece yanan lambalar ve bobinler Bedrock'ta da çevresini aydınlatır.
+  Diğer içerik eklentilerinin blok ışığı okunmaz.
 - Blok adları Java durumunu izler; böylece proxy'li bir ağın tek Geyser kaydı bir duruma her arka uçta aynı Bedrock
   bloğunu verir ve her sunucunun paketi onu kendi şekilde çizer. İki sunucu bir duruma farklı şekil verdiğinde ilk
   sunucunun şekli kullanılır ve proxy günlüğü bunu söyler.
@@ -1818,7 +1824,7 @@ bloğu veya tuzak teli durumlarıdır. Dönüştürülmezlerse Bedrock vanilla n
   başlatmaları için bilgilendirilir (`restart-for-item-changes` ve twilight-proxy'nin `item-mappings.restart`
   ayarı geçerlidir).
 - Dönüştürülmeyenler: multipart blok durumları, chorus bitkileri ve nota bloğu, mantar bloğu ve tuzak teli dışındaki
-  bloklar; içerik eklentilerinin blok ışığı (ışık bloklarını kendileri yerleştirir); animasyonlu blok dokuları ilk
+  bloklar; CraftEngine dışındaki içerik eklentilerinin blok ışığı; animasyonlu blok dokuları ilk
   karelerini gösterir. Bedrock'un blok sınırlarını aşan şekiller (Java'dan her yanda 2 piksel daha az) içeri çekilir.
 
 Derleme raporu bunları sayar (`custom_blocks`, `block_items`); sunucu veya proxy günlüğü "Registered N

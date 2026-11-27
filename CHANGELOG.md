@@ -4,6 +4,13 @@
 
 All notable changes in Twilight are documented here.
 
+## 1.0.1-pre.3 (unreleased)
+
+- Lit CraftEngine blocks (lamps, the lit copper coil) give off their light on Bedrock. CraftEngine keeps the
+  `luminance` of a block in its server settings, not in the resource pack, so Twilight reads it from CraftEngine
+  when a build starts and the Bedrock block emits the same light level. Needs a Geyser restart after the build
+  that adds the light, like other block changes. Other content plugins' block light is not read.
+
 ## 1.0.1-pre.2 - 2026-11-27
 
 - Invisible item frames: furniture and 3D items in frames facing north are drawn again, and frames facing east,
@@ -181,6 +188,13 @@ First public beta of Twilight and twilight-proxy.
 ### Değişiklik günlüğü
 
 Twilight'taki tüm önemli değişiklikler burada belgelenir.
+
+#### 1.0.1-pre.3 (yayınlanmadı)
+
+- Yanan CraftEngine blokları (lambalar, yanan bakır bobin) Bedrock'ta ışık yayar. CraftEngine bir bloğun
+  `luminance` değerini kaynak paketinde değil sunucu ayarlarında tutar; Twilight bunu derleme başlarken
+  CraftEngine'den okur ve Bedrock bloğu aynı ışık seviyesini yayar. Işığı ekleyen derlemeden sonra, diğer blok
+  değişiklikleri gibi Geyser'ın yeniden başlatılması gerekir. Diğer içerik eklentilerinin blok ışığı okunmaz.
 
 #### 1.0.1-pre.2 - 2026-11-27
 

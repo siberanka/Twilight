@@ -242,6 +242,9 @@ public final class CustomBlocks implements AutoCloseable {
         // Java decides how long breaking takes; Geyser drives it, as for its own custom blocks.
         components.destructibleByMining(Float.MAX_VALUE);
         if (!opaqueCube) components.lightDampening(0);
+        // The light the content plugin gives the block (its server setting; Java's client draws it the same way).
+        int light = light(block);
+        if (light > 0) components.lightEmission(light);
         if (block.has("rotation")) {
             JsonArray rotation = block.getAsJsonArray("rotation");
             components.transformation(new TransformationComponent(bedrockRotation(rotation.get(0).getAsInt()),
@@ -252,6 +255,15 @@ public final class CustomBlocks implements AutoCloseable {
                 .includedInCreativeInventory(false)
                 .components(components.build())
                 .build();
+    }
+
+    /** The light the block emits, 0 to 15 (a pack is untrusted on a proxy). */
+    static int light(JsonObject block) {
+        try {
+            return block.has("light") ? Math.clamp(block.get("light").getAsInt(), 0, 15) : 0;
+        } catch (RuntimeException invalid) {
+            return 0;
+        }
     }
 
     private static boolean flag(JsonObject value, String key) {

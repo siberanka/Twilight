@@ -391,6 +391,20 @@ class BedrockPackCompilerTest {
         try (ZipFile zip = new ZipFile(without.outputDirectory().resolve("pack.zip").toFile())) {
             assertNull(zip.getEntry("twilight/geyser_blocks.json"));
         }
+        // A content plugin's block light (not in the pack) reaches the block list, only for lit states.
+        BuildResult lit = new BedrockPackCompiler(root.resolve("data-lit"), config())
+                .withBlockLights(java.util.Map.of("minecraft:note_block[instrument=basedrum,note=4,powered=false]", 8,
+                        "minecraft:note_block[instrument=snare,note=1,powered=false]", 99))
+                .build(List.of(pack), List.of());
+        try (ZipFile zip = new ZipFile(lit.outputDirectory().resolve("pack.zip").toFile())) {
+            JsonObject file = JsonParser.parseString(new String(zip.getInputStream(zip.getEntry("twilight/geyser_blocks.json"))
+                    .readAllBytes(), StandardCharsets.UTF_8)).getAsJsonObject();
+            java.util.Map<String, JsonObject> byState = new java.util.LinkedHashMap<>();
+            for (var block : file.getAsJsonArray("blocks")) byState.put(block.getAsJsonObject().get("state").getAsString(), block.getAsJsonObject());
+            assertEquals(8, byState.get("minecraft:note_block[instrument=basedrum,note=4,powered=false]").get("light").getAsInt());
+            assertEquals(15, byState.get("minecraft:note_block[instrument=snare,note=1,powered=false]").get("light").getAsInt());
+            assertFalse(byState.get("minecraft:note_block[instrument=basedrum,note=3,powered=false]").has("light"));
+        }
     }
 
     /**
