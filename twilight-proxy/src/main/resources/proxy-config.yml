@@ -162,3 +162,23 @@ update-check:
   enabled: true
   # Tell those players when they join and when a version is found.
   notify-players: true
+
+# Other Bedrock content tools can show what Twilight shows (GeyserModelEngine draws ModelEngine and BetterModel
+# models, GeyserDisplayEntity and ScaffoldingExtension draw display entities) or send their own packs and mappings
+# to the proxy's Geyser. auto = twilight-proxy detects them at start (extensions in Geyser's folder) and resolves
+# each conflict so every model shows once; each finding is logged once with the setting that changes it, and
+# /twilightproxy diagnose lists them. Model and display decisions apply on restart.
+integrations:
+  conflicts:
+    mode: auto
+    # Who shows ModelEngine and BetterModel models: auto (Twilight leaves them to the GeyserModelEngine extension
+    # when it is installed), twilight (always Twilight; remove GeyserModelEngine) or other (never Twilight).
+    model-bones: auto
+    # Who registers Geyser's item and block display entities: auto (Twilight stays off when GeyserDisplayEntity or
+    # ScaffoldingExtension is installed), twilight or other.
+    display-entities: auto
+    # Other tools' mapping files in Geyser's custom_mappings that map what Twilight maps: report (log, change
+    # nothing), retire (move them to plugins/twilight-proxy/retired/ before Geyser reads them) or off.
+    foreign-mappings: report
+    # Notices logged per check; the rest is summed up in one line (1-100).
+    max-notices: 10

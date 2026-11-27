@@ -72,6 +72,7 @@ public final class BungeePlugin extends Plugin implements Listener {
                 String result = args.length > 0 && args[0].equalsIgnoreCase("reload")
                         ? (created.reload() ? "twilight-proxy reloaded." : "Reload failed; see the console.")
                         : args.length > 0 && args[0].equalsIgnoreCase("network") ? created.networkText()
+                            : args.length > 0 && args[0].equalsIgnoreCase("diagnose") ? created.diagnoseText()
                         : created.statusText();
                 sender.sendMessage(new TextComponent(result));
             }

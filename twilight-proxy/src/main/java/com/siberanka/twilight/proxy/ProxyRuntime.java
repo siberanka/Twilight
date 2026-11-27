@@ -48,6 +48,7 @@ final class ProxyRuntime implements AutoCloseable {
     private volatile com.siberanka.twilight.network.NetworkSettings networkSettings =
             com.siberanka.twilight.network.NetworkSettings.DEFAULTS;
     private volatile com.siberanka.twilight.network.BedrockNetwork network;
+    volatile com.siberanka.twilight.conflicts.Conflicts.Assessment assessment = com.siberanka.twilight.conflicts.Conflicts.Assessment.NONE;
 
     private ProxyRuntime(GeyserTextLayoutBridge text, GeyserLanguageBridge language, LoadingGuard guard) {
         this.text = text;
@@ -116,7 +117,13 @@ final class ProxyRuntime implements AutoCloseable {
         } catch (RuntimeException | LinkageError failure) {
             platform.warn("Player head skins are unavailable for this Geyser build; Bedrock shows Steve's head.", failure);
         }
-        if (config.itemDisplays()) {
+        var decision = ProxyConflicts.assess(platform.dataDirectory(), platform, config.conflicts());
+        runtime.assessment = decision;
+        for (var finding : decision.findings()) {
+            if (finding.level() == com.siberanka.twilight.conflicts.Conflicts.Level.WARN) platform.warn("Conflict: " + finding.text(), null);
+            else platform.info("Conflict resolved: " + finding.text());
+        }
+        if (config.itemDisplays() && decision.registerDisplays()) {
             try {
                 SessionDisplays variants = new SessionDisplays(packOf);
                 runtime.sessionDisplays = variants;
@@ -124,7 +131,7 @@ final class ProxyRuntime implements AutoCloseable {
                     earlyDisplays.variants = variants;
                     runtime.displays = earlyDisplays.bridge;
                 } else {
-                    runtime.displays = new GeyserDisplayBridge(owner, variants, logger, true);
+                    runtime.displays = new GeyserDisplayBridge(owner, variants, logger, true).modelBones(decision.showModelBones());
                 }
                 DisplaySightings sightings = runtime.sightings;
                 runtime.displays.onUnshown((session, keys) -> {
@@ -175,6 +182,31 @@ final class ProxyRuntime implements AutoCloseable {
     }
 
     /** Whether Java item displays are shown: Geyser registered the display entity with this runtime. */
+    /** The runtime layers and whether each runs (the capability probe of {@code /twilightproxy diagnose}). */
+    java.util.List<com.siberanka.twilight.conflicts.Diagnostics.Layer> layers() {
+        var layers = new java.util.ArrayList<com.siberanka.twilight.conflicts.Diagnostics.Layer>();
+        layers.add(layer("item-display bridge (furniture, model bones)", showsItemDisplays(), "item/block displays show with the servers' models",
+                !assessment.registerDisplays() ? "another extension owns display entities (integrations.conflicts.display-entities)"
+                        : "off (bedrock.item-displays) or unavailable for this Geyser build"));
+        layers.add(layer("model bones (ModelEngine, BetterModel)", showsItemDisplays() && assessment.showModelBones(),
+                "shown through the item-display bridge", !assessment.showModelBones()
+                        ? "GeyserModelEngine renders them (integrations.conflicts.model-bones)" : "needs the item-display bridge"));
+        layers.add(layer("Java text layout", text != null, "custom font glyphs and menu titles", "off (bedrock.text-layout) or unavailable"));
+        layers.add(layer("resource-pack translations", language != null, "Java language files for Bedrock", "off (bedrock.translations) or unavailable"));
+        layers.add(layer("loading protection", guard != null, "keeps clients alive while packs load", "unavailable for this Geyser build"));
+        layers.add(layer("custom blocks", blocks != null, "note block / tripwire / mushroom blocks", "off (bedrock.custom-blocks) or unavailable"));
+        layers.add(layer("player head skins", skulls != null, "custom skulls", "off (bedrock.player-heads) or unavailable"));
+        layers.add(layer("rider name rule", riderNames != null, "ridden mobs show no name", "unavailable for this Geyser build"));
+        layers.add(layer("custom elytras on other players", wornElytra != null, "Java elytra models", "unavailable for this Geyser build"));
+        layers.add(layer("Bedrock network layer", network != null, "held-back updates, per-connection limits", "off (bedrock-network.enabled) or unavailable"));
+        return layers;
+    }
+
+    private static com.siberanka.twilight.conflicts.Diagnostics.Layer layer(String name, boolean active, String detail, String whyNot) {
+        return active ? com.siberanka.twilight.conflicts.Diagnostics.Layer.on(name, detail)
+                : com.siberanka.twilight.conflicts.Diagnostics.Layer.off(name, whyNot);
+    }
+
     boolean showsItemDisplays() {
         GeyserDisplayBridge bridge = displays;
         return bridge != null && bridge.registered();

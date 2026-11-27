@@ -52,6 +52,12 @@ public final class ProxyFeatures {
         return new ProxyFeatures(file, flags, confirmed);
     }
 
+    /** The version code twilight-proxy announced (see PackChannel#withVersion); 0 when unknown or older than 1.0.2. */
+    public int proxyVersionCode(long now) {
+        long age = now - confirmed;
+        return age >= 0 && age <= MAX_AGE_MILLIS ? PackChannel.versionOf(flags) : 0;
+    }
+
     /** Whether the proxy shows Java item displays with the pack's models (and so wants them built). */
     public boolean itemDisplays(long now) {
         return has(PackChannel.ITEM_DISPLAYS, now);
