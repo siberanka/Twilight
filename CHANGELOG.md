@@ -6,6 +6,10 @@ All notable changes in Twilight are documented here.
 
 ## 1.0.1-pre.3 (unreleased)
 
+- `geyser.elytra-per-player` also works with Geyser on the proxy: twilight-proxy reads the wings table of the pack
+  each Bedrock player loaded, so every backend keeps its own elytras. Set the option on the backends; the proxy
+  needs no setting. A player who switches servers without a transfer keeps the first server's wings table until
+  rejoining.
 - Custom bows and crossbows with a single model (no pull states) now move in first person while drawn on Bedrock,
   like Java: the weapon swings to the middle of the view with Java's own drawing pose, combined with the model's
   `firstperson_righthand` transform. Weapons with pull states and vanilla-looking ones are unchanged. The slight
@@ -36,9 +40,8 @@ All notable changes in Twilight are documented here.
   seated.
 - New experimental option `geyser.elytra-per-player` (default `false`): a Bedrock player also sees their own
   custom elytra, standing and gliding, and vanilla elytras stay vanilla. It takes precedence over
-  `elytra-override`, works with Geyser on the backend server and, through twilight-proxy, with Geyser on the proxy (each Bedrock
-  session uses the wings table of the pack it loaded), and needs a Geyser restart after the first build with
-  custom elytras.
+  `elytra-override`, works with Geyser on the backend server (not yet on the proxy) and needs a Geyser restart
+  after the first build with custom elytras.
 - Identical content always builds a byte-identical pack across restarts (the texture order of multi-texture block
   models depended on the JVM run), so Bedrock players are not asked to download an unchanged pack again.
 
@@ -195,6 +198,10 @@ Twilight'taki tüm önemli değişiklikler burada belgelenir.
 
 #### 1.0.1-pre.3 (yayınlanmadı)
 
+- `geyser.elytra-per-player` proxy'deki Geyser ile de çalışır: twilight-proxy her Bedrock oyuncusunun yüklediği
+  paketin kanat tablosunu okur, böylece her arka uç kendi elytralarını korur. Seçeneği arka uçlarda açın; proxy'de
+  ayar gerekmez. Transfer olmadan sunucu değiştiren oyuncu, yeniden katılana kadar ilk sunucunun kanat tablosunu
+  kullanır.
 - Tek modelli (çekme durumu olmayan) özel yaylar ve tatar yayları Bedrock'ta çekilirken birinci şahıs görünümde
   artık Java gibi hareket eder: silah, Java'nın kendi çekme duruşuyla ve modelin `firstperson_righthand`
   dönüşümüyle birleştirilerek görüşün ortasına gelir. Çekme durumlu ve vanilla görünümlü silahlar değişmedi.
@@ -228,9 +235,8 @@ Twilight'taki tüm önemli değişiklikler burada belgelenir.
   varlıklar oturmaya devam eder.
 - Yeni deneysel `geyser.elytra-per-player` seçeneği (varsayılan `false`): Bedrock oyuncusu kendi özel elytrasını da
   dururken ve süzülürken görür, vanilla elytralar vanilla kalır. `elytra-override` üzerinde önceliklidir, arka uç
-  sunucudaki Geyser ile ve twilight-proxy aracılığıyla proxy'deki Geyser ile çalışır (her Bedrock oturumu yüklediği
-  paketin kanat tablosunu kullanır) ve özel elytra içeren ilk derlemeden sonra Geyser'ın yeniden başlatılmasını
-  gerektirir.
+  sunucudaki Geyser ile çalışır (proxy'de henüz değil) ve özel elytra içeren ilk derlemeden sonra Geyser'ın
+  yeniden başlatılmasını gerektirir.
 - Aynı içerik yeniden başlatmalarda her zaman bayt bayt aynı paketi derler (çok dokulu blok modellerinin doku
   sırası JVM çalıştırmasına bağlıydı); Bedrock oyuncularından değişmemiş paketi yeniden indirmeleri istenmez.
 
