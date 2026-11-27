@@ -255,10 +255,12 @@ integrations:
     # /twilight diagnose report still lists the running layers). Model and display decisions apply on restart.
     mode: auto
     # Who shows ModelEngine and BetterModel models (their bones) on Bedrock.
-    #   auto     = Twilight leaves them to the GeyserModelEngine extension when it is installed, and shows them
-    #              through its item-display bridge otherwise.
-    #   twilight = Twilight always shows them (remove GeyserModelEngine, or players see every model twice).
-    #   other    = Twilight never shows them.
+    #   auto     = Twilight shows them through its item-display bridge; when a GeyserModelEngine extension is
+    #              installed too, players may see models twice and one warning at every start says how to fix it
+    #              (remove GeyserModelEngine, its extension and GeyserUtils). GeyserModelEngine can draw nothing for
+    #              a model, so Twilight does not yield by default.
+    #   twilight = the same as an explicit choice (the warning has no removal hint).
+    #   other    = Twilight never shows them (for GeyserModelEngine users).
     model-bones: auto
     # Who registers Geyser's item and block display entities (furniture, model bones).
     #   auto     = Twilight's display bridge stays off when GeyserDisplayEntity or ScaffoldingExtension is

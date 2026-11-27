@@ -8,7 +8,7 @@ import java.util.Locale;
 
 /** Who renders one kind of Bedrock content when Twilight and another tool both could. */
 public enum Owner {
-    /** Twilight yields to a specialised renderer that is installed, and renders itself otherwise. */
+    /** The default: ModelEngine/BetterModel models are drawn by Twilight (with a warning when another extension draws them); display entities are left to an installed display extension. */
     AUTO,
     /** Twilight always renders; the other tool should be removed. */
     TWILIGHT,

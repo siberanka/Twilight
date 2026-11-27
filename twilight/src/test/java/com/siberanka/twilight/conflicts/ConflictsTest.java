@@ -34,15 +34,27 @@ final class ConflictsTest {
     }
 
     @Test
-    void autoLeavesModelBonesToGeyserModelEngineAndSaysSo() {
+    void autoKeepsDrawingModelsAndWarnsWithTheFix() {
         Assessment assessment = Conflicts.assess(backend(Set.of("GeyserModelEngine", "GeyserUtils", "ModelEngine"),
                 Set.of("GeyserModelEngineExtension", "geysermodelengineextension", "geyserutils")), ConflictSettings.DEFAULTS);
-        assertFalse(assessment.showModelBones(), "one owner per model: GeyserModelEngine");
+        assertTrue(assessment.showModelBones(), "GeyserModelEngine may draw nothing for a model: Twilight keeps drawing");
         assertTrue(assessment.registerDisplays(), "furniture displays are not affected");
         Finding finding = find(assessment, "model-bones");
         assertNotNull(finding);
+        assertEquals(Level.WARN, finding.level());
+        assertTrue(finding.summary().contains("GeyserModelEngine is installed: Bedrock players may see models twice"));
+        assertTrue(finding.fix().contains("docs/MIGRATION.md") && finding.fix().contains("model-bones: other"), "names the removal and the setting");
+    }
+
+    @Test
+    void otherLeavesModelBonesToGeyserModelEngine() {
+        var settings = new ConflictSettings(true, Owner.OTHER, Owner.AUTO, ConflictSettings.Foreign.REPORT, 10);
+        Assessment assessment = Conflicts.assess(backend(Set.of("GeyserModelEngine", "GeyserUtils"),
+                Set.of("geysermodelengineextension")), settings);
+        assertFalse(assessment.showModelBones(), "one owner per model: GeyserModelEngine");
+        Finding finding = find(assessment, "model-bones");
         assertEquals(Level.INFO, finding.level());
-        assertTrue(finding.text().contains("integrations.conflicts.model-bones"), "names the setting that changes it");
+        assertTrue(finding.text().contains("model-bones"));
     }
 
     @Test
@@ -54,6 +66,7 @@ final class ConflictsTest {
         Finding finding = find(assessment, "model-bones");
         assertEquals(Level.WARN, finding.level());
         assertTrue(finding.summary().contains("twice"));
+        assertFalse(finding.text().contains("MIGRATION"), "an explicit choice gets no removal hint");
     }
 
     @Test
@@ -117,9 +130,11 @@ final class ConflictsTest {
     }
 
     @Test
-    void proxyWithTheExtensionYieldsToo() {
+    void proxyWithTheExtensionKeepsDrawingByDefaultAndYieldsOnOther() {
         var env = new Environment(true, "Velocity", Set.of("geyserutils"), Set.of("geysermodelengineextension"), true, "Geyser", false, 0, false);
-        assertFalse(Conflicts.assess(env, ConflictSettings.DEFAULTS).showModelBones());
+        assertTrue(Conflicts.assess(env, ConflictSettings.DEFAULTS).showModelBones());
+        var other = new ConflictSettings(true, Owner.OTHER, Owner.AUTO, ConflictSettings.Foreign.REPORT, 10);
+        assertFalse(Conflicts.assess(env, other).showModelBones());
     }
 
     @Test

@@ -756,7 +756,7 @@ Signals Twilight reads: the plugins of the server or proxy, the extensions in Ge
 
 | Found | Why it conflicts | What Twilight does by default |
 |---|---|---|
-| GeyserModelEngineExtension (with GeyserModelEngine and GeyserUtils) | It draws ModelEngine/BetterModel mobs as Bedrock entities; Twilight's item-display bridge draws the same models: two models | Twilight shows no ModelEngine/BetterModel bones (and builds none into the pack); `model-bones: twilight` forces both and logs a warning at every start |
+| GeyserModelEngineExtension (with GeyserModelEngine and GeyserUtils) | It draws ModelEngine/BetterModel mobs as Bedrock entities; Twilight's item-display bridge draws the same models: players may see models twice. It can also draw nothing for a model (a model that was not exported for it, or a ModelEngine version it does not support), so Twilight does not yield by default | Twilight keeps drawing and logs one warning at every start with the fix: remove GeyserModelEngine, its extension and GeyserUtils ([migration guide](docs/MIGRATION.md)), or set `model-bones: other` to leave models to it (Twilight then shows and builds no bones); `model-bones: twilight` is the explicit "Twilight draws" choice (warning without the removal hint) |
 | GeyserModelEngine plugin without its extension or GeyserUtils | It draws nothing | Warning; Twilight keeps showing the bones |
 | GeyserDisplayEntity, ScaffoldingExtension | Geyser lets one translator own `item_display`; whichever loads first wins | Twilight's display bridge stays off (`display-entities: twilight` makes it register anyway, with a warning) |
 | Mapping files in `custom_mappings/` (java2bedrock.sh, Rainbow, hand-written) that map the same Java item (custom model data or item model) as Twilight | Geyser keeps the mapping it reads first (name order) and drops the other; players may get the other tool's item | Warning once per file (first `max-notices`, then one summary line); `foreign-mappings: retire` moves them to `retired/` |
@@ -781,7 +781,7 @@ settings for the next check.
 | Key | Default | Meaning |
 |---|---|---|
 | `mode` | `auto` | `auto` detects and resolves; `off` does no detection (the layer report of `diagnose` still works) |
-| `model-bones` | `auto` | Who shows ModelEngine/BetterModel models: `auto` (Twilight yields to an installed GeyserModelEngine extension, otherwise shows them), `twilight` (always Twilight), `other` (never Twilight) |
+| `model-bones` | `auto` | Who shows ModelEngine/BetterModel models: `auto` (Twilight keeps drawing them and warns when a GeyserModelEngine extension is installed), `twilight` (the same, as an explicit choice: the warning has no removal hint), `other` (Twilight never draws them, for GeyserModelEngine users) |
 | `display-entities` | `auto` | Who registers Geyser's item and block display entities: `auto` (Twilight stays off when GeyserDisplayEntity or ScaffoldingExtension is installed), `twilight`, `other` |
 | `foreign-mappings` | `report` | Other tools' overlapping mapping files: `report` (log, change nothing), `retire` (move to `retired/<time>/` before Geyser reads them, never delete), `off` |
 | `max-notices` | `10` | Overlap notices per check (1-100); the rest is one summary line |
@@ -804,16 +804,16 @@ Sample (a backend with GeyserModelEngine installed and another tool's mapping fi
 [Twilight] Layers:
 [Twilight]   [on ] pack compiler - builds the Bedrock pack and Geyser mappings
 [Twilight]   [on ] item-display bridge (furniture, model bones) - item/block displays show with the pack's models
-[Twilight]   [off] model bones (ModelEngine, BetterModel) - GeyserModelEngine renders them (integrations.conflicts.model-bones)
+[Twilight]   [on ] model bones (ModelEngine, BetterModel) - shown through the item-display bridge
 [Twilight]   [off] pack hosting - off (pack-host.enabled: false) or Geyser absent
 [Twilight]   ... (the other layers)
-[Twilight] Conflict handling: auto (model-bones=auto, display-entities=auto, foreign-mappings=report); Twilight shows model bones: false, registers displays: true
+[Twilight] Conflict handling: auto (model-bones=auto, display-entities=auto, foreign-mappings=report); Twilight shows model bones: true, registers displays: true
 [Twilight] Findings:
-[Twilight]   [INFO] GeyserModelEngine renders ModelEngine/BetterModel models on Bedrock: Twilight's item-display bridge leaves their bones to it, so each model shows once. To use Twilight's display models instead, remove GeyserModelEngine and set integrations.conflicts.model-bones: twilight.
+[Twilight]   [WARN] GeyserModelEngine is installed: Bedrock players may see models twice (Twilight shows ModelEngine/BetterModel models too). Remove GeyserModelEngine, its Geyser extension and GeyserUtils (see docs/MIGRATION.md), or set integrations.conflicts.model-bones: other to leave models to it.
 [Twilight]   [WARN] custom_mappings/geyser_mappings.json maps 2 Java item selector(s) that Twilight maps too (for example minecraft:apple|cmd=10000, minecraft:apple|cmd=10001): Geyser keeps the one it reads first (files are read in name order) and logs "Not registering custom item definition" for the other, so Bedrock players may get the other tool's item instead of Twilight's. Remove the file, or set integrations.conflicts.foreign-mappings: retire to let Twilight move it out.
 ```
 
-With `model-bones: twilight` the start log carries `Conflict: GeyserModelEngine renders ModelEngine/BetterModel models on Bedrock, and Twilight is set to show them too ...: Bedrock players see every model twice.`; with `foreign-mappings: retire` it logs `Moved custom_mappings/geyser_mappings.json -> retired/<time>/custom_mappings/geyser_mappings.json: another tool's mapping file that overlapped Twilight's mappings.`
+With `model-bones: other` the start log says `Conflict resolved: GeyserModelEngine renders ModelEngine/BetterModel models on Bedrock (integrations.conflicts.model-bones: other): Twilight's item-display bridge leaves their bones to it ...` and the diagnose layer line reads `[off] model bones (ModelEngine, BetterModel) - GeyserModelEngine renders them`; with `foreign-mappings: retire` it logs `Moved custom_mappings/geyser_mappings.json -> retired/<time>/custom_mappings/geyser_mappings.json: another tool's mapping file that overlapped Twilight's mappings.`
 
 ## Pack hosting
 
@@ -1130,7 +1130,7 @@ the receiver's clock; messages larger than 30128 bytes are dropped unread.
 
 | Symptom | Check |
 |---|---|
-| Bedrock players see every ModelEngine or BetterModel model twice | GeyserModelEngine and Twilight both draw it: `/twilight diagnose`, then `integrations.conflicts.model-bones: auto` (the default) or remove GeyserModelEngine ([conflicts](#conflicts-with-other-bedrock-content-tools)) |
+| Bedrock players see every ModelEngine or BetterModel model twice | GeyserModelEngine and Twilight both draw it: `/twilight diagnose`. Remove GeyserModelEngine, its extension and GeyserUtils ([migration guide](docs/MIGRATION.md)), or set `integrations.conflicts.model-bones: other` to leave models to it ([conflicts](#conflicts-with-other-bedrock-content-tools)) |
 | Furniture or model bones are invisible although Twilight built them | `/twilight diagnose` shows "item-display bridge: off" with the reason: another display extension (GeyserDisplayEntity, ScaffoldingExtension) or `display-entities: other` |
 | Some custom items show another tool's icon | Mapping files of java2bedrock.sh, Rainbow or by hand map the same item: the log and `/twilight diagnose` name them ([migration guide](docs/MIGRATION.md)) |
 | Bedrock players get no pack | `/twilight status`; `plugins/Twilight/logs/`; `geyser.send-pack-to-bedrock` |
@@ -1954,7 +1954,7 @@ yere bir şey gönderilmez.
 
 | Bulunan | Neden çakışır | Twilight varsayılan olarak ne yapar |
 |---|---|---|
-| GeyserModelEngineExtension (GeyserModelEngine ve GeyserUtils ile) | ModelEngine/BetterModel moblarını Bedrock varlıkları olarak çizer; Twilight'ın eşya görüntüsü köprüsü aynı modelleri çizer: iki model | Twilight ModelEngine/BetterModel kemiklerini göstermez (pakete de koymaz); `model-bones: twilight` ikisini de zorlar ve her başlangıçta uyarı yazar |
+| GeyserModelEngineExtension (GeyserModelEngine ve GeyserUtils ile) | ModelEngine/BetterModel moblarını Bedrock varlıkları olarak çizer; Twilight'ın eşya görüntüsü köprüsü aynı modelleri çizer: oyuncular modelleri iki kez görebilir. Bir model için hiçbir şey çizmeyebilir de (ona göre dışa aktarılmamış model ya da desteklemediği ModelEngine sürümü); bu yüzden Twilight varsayılan olarak yol vermez | Twilight çizmeye devam eder ve her başlangıçta çözümle birlikte tek uyarı yazar: GeyserModelEngine'i, uzantısını ve GeyserUtils'i kaldırın ([geçiş rehberi](docs/MIGRATION.md)) ya da modelleri ona bırakmak için `model-bones: other` yapın (Twilight o zaman kemik göstermez ve derlemez); `model-bones: twilight` "Twilight çizer" seçiminin açık halidir (kaldırma ipucu olmayan uyarı) |
 | Uzantısı ya da GeyserUtils olmayan GeyserModelEngine eklentisi | Hiçbir şey çizmez | Uyarı; Twilight kemikleri göstermeye devam eder |
 | GeyserDisplayEntity, ScaffoldingExtension | Geyser `item_display` için tek çevirmene izin verir; önce yüklenen kazanır | Twilight'ın görüntü köprüsü kapalı kalır (`display-entities: twilight` yine de kaydettirir, uyarıyla) |
 | `custom_mappings/` içinde Twilight ile aynı Java eşyayı (özel model verisi ya da eşya modeli) eşleyen dosyalar (java2bedrock.sh, Rainbow, elle yazılmış) | Geyser önce okuduğu eşlemeyi tutar (ad sırası) ve ötekini atar; oyuncular öteki aracın eşyasını alabilir | Dosya başına bir kez uyarı (ilk `max-notices`, sonra tek özet satırı); `foreign-mappings: retire` onları `retired/` içine taşır |
@@ -1979,7 +1979,7 @@ varsayılanlarını korur. Model ve görüntü kararları başlangıçta verilir
 | Anahtar | Varsayılan | Anlamı |
 |---|---|---|
 | `mode` | `auto` | `auto` algılar ve çözer; `off` algılama yapmaz (`diagnose` katman raporu yine çalışır) |
-| `model-bones` | `auto` | ModelEngine/BetterModel modellerini kim gösterir: `auto` (kuruluysa GeyserModelEngine uzantısına bırakır, yoksa Twilight gösterir), `twilight` (hep Twilight), `other` (Twilight hiç) |
+| `model-bones` | `auto` | ModelEngine/BetterModel modellerini kim gösterir: `auto` (Twilight çizmeye devam eder; GeyserModelEngine uzantısı kuruluysa uyarır), `twilight` (aynısı, açık seçim olarak: uyarıda kaldırma ipucu yoktur), `other` (Twilight hiç çizmez; GeyserModelEngine kullanıcıları için) |
 | `display-entities` | `auto` | Geyser'ın eşya ve blok görüntü varlıklarını kim kaydeder: `auto` (GeyserDisplayEntity ya da ScaffoldingExtension kuruluysa Twilight kapalı kalır), `twilight`, `other` |
 | `foreign-mappings` | `report` | Diğer araçların çakışan eşleme dosyaları: `report` (günlüğe yaz, değiştirme), `retire` (Geyser okumadan önce `retired/<zaman>/` içine taşı, asla silme), `off` |
 | `max-notices` | `10` | Denetim başına çakışma bildirimi sayısı (1-100); kalanı tek özet satırıdır |
@@ -1992,7 +1992,7 @@ geçerli çakışma ayarlarını ve her bulguyu yazdırır, aynı satırları `r
 
 Örnek (GeyserModelEngine kurulu ve başka bir aracın eşleme dosyası olan bir arka uç; Leaf 1.21.11, Geyser 2.12): günlük satırları aynıdır (yukarıdaki İngilizce örneğe bakın; ileti metinleri İngilizcedir).
 
-`model-bones: twilight` ile başlangıç günlüğü `Conflict: GeyserModelEngine renders ModelEngine/BetterModel models on Bedrock, and Twilight is set to show them too ...: Bedrock players see every model twice.` satırını taşır; `foreign-mappings: retire` ile `Moved custom_mappings/geyser_mappings.json -> retired/<zaman>/custom_mappings/geyser_mappings.json: another tool's mapping file that overlapped Twilight's mappings.` yazar.
+`model-bones: other` ile başlangıç günlüğü `Conflict resolved: GeyserModelEngine renders ModelEngine/BetterModel models on Bedrock (integrations.conflicts.model-bones: other): Twilight's item-display bridge leaves their bones to it ...` der ve tanılama katman satırı `[off] model bones (ModelEngine, BetterModel) - GeyserModelEngine renders them` olur; `foreign-mappings: retire` ile `Moved custom_mappings/geyser_mappings.json -> retired/<zaman>/custom_mappings/geyser_mappings.json: another tool's mapping file that overlapped Twilight's mappings.` yazar.
 
 #### Paket sunucusu
 
@@ -2309,7 +2309,7 @@ içinde olmalıdır; 30128 bayttan büyük mesajlar okunmadan atılır.
 
 | Belirti | Denetim |
 |---|---|
-| Bedrock oyuncuları her ModelEngine ya da BetterModel modelini iki kez görüyor | GeyserModelEngine ve Twilight ikisi de çiziyor: `/twilight diagnose`, sonra `integrations.conflicts.model-bones: auto` (varsayılan) ya da GeyserModelEngine'i kaldırın ([çakışmalar](#diğer-bedrock-içerik-araçlarıyla-çakışmalar)) |
+| Bedrock oyuncuları her ModelEngine ya da BetterModel modelini iki kez görüyor | GeyserModelEngine ve Twilight ikisi de çiziyor: `/twilight diagnose`. GeyserModelEngine'i, uzantısını ve GeyserUtils'i kaldırın ([geçiş rehberi](docs/MIGRATION.md)) ya da modelleri ona bırakmak için `integrations.conflicts.model-bones: other` yapın ([çakışmalar](#diğer-bedrock-içerik-araçlarıyla-çakışmalar)) |
 | Twilight derlemiş olsa da mobilya ya da model kemikleri görünmüyor | `/twilight diagnose` "item-display bridge: off" ve nedenini gösterir: başka bir görüntü uzantısı (GeyserDisplayEntity, ScaffoldingExtension) ya da `display-entities: other` |
 | Bazı özel eşyalar başka bir aracın simgesini gösteriyor | java2bedrock.sh, Rainbow ya da elle yazılmış eşleme dosyaları aynı eşyayı eşliyor: günlük ve `/twilight diagnose` onları adıyla söyler ([geçiş rehberi](docs/MIGRATION.md)) |
 | Bedrock oyuncuları paket almıyor | `/twilight status`; `plugins/Twilight/logs/`; `geyser.send-pack-to-bedrock` |

@@ -17,12 +17,13 @@ import java.util.Map;
  * purpose) and render itself otherwise. Nothing here changes another tool's files or settings.
  */
 public final class Conflicts {
-    /** Geyser extension ids and names that render ModelEngine/BetterModel models as Bedrock custom entities. */
     /**
-     * What {@code model-bones: auto} does when another extension renders the models. The single place to change
+     * Whether {@code model-bones: auto} leaves the models to another extension that renders them (false: Twilight keeps drawing
+     * and warns, because such an extension may draw nothing for a model). The single place to change
      * when Twilight gets its own entity render mode for them and should be preferred.
      */
-    static final boolean AUTO_YIELDS_MODEL_BONES = true;
+    static final boolean AUTO_YIELDS_MODEL_BONES = false;
+    /** Geyser extension ids and names that render ModelEngine/BetterModel models as Bedrock custom entities. */
     static final List<String> MODEL_RENDERERS = List.of("geysermodelengineextension", "geysermodelengine");
     /** Geyser extensions that register Geyser's item and block display entities (name fragments). */
     static final List<String> DISPLAY_RENDERERS = List.of("geyserdisplayentity", "scaffolding");
@@ -61,16 +62,22 @@ public final class Conflicts {
         boolean showBones = true;
         if (modelRenderer) {
             boolean yield = settings.modelBones() == Owner.OTHER || (settings.modelBones() == Owner.AUTO && AUTO_YIELDS_MODEL_BONES);
-            if (settings.modelBones() == Owner.TWILIGHT) {
-                add(findings, new Finding("model-bones", Level.WARN,
-                        "GeyserModelEngine renders ModelEngine/BetterModel models on Bedrock, and Twilight is set to show them too"
-                                + " (integrations.conflicts.model-bones: twilight): Bedrock players see every model twice.",
-                        "Remove GeyserModelEngine and its Geyser extension, or set integrations.conflicts.model-bones to auto."));
-            } else {
+            if (yield) {
                 add(findings, new Finding("model-bones", Level.INFO,
-                        "GeyserModelEngine renders ModelEngine/BetterModel models on Bedrock: Twilight's item-display bridge leaves"
-                                + " their bones to it, so each model shows once.",
-                        "To use Twilight's display models instead, remove GeyserModelEngine and set integrations.conflicts.model-bones: twilight."));
+                        "GeyserModelEngine renders ModelEngine/BetterModel models on Bedrock (integrations.conflicts.model-bones: other):"
+                                + " Twilight's item-display bridge leaves their bones to it, so each model shows once, but only the models"
+                                + " GeyserModelEngine can draw.",
+                        "To let Twilight draw the models, remove GeyserModelEngine and set integrations.conflicts.model-bones to auto."));
+            } else if (settings.modelBones() == Owner.AUTO) {
+                add(findings, new Finding("model-bones", Level.WARN,
+                        "GeyserModelEngine is installed: Bedrock players may see models twice (Twilight shows ModelEngine/BetterModel"
+                                + " models too).",
+                        "Remove GeyserModelEngine, its Geyser extension and GeyserUtils (see docs/MIGRATION.md), or set"
+                                + " integrations.conflicts.model-bones: other to leave models to it."));
+            } else {
+                add(findings, new Finding("model-bones", Level.WARN,
+                        "GeyserModelEngine is installed and integrations.conflicts.model-bones is twilight: Bedrock players may see"
+                                + " models twice.", ""));
             }
             showBones = !yield;
         } else if (settings.modelBones() == Owner.OTHER) {

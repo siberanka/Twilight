@@ -8,8 +8,9 @@ All notable changes in Twilight are documented here.
 
 - Conflicts with other Bedrock content tools are detected at start and resolved automatically
   (`integrations.conflicts`, backend and proxy). With the GeyserModelEngine extension in Geyser's folder, Twilight
-  leaves ModelEngine and BetterModel bones to it, so each model shows once (before, Bedrock players saw both
-  GeyserModelEngine's entity and Twilight's display models). With GeyserDisplayEntity or ScaffoldingExtension,
+  keeps drawing ModelEngine and BetterModel bones (GeyserModelEngine can draw nothing for a model, for example on
+  ModelEngine R4.1.0, and a missing model is worse than a doubled one) and logs one warning at every start: remove
+  GeyserModelEngine, its extension and GeyserUtils, or set `model-bones: other` to leave models to it. With GeyserDisplayEntity or ScaffoldingExtension,
   Twilight's display bridge stays off instead of racing it for Geyser's `item_display`. Each decision is logged
   once with the setting that changes it (`model-bones`, `display-entities`: `auto`, `twilight`, `other`).
 - Mapping files of other tools (java2bedrock.sh, Rainbow, hand-written) that map the same Java items as Twilight
@@ -237,8 +238,10 @@ Twilight'taki tüm önemli değişiklikler burada belgelenir.
 
 - Diğer Bedrock içerik araçlarıyla çakışmalar başlangıçta algılanır ve otomatik çözülür
   (`integrations.conflicts`, arka uç ve proxy). Geyser klasöründe GeyserModelEngine uzantısı varsa Twilight
-  ModelEngine ve BetterModel kemiklerini ona bırakır; böylece her model bir kez görünür (öncesinde Bedrock
-  oyuncuları hem GeyserModelEngine'in varlığını hem Twilight'ın görüntü modellerini görüyordu). GeyserDisplayEntity
+  ModelEngine ve BetterModel kemiklerini çizmeye devam eder (GeyserModelEngine bir model için, örneğin ModelEngine
+  R4.1.0 üzerinde, hiçbir şey çizmeyebilir ve eksik model iki kat modelden kötüdür) ve her başlangıçta tek uyarı
+  yazar: GeyserModelEngine'i, uzantısını ve GeyserUtils'i kaldırın ya da modelleri ona bırakmak için
+  `model-bones: other` yapın. GeyserDisplayEntity
   ya da ScaffoldingExtension varsa Twilight'ın görüntü köprüsü, Geyser'ın `item_display` türü için onunla yarışmak
   yerine kapalı kalır. Her karar, değiştiren ayarla (`model-bones`, `display-entities`: `auto`, `twilight`,
   `other`) bir kez günlüğe yazılır.

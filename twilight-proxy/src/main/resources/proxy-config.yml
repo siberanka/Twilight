@@ -171,8 +171,9 @@ update-check:
 integrations:
   conflicts:
     mode: auto
-    # Who shows ModelEngine and BetterModel models: auto (Twilight leaves them to the GeyserModelEngine extension
-    # when it is installed), twilight (always Twilight; remove GeyserModelEngine) or other (never Twilight).
+    # Who shows ModelEngine and BetterModel models: auto (Twilight shows them and warns when a GeyserModelEngine
+    # extension is installed; remove GeyserModelEngine, its extension and GeyserUtils), twilight (the same, explicit)
+    # or other (never Twilight; GeyserModelEngine draws them).
     model-bones: auto
     # Who registers Geyser's item and block display entities: auto (Twilight stays off when GeyserDisplayEntity or
     # ScaffoldingExtension is installed), twilight or other.

@@ -52,7 +52,8 @@ final class ProxyConflictsTest {
             zip.closeEntry();
         }
         var assessment = ProxyConflicts.assess(own, null, ConflictSettings.DEFAULTS);
-        assertFalse(assessment.showModelBones());
+        assertTrue(assessment.showModelBones(), "Twilight keeps drawing by default");
+        assertFalse(ProxyConflicts.assess(own, null, new ConflictSettings(true, Owner.OTHER, Owner.AUTO, ConflictSettings.Foreign.REPORT, 10)).showModelBones());
         assertTrue(assessment.registerDisplays());
         assertTrue(ProxyConflicts.environment(own, null, "1.0.2").proxy());
     }

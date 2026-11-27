@@ -60,19 +60,24 @@ ScaffoldingExtension is the Geyser extension that draws Nexo's furniture (item d
 GeyserModelEngine draws ModelEngine and BetterModel mobs as real Bedrock custom entities through the
 GeyserModelEngineExtension and GeyserUtils. Twilight draws the same models as Java item displays.
 
-You can keep either; do not run both on the same models.
+We recommend moving to Twilight: it draws the models without a Blockbench export step, from the plugins' own
+packs. Do not run both on the same models. By default (`auto`) Twilight keeps drawing ModelEngine and BetterModel
+models even when it finds the GeyserModelEngine extension, because GeyserModelEngine can draw nothing for a model
+(one that was not exported for it, or a ModelEngine version it does not support; GeyserModelEngine 1.0.9 created no
+entity on ModelEngine R4.1.0 in our test). A missing model is worse than a doubled one, so while both are
+installed Bedrock players may see models twice and Twilight logs one warning at every start.
 
-- **Keep GeyserModelEngine** (nothing to remove): with its extension in Geyser's `extensions/`, Twilight leaves
-  model bones to it (`integrations.conflicts.model-bones: auto`) and builds no bone models for the pack. Twilight
-  still handles everything else (furniture, items, blocks, menus). Models you did not export for GeyserModelEngine
-  are not shown by either tool then.
-- **Move to Twilight**: remove the GeyserModelEngine plugin, GeyserUtils (plugin and Geyser extension) and
-  `GeyserModelEngineExtension` with its generated pack folder (`extensions/geysermodelengineextension/`), then
-  restart. Twilight's display bridge shows ModelEngine and BetterModel models from the plugins' own packs; no
-  Blockbench export step is needed. There is no custom Bedrock entity for the model: the hitbox, name tag and damage
-  reaction are those of the Java base entity.
-- Force Twilight even with GeyserModelEngine installed (`model-bones: twilight`): Bedrock players then see every
-  model twice. Twilight warns about it at every start.
+- **Move to Twilight (recommended)**: remove the GeyserModelEngine plugin, GeyserUtils (plugin and Geyser
+  extension) and `GeyserModelEngineExtension` with its generated pack folder
+  (`extensions/geysermodelengineextension/`), then restart. Twilight's display bridge shows ModelEngine and
+  BetterModel models from the plugins' own packs. There is no custom Bedrock entity for the model: the hitbox, name
+  tag and damage reaction are those of the Java base entity.
+- **Keep GeyserModelEngine**: set `integrations.conflicts.model-bones: other`. With its extension in Geyser's
+  `extensions/`, Twilight then leaves model bones to it and builds no bone models for the pack. Twilight still
+  handles everything else (furniture, items, blocks, menus). Models you did not export for GeyserModelEngine are not
+  shown by either tool then.
+- `model-bones: twilight` is the same as `auto` as an explicit choice: Twilight draws, and the warning no longer
+  suggests removing GeyserModelEngine.
 
 ### Hand-written Geyser mappings and packs
 
@@ -88,7 +93,7 @@ finding is logged once at start with the setting that changes it, and `/twilight
 
 | Found | Default (`auto`) | Other choices |
 |---|---|---|
-| GeyserModelEngineExtension in Geyser's `extensions/` | Twilight shows no ModelEngine/BetterModel bones; one model | `model-bones: twilight` (Twilight shows them; remove GeyserModelEngine) or `other` (Twilight never) |
+| GeyserModelEngineExtension in Geyser's `extensions/` | Twilight keeps drawing the models and logs one warning with the fix (players may see models twice) | remove GeyserModelEngine, its extension and GeyserUtils (recommended), or `model-bones: other` (Twilight never draws them; GeyserModelEngine does), `twilight` (explicit, no removal hint) |
 | GeyserDisplayEntity or ScaffoldingExtension in `extensions/` | Twilight's display bridge stays off; the extension draws displays | `display-entities: twilight` (Twilight registers; the load order decides) or `other` |
 | Mapping files in `custom_mappings/` that map what Twilight maps | Logged once per file (first 10, then one summary line); nothing is changed | `foreign-mappings: retire` moves them to `plugins/Twilight/retired/<time>/`, `off` does not look |
 | A pack in `packs/` with Twilight's pack id (a copy under another name) | Logged | remove the copy |
@@ -108,7 +113,7 @@ bridge is built at start).
   `plugins/twilight-proxy/retired/`), under the same relative path. Move them back and set
   `foreign-mappings: report`.
 - Go back to the other tool's rendering of one kind with `model-bones: other` or `display-entities: other`
-  (Twilight then never renders it), or to Twilight's with `twilight`; restart.
+  (Twilight then never renders it), or to Twilight's with `auto` or `twilight`; restart.
 - `/twilight rollback [n]` restores an earlier Geyser deployment of Twilight's own pack and mappings.
 - To remove Twilight completely: delete `packs/twilight.zip` and `custom_mappings/twilight*.json` from Geyser,
   remove the plugin, restore your backup of the old pack sender's files.
@@ -179,19 +184,25 @@ ScaffoldingExtension, Nexo mobilyalarını (eşya görüntüleri) Bedrock oyuncu
 GeyserModelEngine, ModelEngine ve BetterModel moblarını GeyserModelEngineExtension ve GeyserUtils ile gerçek
 Bedrock özel varlıkları olarak çizer. Twilight aynı modelleri Java eşya görüntüleri olarak çizer.
 
-İkisinden birini tutabilirsiniz; aynı modellerde ikisini birden çalıştırmayın.
+Twilight'a geçmenizi öneririz: modelleri Blockbench dışa aktarma adımı olmadan, eklentilerin kendi paketlerinden
+çizer. Aynı modellerde ikisini birden çalıştırmayın. Varsayılan olarak (`auto`) Twilight, GeyserModelEngine
+uzantısını bulsa bile ModelEngine ve BetterModel modellerini çizmeye devam eder; çünkü GeyserModelEngine bir model
+için hiçbir şey çizmeyebilir (ona göre dışa aktarılmamış model ya da desteklemediği ModelEngine sürümü;
+GeyserModelEngine 1.0.9 testimizde ModelEngine R4.1.0 üzerinde varlık oluşturmadı). Eksik model, iki kat modelden
+kötüdür; bu yüzden ikisi de kuruluyken Bedrock oyuncuları modelleri iki kez görebilir ve Twilight her başlangıçta
+tek uyarı yazar.
 
-- **GeyserModelEngine'i tutun** (kaldıracak bir şey yok): uzantısı Geyser'ın `extensions/` klasöründeyse Twilight
-  model kemiklerini ona bırakır (`integrations.conflicts.model-bones: auto`) ve pakete kemik modeli koymaz.
+- **Twilight'a geçin (önerilir)**: GeyserModelEngine eklentisini, GeyserUtils'i (eklenti ve Geyser uzantısı) ve
+  `GeyserModelEngineExtension` ile üretilmiş paket klasörünü (`extensions/geysermodelengineextension/`) kaldırıp
+  yeniden başlatın. Twilight'ın görüntü köprüsü ModelEngine ve BetterModel modellerini eklentilerin kendi
+  paketlerinden gösterir. Model için özel bir Bedrock varlığı yoktur: çarpışma kutusu, ad etiketi ve hasar tepkisi
+  Java taban varlığınındır.
+- **GeyserModelEngine'i tutun**: `integrations.conflicts.model-bones: other` yapın. Uzantısı Geyser'ın
+  `extensions/` klasöründeyse Twilight o zaman model kemiklerini ona bırakır ve pakete kemik modeli koymaz.
   Twilight geri kalan her şeyi (mobilyalar, eşyalar, bloklar, menüler) yapmaya devam eder. GeyserModelEngine için
   dışa aktarmadığınız modelleri o zaman iki araç da göstermez.
-- **Twilight'a geçin**: GeyserModelEngine eklentisini, GeyserUtils'i (eklenti ve Geyser uzantısı) ve
-  `GeyserModelEngineExtension` ile üretilmiş paket klasörünü (`extensions/geysermodelengineextension/`)
-  kaldırıp yeniden başlatın. Twilight'ın görüntü köprüsü ModelEngine ve BetterModel modellerini eklentilerin kendi
-  paketlerinden gösterir; Blockbench dışa aktarma adımı gerekmez. Model için özel bir Bedrock varlığı yoktur:
-  çarpışma kutusu, ad etiketi ve hasar tepkisi Java taban varlığınındır.
-- GeyserModelEngine kuruluyken Twilight'ı zorlamak (`model-bones: twilight`): Bedrock oyuncuları her modeli iki
-  kez görür. Twilight her başlangıçta bunu uyarır.
+- `model-bones: twilight`, `auto` ile aynıdır ama açık seçimdir: Twilight çizer ve uyarı artık GeyserModelEngine'i
+  kaldırmayı önermez.
 
 ##### Elle yazılmış Geyser eşlemeleri ve paketleri
 
@@ -207,7 +218,7 @@ gösterir.
 
 | Bulunan | Varsayılan (`auto`) | Diğer seçenekler |
 |---|---|---|
-| Geyser'ın `extensions/` klasöründe GeyserModelEngineExtension | Twilight ModelEngine/BetterModel kemiği göstermez; tek model | `model-bones: twilight` (Twilight gösterir; GeyserModelEngine'i kaldırın) ya da `other` (Twilight hiç göstermez) |
+| Geyser'ın `extensions/` klasöründe GeyserModelEngineExtension | Twilight modelleri çizmeye devam eder ve çözümle tek uyarı yazar (oyuncular modelleri iki kez görebilir) | GeyserModelEngine'i, uzantısını ve GeyserUtils'i kaldırın (önerilir) ya da `model-bones: other` (Twilight hiç çizmez; GeyserModelEngine çizer), `twilight` (açık seçim, kaldırma ipucu yok) |
 | `extensions/` içinde GeyserDisplayEntity ya da ScaffoldingExtension | Twilight'ın görüntü köprüsü kapalı kalır; görüntüleri uzantı çizer | `display-entities: twilight` (Twilight kaydeder; yükleme sırası belirler) ya da `other` |
 | `custom_mappings/` içinde Twilight'ın eşlediğini eşleyen dosyalar | Dosya başına bir kez günlüğe yazılır (ilk 10, sonra tek özet satırı); hiçbir şey değişmez | `foreign-mappings: retire` onları `plugins/Twilight/retired/<zaman>/` içine taşır, `off` bakmaz |
 | `packs/` içinde Twilight'ın paket kimliğini taşıyan paket (başka adla kopya) | Günlüğe yazılır | kopyayı kaldırın |

@@ -183,6 +183,6 @@ final class MappingOverlapsTest {
         assertTrue(report.contains("Floodgate: not installed"));
         assertTrue(report.contains("Via: installed"));
         assertTrue(report.contains("fork: leaf"));
-        assertTrue(report.contains("[INFO] GeyserModelEngine renders"));
+        assertTrue(report.contains("[WARN] GeyserModelEngine is installed: Bedrock players may see models twice"));
     }
 }
