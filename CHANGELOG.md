@@ -4,6 +4,13 @@
 
 All notable changes in Twilight are documented here.
 
+## 1.0.1 (unreleased)
+
+- A font file with a stray trailing comma (an add-on pack's `font/default.json`, for example ItemsAdder's
+  AddonTextures/MinionGUI) no longer stops the whole conversion in strict mode. Java reads the comma as a missing
+  provider, logs an error and drops that pack's definition of the font; Twilight now does the same, with a notice
+  ("font definitions are malformed and ignored, as on Java"), instead of rejecting the build.
+
 ## 1.0.1-pre.3 - 2026-11-27
 
 - `geyser.elytra-per-player` also works with Geyser on the proxy: twilight-proxy reads the wings table of the pack
@@ -195,6 +202,13 @@ First public beta of Twilight and twilight-proxy.
 ### Değişiklik günlüğü
 
 Twilight'taki tüm önemli değişiklikler burada belgelenir.
+
+#### 1.0.1 (yayınlanmadı)
+
+- Başıboş bir sondaki virgül içeren yazı tipi dosyası (bir eklenti paketinin `font/default.json` dosyası, örneğin
+  ItemsAdder'ın AddonTextures/MinionGUI klasörü) artık sıkı modda dönüşümün tamamını durdurmaz. Java virgülü eksik
+  bir sağlayıcı olarak okur, hata kaydeder ve o paketin yazı tipi tanımını atar; Twilight da aynısını yapar ve
+  derlemeyi reddetmek yerine bir bildirim ekler ("font definitions are malformed and ignored, as on Java").
 
 #### 1.0.1-pre.3 - 2026-11-27
 

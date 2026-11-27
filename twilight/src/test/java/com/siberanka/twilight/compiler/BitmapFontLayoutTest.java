@@ -170,6 +170,18 @@ class BitmapFontLayoutTest {
         assertEquals(1,large,"the large glyph sits on one page of large cells");
     }
 
+    /** A trailing comma in an add-on's font file reads as a null provider: Java drops that definition, the build must go on. */
+    @Test
+    void ignoresAFontDefinitionWithANonObjectProviderLikeJavaInsteadOfRejectingTheBuild() throws Exception {
+        add(0xE000,16,8,7,0,16);
+        providers.add(com.google.gson.JsonNull.INSTANCE);
+        var output=compile();
+        assertTrue(output.result.problems().isEmpty(),output.result.problems().toString());
+        assertEquals(0,output.result.glyphs());
+        assertTrue(output.result.notices().stream().anyMatch(n->n.contains("malformed and ignored")&&n.contains("providers[1] is not an object")),
+                output.result.notices().toString());
+    }
+
     private void add(int codePoint,int sourceSize,int height,int ascent,int visibleStart,int visibleEnd) throws Exception {
         BufferedImage image=new BufferedImage(sourceSize,sourceSize,BufferedImage.TYPE_INT_ARGB);
         for(int y=visibleStart;y<visibleEnd;y++) for(int x=0;x<sourceSize;x++) image.setRGB(x,y,0xFFFF0000);

@@ -220,15 +220,18 @@ final class BitmapFontCompiler {
         JsonElement providersElement = parsed.getAsJsonObject().get("providers");
         if (providersElement == null || !providersElement.isJsonArray()) return;
         var providers = providersElement.getAsJsonArray();
+        // Java decodes the provider list as a whole: one element that is not an object (a trailing comma reads as
+        // null) makes it log an error and drop this pack's definition of the font, while the build goes on.
+        for (int index = 0; index < providers.size(); index++) {
+            if (!providers.get(index).isJsonObject()) {
+                throw new com.google.gson.JsonParseException("providers[" + index + "] is not an object");
+            }
+        }
         // Java uses the first provider that defines a character: read in reverse and overwrite.
         List<JsonElement> lastFirst = new ArrayList<>(providers.size());
         providers.forEach(lastFirst::add);
         java.util.Collections.reverse(lastFirst);
         for (JsonElement element : lastFirst) {
-            if (!element.isJsonObject()) {
-                problem("font definitions contain non-object providers", normalized);
-                continue;
-            }
             JsonObject provider = element.getAsJsonObject();
             String type = string(provider, "type");
             type = type.substring(type.indexOf(':') + 1);
