@@ -254,6 +254,39 @@ bedrock-network:
   # Raise zlib compression (by up to 2 levels above Geyser's) for struggling connections.
   adaptive-compression: true
 
+integrations:
+  conflicts:
+    # Other Bedrock content tools can show what Twilight shows (GeyserModelEngine draws ModelEngine and
+    # BetterModel models, GeyserDisplayEntity and ScaffoldingExtension draw display entities) or send their own
+    # packs and mappings to Geyser. auto = Twilight detects them at start and resolves each conflict so that
+    # every model shows once and nothing Twilight does stops Geyser from starting; every finding is logged
+    # once with the setting that changes it, and /twilight diagnose lists them. off = no detection (the
+    # /twilight diagnose report still lists the running layers). Model and display decisions apply on restart.
+    mode: auto
+    # Who shows ModelEngine and BetterModel models (their bones) on Bedrock.
+    #   auto     = Twilight shows them through its item-display bridge; when a GeyserModelEngine extension is
+    #              installed too, players may see models twice and one warning at every start says how to fix it
+    #              (remove GeyserModelEngine, its extension and GeyserUtils). GeyserModelEngine can draw nothing for
+    #              a model, so Twilight does not yield by default.
+    #   twilight = the same as an explicit choice (the warning has no removal hint).
+    #   other    = Twilight never shows them (for GeyserModelEngine users).
+    model-bones: auto
+    # Who registers Geyser's item and block display entities (furniture, model bones).
+    #   auto     = Twilight's display bridge stays off when GeyserDisplayEntity or ScaffoldingExtension is
+    #              installed (Geyser allows one owner), and runs otherwise.
+    #   twilight = Twilight always registers them; the other extension then depends on the load order.
+    #   other    = Twilight never registers them.
+    display-entities: auto
+    # Other tools' mapping files in Geyser's custom_mappings that map the same Java items as Twilight does
+    # (java2bedrock.sh, Rainbow, hand-written files).
+    #   report = log each overlapping file (at most max-notices), change nothing.
+    #   retire = move overlapping files out of Geyser to plugins/Twilight/retired/<time>/ before Geyser reads
+    #            them (never deleted; put them back to undo).
+    #   off    = do not look.
+    foreign-mappings: report
+    # Notices logged per check; the rest is summed up in one line (1-100).
+    max-notices: 10
+
 update-check:
   # Look for a newer Twilight release on GitHub (on the GitLab mirror when GitHub
   # cannot be reached) shortly after start and every six hours. A newer version is

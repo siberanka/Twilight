@@ -29,6 +29,11 @@ final class DisplayItems {
 
     private DisplayItems() {}
 
+    /** Whether an item model belongs to ModelEngine or BetterModel (their bones are items with such a model). */
+    static boolean modelBone(String itemModel) {
+        return itemModel != null && (itemModel.startsWith("modelengine:") || itemModel.startsWith("bettermodel:"));
+    }
+
     /** The stack's own {@code item_model} ("namespace:path"), or null when it has none. */
     @SuppressWarnings({"unchecked", "rawtypes"})
     static String itemModel(ItemStack stack) {

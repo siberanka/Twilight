@@ -46,6 +46,18 @@ public final class PackChannel {
     public static final int MAX_DISPLAYED_KEY = 400;
     /** Capability flag: the proxy's Geyser shows Java item displays (furniture, model bones) with the pack's models. */
     public static final int ITEM_DISPLAYS = 1;
+    /** Capability bits 8..30 carry the proxy's version code (major * 10000 + minor * 100 + patch); 0 from older proxies. */
+    public static final int VERSION_SHIFT = 8;
+    public static final int MAX_VERSION_CODE = (1 << 23) - 1;
+
+    public static int withVersion(int flags, int versionCode) {
+        int code = Math.clamp(versionCode, 0, MAX_VERSION_CODE);
+        return (flags & ((1 << VERSION_SHIFT) - 1)) | (code << VERSION_SHIFT);
+    }
+
+    public static int versionOf(int flags) {
+        return flags >>> VERSION_SHIFT;
+    }
     /** Pack bytes per chunk message; well below every platform's plugin-message limit. */
     public static final int CHUNK_BYTES = 30_000;
     /** No valid message is larger; bigger payloads are dropped unread. */

@@ -23,7 +23,8 @@ record ProxyConfig(PackSource defaultSource, Map<String, PackSource> servers, bo
                    com.siberanka.twilight.host.HostSettings host, boolean updateCheck, boolean updateNotify,
                    LocalSettings local, boolean retireStaleFiles, boolean restartWhenEmpty,
                    boolean textLayout, boolean translations, int loadingProtectionSeconds, boolean customBlocks,
-                   boolean itemDisplays, boolean playerHeads, com.siberanka.twilight.network.NetworkSettings network) {
+                   boolean itemDisplays, boolean playerHeads, com.siberanka.twilight.network.NetworkSettings network,
+                   com.siberanka.twilight.conflicts.ConflictSettings conflicts) {
     /** {@code local-backends}: read the exports of backends on this machine from their folders. */
     record LocalSettings(boolean enabled, java.util.List<Path> search, Map<String, Path> servers) {
         static final LocalSettings OFF = new LocalSettings(false, java.util.List.of(), Map.of());
@@ -134,7 +135,16 @@ record ProxyConfig(PackSource defaultSource, Map<String, PackSource> servers, bo
                 bedrockSwitch(root.get("bedrock"), "custom-blocks"),
                 bedrockSwitch(root.get("bedrock"), "item-displays"),
                 bedrockSwitch(root.get("bedrock"), "player-heads"),
-                networkSettings(root.get("bedrock-network")));
+                networkSettings(root.get("bedrock-network")),
+                conflictSettings(root.get("integrations")));
+    }
+
+    /** {@code integrations.conflicts}; missing keeps every default. */
+    private static com.siberanka.twilight.conflicts.ConflictSettings conflictSettings(Object section) {
+        if (section == null) return com.siberanka.twilight.conflicts.ConflictSettings.DEFAULTS;
+        Object conflicts = map(section, "integrations").get("conflicts");
+        if (conflicts == null) return com.siberanka.twilight.conflicts.ConflictSettings.DEFAULTS;
+        return com.siberanka.twilight.conflicts.ConflictSettings.parse(map(conflicts, "integrations.conflicts")::get);
     }
 
     /** The {@code bedrock-network} section; missing keeps every default. */

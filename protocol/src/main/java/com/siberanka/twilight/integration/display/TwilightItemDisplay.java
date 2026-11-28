@@ -96,6 +96,11 @@ final class TwilightItemDisplay extends Entity {
     void item(ItemStack stack) {
         DisplayIndex.Variant selected = null;
         if (stack != null && stack.getAmount() > 0) {
+            if (!bridge.modelBones() && DisplayItems.modelBone(DisplayItems.itemModel(stack))) {
+                // Another extension (GeyserModelEngine) draws this model: its bones stay invisible here.
+                show(null);
+                return;
+            }
             selected = select(bridge, session, stack, false);
             if (selected == null) bridge.unshown(session, unshownKeys(stack, false));
         }

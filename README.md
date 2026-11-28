@@ -52,7 +52,7 @@ Before installing:
 - Coming from an earlier development build: its update check does not announce this beta. Replace both
   JARs by hand once; later versions are announced as usual.
 
-The [wiki](WIKI.md) is the reference for installation, commands, every configuration key, files, the API and the security model. The current capability matrix and version-specific limitations are documented in [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md). Strict conversion fails closed when content cannot be represented safely.
+The [wiki](WIKI.md) is the reference for installation, commands, every configuration key, files, the API and the security model. Coming from java2bedrock.sh, Rainbow, Scaffolding or GeyserModelEngine: see the [migration guide](docs/MIGRATION.md) (Twilight detects these tools and resolves overlaps automatically; `/twilight diagnose` shows what runs and why). The current capability matrix and version-specific limitations are documented in [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md). Strict conversion fails closed when content cannot be represented safely.
 
 The [expanded acceptance contract](docs/COMPATIBILITY_REVIEW_2026-10-03.md)
 tracks 40 areas and 289 required scenarios, including menus, tooltips and live

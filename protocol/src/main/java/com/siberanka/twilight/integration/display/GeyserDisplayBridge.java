@@ -76,6 +76,19 @@ public final class GeyserDisplayBridge implements AutoCloseable {
      * @param register whether to take over item displays at all; a proxy does whenever the feature is on, since its
      *                 servers' packs arrive after Geyser started
      */
+    private volatile boolean modelBones = true;
+
+    /**
+     * Whether ModelEngine and BetterModel bones are shown (default). Off when another Geyser extension renders those
+     * models (GeyserModelEngine): the bones are then left out so each model shows once.
+     */
+    public GeyserDisplayBridge modelBones(boolean shown) {
+        modelBones = shown;
+        return this;
+    }
+
+    boolean modelBones() { return modelBones; }
+
     public GeyserDisplayBridge(Object owner, Variants variants, Logger logger, boolean register) {
         this.variants = variants;
         registrar = EventRegistrar.of(owner);

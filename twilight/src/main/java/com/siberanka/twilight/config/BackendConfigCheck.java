@@ -50,6 +50,7 @@ public final class BackendConfigCheck implements ConfigMaintenance.Validator {
         TwilightConfig.read(yaml, serverRoot);
         NetworkSettings.parse(key -> yaml.get("bedrock-network." + key));
         HostSettings.parse(key -> yaml.get("pack-host." + key));
+        com.siberanka.twilight.conflicts.ConflictSettings.parse(key -> yaml.get("integrations.conflicts." + key));
         OPTIONS.forEach((path, allowed) -> {
             Object value = yaml.get(path);
             if (value == null) return;

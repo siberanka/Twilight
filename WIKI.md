@@ -29,14 +29,15 @@ are in the [reports](docs/); limits per feature are in [docs/COMPATIBILITY.md](d
 8. [Player heads](#player-heads)
 9. [Custom blocks](#custom-blocks)
 10. [Animated textures](#animated-textures)
-11. [Pack hosting](#pack-hosting)
-12. [Updates](#updates)
-13. [Files and folders](#files-and-folders)
-14. [Developer API](#developer-api)
-15. [Plugin-message protocol](#plugin-message-protocol)
-16. [Security model](#security-model)
-17. [Troubleshooting](#troubleshooting)
-18. [Building from source](#building-from-source)
+11. [Conflicts with other Bedrock content tools](#conflicts-with-other-bedrock-content-tools)
+12. [Pack hosting](#pack-hosting)
+13. [Updates](#updates)
+14. [Files and folders](#files-and-folders)
+15. [Developer API](#developer-api)
+16. [Plugin-message protocol](#plugin-message-protocol)
+17. [Security model](#security-model)
+18. [Troubleshooting](#troubleshooting)
+19. [Building from source](#building-from-source)
 
 ## Requirements
 
@@ -118,6 +119,7 @@ season changes. Unchanged inputs are detected by a fingerprint and skipped.
 | `/twilight reload` | Reload and validate `config.yml` |
 | `/twilight network` | The [Bedrock network](#bedrock-network) layer per Bedrock player: round trip, inputs per second, strain, hidden and waiting entities, updates merged away, zlib level |
 | `/twilight menus [reset]` | The menus players opened since start, whatever plugin made them, and how Bedrock gets their titles: plain or laid out, offset tags a plugin left unreplaced, characters the pack has no image for, player heads and custom items. Writes `reports/menus.json`; `reset` starts over |
+| `/twilight diagnose` (alias `doctor`) | The capability probe and conflict report: which layers run and why the others do not, the conflict settings in force and every finding ([conflicts](#conflicts-with-other-bedrock-content-tools)). Saved to `reports/diagnostics.txt` |
 
 Alias: `/tw`. Permission: `twilight.admin` (default: operators). Long operations run off the server
 thread; only one runs at a time. Players with `twilight.update` (default: operators) are told about
@@ -130,6 +132,7 @@ new versions ([updates](#updates)).
 | `/twilightproxy` | Shared-secret state, Geyser presence, update check and the pack of every server |
 | `/twilightproxy reload` | Reload `config.yml` and every pack |
 | `/twilightproxy network` | The [Bedrock network](#bedrock-network) layer per Bedrock player on the proxy's Geyser |
+| `/twilightproxy diagnose` | The same probe and conflict report for the proxy's Geyser ([conflicts](#conflicts-with-other-bedrock-content-tools)) |
 
 Alias: `/twproxy`. Permission: `twilight.proxy.admin`. Players with `twilight.proxy.update` or
 `twilight.proxy.admin` are told about new versions; proxies have no operators, so grant it with a
@@ -271,6 +274,8 @@ each player's connection.
 |---|---|---|
 | `enabled` | `true` | Look for a newer release shortly after start and every six hours ([updates](#updates)) |
 | `notify-players` | `true` | Tell players with `twilight.update` when they join and when a version is found |
+
+`integrations.conflicts` decisions apply on restart.
 
 Changes to `ui` and `world` keys need a new build (`/twilight convert`); `proxy` and `pack-host` keys
 and `geyser.send-pack-to-bedrock` take effect on restart; `update-check` and `bedrock-network` (except
@@ -771,6 +776,78 @@ Measured on a real ItemsAdder pack with 358 animated items (36.4 MB without anim
 
 Java's animation clock is global; Bedrock entity textures follow the time since the entity (the player holding an
 item, the furniture) appeared, so two furniture pieces placed at different times are in different phases.
+## Conflicts with other Bedrock content tools
+
+Other tools can show what Twilight shows, or send their own packs and mappings to the same Geyser. Twilight looks
+for them at start (backend and proxy), resolves the cases it can without touching another tool's files, logs each
+finding once with the setting that changes it, and lists everything with `/twilight diagnose`
+(`/twilightproxy diagnose` on a proxy). The report is also saved to `reports/diagnostics.txt`. See the
+[migration guide](docs/MIGRATION.md) for what to remove when you come from one of these tools.
+
+Signals Twilight reads: the plugins of the server or proxy, the extensions in Geyser's `extensions/` folder (the
+`id` and `name` in each jar's `extension.yml`), Geyser's `config.yml`, and the files in `custom_mappings/` and
+`packs/`. Nothing is loaded from other tools' jars and nothing is sent anywhere.
+
+| Found | Why it conflicts | What Twilight does by default |
+|---|---|---|
+| GeyserModelEngineExtension (with GeyserModelEngine and GeyserUtils) | It draws ModelEngine/BetterModel mobs as Bedrock entities; Twilight's item-display bridge draws the same models: players may see models twice. It can also draw nothing for a model (a model that was not exported for it, or a ModelEngine version it does not support), so Twilight does not yield by default | Twilight keeps drawing and logs one warning at every start with the fix: remove GeyserModelEngine, its extension and GeyserUtils ([migration guide](docs/MIGRATION.md)), or set `model-bones: other` to leave models to it (Twilight then shows and builds no bones); `model-bones: twilight` is the explicit "Twilight draws" choice (warning without the removal hint) |
+| GeyserModelEngine plugin without its extension or GeyserUtils | It draws nothing | Warning; Twilight keeps showing the bones |
+| GeyserDisplayEntity, ScaffoldingExtension | Geyser lets one translator own `item_display`; whichever loads first wins | Twilight's display bridge stays off (`display-entities: twilight` makes it register anyway, with a warning) |
+| Mapping files in `custom_mappings/` (java2bedrock.sh, Rainbow, hand-written) that map the same Java item (custom model data or item model) as Twilight | Geyser keeps the mapping it reads first (name order) and drops the other; players may get the other tool's item | Warning once per file (first `max-notices`, then one summary line); `foreign-mappings: retire` moves them to `retired/` |
+| A pack in `packs/` with Twilight's pack id | Bedrock treats both as one pack | Warning |
+| BedrockBundler, Rainbow plugins | A second pack sender | Warning |
+| `enable-custom-content: false` in Geyser's `config.yml` | Custom items and blocks do not reach Bedrock | Warning in the report |
+| Geyser on the backend and on the proxy both showing displays | Two Geysers | Information only |
+| Twilight and twilight-proxy with different minor versions | New features may work on one side only | Warning (the backend learns the proxy's version from its capability message) |
+
+The report also lists, for each runtime layer (item-display bridge, model bones, translations, text layout,
+custom biomes, worn elytras, rider names, loading protection, custom blocks, network layer, pack hosting, proxy
+pack sharing), whether it runs and why not: Geyser missing on this server, an option off, an API this Geyser build
+lacks, or another extension owning the feature. It notes Floodgate, ViaVersion/ViaBackwards/ViaRewind, Folia and
+Purpur, Leaf and Pufferfish forks.
+
+### `integrations.conflicts`
+
+The same keys are in `plugins/twilight-proxy/config.yml`. The section is optional; missing keys keep their
+defaults. Model and display decisions are made at start (restart to apply); `/twilight reload` re-reads the
+settings for the next check.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `mode` | `auto` | `auto` detects and resolves; `off` does no detection (the layer report of `diagnose` still works) |
+| `model-bones` | `auto` | Who shows ModelEngine/BetterModel models: `auto` (Twilight keeps drawing them and warns when a GeyserModelEngine extension is installed), `twilight` (the same, as an explicit choice: the warning has no removal hint), `other` (Twilight never draws them, for GeyserModelEngine users) |
+| `display-entities` | `auto` | Who registers Geyser's item and block display entities: `auto` (Twilight stays off when GeyserDisplayEntity or ScaffoldingExtension is installed), `twilight`, `other` |
+| `foreign-mappings` | `report` | Other tools' overlapping mapping files: `report` (log, change nothing), `retire` (move to `retired/<time>/` before Geyser reads them, never delete), `off` |
+| `max-notices` | `10` | Overlap notices per check (1-100); the rest is one summary line |
+
+### Diagnostics
+
+`/twilight diagnose` (alias `doctor`) and `/twilightproxy diagnose` print the platform, the layers with the reason
+each one is off, the conflict settings in force and every finding, and save the same lines to
+`reports/diagnostics.txt` (`plugins/twilight-proxy/reports/diagnostics.txt` on a proxy).
+
+Sample (a backend with GeyserModelEngine installed and another tool's mapping file; Leaf 1.21.11, Geyser 2.12):
+
+```
+[Twilight] Twilight 1.0.1 diagnostics
+[Twilight]   platform: Leaf 1.21.11 (1.21.11-178-762f884 (MC: 1.21.11))
+[Twilight]   Geyser: Geyser-Spigot 2.12.1-SNAPSHOT
+[Twilight]   Floodgate: installed
+[Twilight]   Via: installed (older Java clients see translated items; Bedrock content is not affected)
+[Twilight]   fork: leaf (supported)
+[Twilight] Layers:
+[Twilight]   [on ] pack compiler - builds the Bedrock pack and Geyser mappings
+[Twilight]   [on ] item-display bridge (furniture, model bones) - item/block displays show with the pack's models
+[Twilight]   [on ] model bones (ModelEngine, BetterModel) - shown through the item-display bridge
+[Twilight]   [off] pack hosting - off (pack-host.enabled: false) or Geyser absent
+[Twilight]   ... (the other layers)
+[Twilight] Conflict handling: auto (model-bones=auto, display-entities=auto, foreign-mappings=report); Twilight shows model bones: true, registers displays: true
+[Twilight] Findings:
+[Twilight]   [WARN] GeyserModelEngine is installed: Bedrock players may see models twice (Twilight shows ModelEngine/BetterModel models too). Remove GeyserModelEngine, its Geyser extension and GeyserUtils (see docs/MIGRATION.md), or set integrations.conflicts.model-bones: other to leave models to it.
+[Twilight]   [WARN] custom_mappings/geyser_mappings.json maps 2 Java item selector(s) that Twilight maps too (for example minecraft:apple|cmd=10000, minecraft:apple|cmd=10001): Geyser keeps the one it reads first (files are read in name order) and logs "Not registering custom item definition" for the other, so Bedrock players may get the other tool's item instead of Twilight's. Remove the file, or set integrations.conflicts.foreign-mappings: retire to let Twilight move it out.
+```
+
+With `model-bones: other` the start log says `Conflict resolved: GeyserModelEngine renders ModelEngine/BetterModel models on Bedrock (integrations.conflicts.model-bones: other): Twilight's item-display bridge leaves their bones to it ...` and the diagnose layer line reads `[off] model bones (ModelEngine, BetterModel) - GeyserModelEngine renders them`; with `foreign-mappings: retire` it logs `Moved custom_mappings/geyser_mappings.json -> retired/<time>/custom_mappings/geyser_mappings.json: another tool's mapping file that overlapped Twilight's mappings.`
 
 ## Pack hosting
 
@@ -928,6 +1005,8 @@ by hand once. `/twilight status` and `/twilightproxy` show the result of the las
 | `player-skins.txt` | Skin hashes of the players who joined, with the time each was last seen (at most 20000) |
 | `cache/skins/` | Skins of heads shown in item displays, downloaded from Mojang's texture server |
 | `proxy-features.properties` | What the twilight-proxy in front of this server last said it shows; expires after 30 days without a repeat |
+| `reports/diagnostics.txt` | The last `/twilight diagnose` report |
+| `retired/<time>/` | Files Twilight moved out of Geyser's folder (stale Twilight files, and other tools' overlapping mapping files with `foreign-mappings: retire`); move them back to undo |
 
 In Geyser's folder Twilight owns `packs/twilight.zip`, `custom_mappings/twilight_*.json` and
 `locales/overrides/`; nothing else is touched.
@@ -1085,6 +1164,9 @@ the receiver's clock; messages larger than 30128 bytes are dropped unread.
 
 | Symptom | Check |
 |---|---|
+| Bedrock players see every ModelEngine or BetterModel model twice | GeyserModelEngine and Twilight both draw it: `/twilight diagnose`. Remove GeyserModelEngine, its extension and GeyserUtils ([migration guide](docs/MIGRATION.md)), or set `integrations.conflicts.model-bones: other` to leave models to it ([conflicts](#conflicts-with-other-bedrock-content-tools)) |
+| Furniture or model bones are invisible although Twilight built them | `/twilight diagnose` shows "item-display bridge: off" with the reason: another display extension (GeyserDisplayEntity, ScaffoldingExtension) or `display-entities: other` |
+| Some custom items show another tool's icon | Mapping files of java2bedrock.sh, Rainbow or by hand map the same item: the log and `/twilight diagnose` name them ([migration guide](docs/MIGRATION.md)) |
 | Bedrock players get no pack | `/twilight status`; `plugins/Twilight/logs/`; `geyser.send-pack-to-bedrock` |
 | "Restart the server to activate changed custom items, blocks or player heads" | Geyser registers them at startup; restart once. Other changes reach Bedrock players when they next join |
 | A build is not published | `build/current/build-report.json` → `problems`; strict builds keep the last good pack |
@@ -1163,14 +1245,15 @@ Bu sayfa yöneticiler ve eklenti geliştiricileri için başvuru kaynağıdır. 
 8. [Oyuncu kafaları](#oyuncu-kafaları)
 9. [Özel bloklar](#özel-bloklar)
 10. [Animasyonlu dokular](#animasyonlu-dokular)
-11. [Paket sunucusu](#paket-sunucusu)
-12. [Güncellemeler](#güncellemeler)
-13. [Dosyalar ve klasörler](#dosyalar-ve-klasörler)
-14. [Geliştirici API'si](#geliştirici-apisi)
-15. [Eklenti mesajı protokolü](#eklenti-mesajı-protokolü)
-16. [Güvenlik modeli](#güvenlik-modeli)
-17. [Sorun giderme](#sorun-giderme)
-18. [Kaynaktan derleme](#kaynaktan-derleme)
+11. [Diğer Bedrock içerik araçlarıyla çakışmalar](#diğer-bedrock-içerik-araçlarıyla-çakışmalar)
+12. [Paket sunucusu](#paket-sunucusu)
+13. [Güncellemeler](#güncellemeler)
+14. [Dosyalar ve klasörler](#dosyalar-ve-klasörler)
+15. [Geliştirici API'si](#geliştirici-apisi)
+16. [Eklenti mesajı protokolü](#eklenti-mesajı-protokolü)
+17. [Güvenlik modeli](#güvenlik-modeli)
+18. [Sorun giderme](#sorun-giderme)
+19. [Kaynaktan derleme](#kaynaktan-derleme)
 
 #### Gereksinimler
 
@@ -1254,6 +1337,7 @@ atlanır.
 | `/twilight reload` | `config.yml` dosyasını yeniden yükler ve doğrular |
 | `/twilight network` | Bedrock oyuncusu başına [Bedrock ağı](#bedrock-ağı) katmanı: gidiş-dönüş süresi, saniyedeki girdiler, zorlanma, gizli ve bekleyen varlıklar, birleştirilerek düşülen güncellemeler, zlib seviyesi |
 | `/twilight menus [reset]` | Açılıştan beri oyuncuların açtığı menüler (hangi eklenti yapmış olursa olsun) ve Bedrock'un başlıklarını nasıl aldığı: düz mü yerleştirilmiş mi, bir eklentinin değiştirmeden bıraktığı offset etiketleri, paketin görseli olmayan karakterler, oyuncu kafaları ve özel eşyalar. `reports/menus.json` dosyasını yazar; `reset` baştan başlatır |
+| `/twilight diagnose` (takma ad `doctor`) | Yetenek yoklaması ve çakışma raporu: hangi katmanlar çalışıyor, diğerleri neden çalışmıyor, geçerli çakışma ayarları ve her bulgu ([çakışmalar](#diğer-bedrock-içerik-araçlarıyla-çakışmalar)). `reports/diagnostics.txt` dosyasına kaydedilir |
 
 Takma ad: `/tw`. İzin: `twilight.admin` (varsayılan: operatörler). Uzun işlemler sunucu iş parçacığı
 dışında çalışır; aynı anda yalnızca biri çalışır. `twilight.update` iznine sahip oyunculara (varsayılan:
@@ -1266,6 +1350,7 @@ operatörler) yeni sürümler bildirilir ([güncellemeler](#güncellemeler)).
 | `/twilightproxy` | Paylaşılan gizli anahtar durumu, Geyser varlığı, güncelleme denetimi ve her sunucunun paketi |
 | `/twilightproxy reload` | `config.yml` dosyasını ve her paketi yeniden yükler |
 | `/twilightproxy network` | Proxy'nin Geyser'ındaki Bedrock oyuncusu başına [Bedrock ağı](#bedrock-ağı) katmanı |
+| `/twilightproxy diagnose` | Proxy'nin Geyser'ı için aynı yoklama ve çakışma raporu ([çakışmalar](#diğer-bedrock-içerik-araçlarıyla-çakışmalar)) |
 
 Takma ad: `/twproxy`. İzin: `twilight.proxy.admin`. `twilight.proxy.update` veya `twilight.proxy.admin`
 iznine sahip oyunculara yeni sürümler bildirilir; proxy'lerde operatör yoktur, bu yüzden izni bir izin
@@ -1409,6 +1494,8 @@ oyuncunun bağlantısını izler.
 |---|---|---|
 | `enabled` | `true` | Açılıştan kısa süre sonra ve her altı saatte bir daha yeni bir sürüm arar ([güncellemeler](#güncellemeler)) |
 | `notify-players` | `true` | `twilight.update` iznine sahip oyunculara katıldıklarında ve bir sürüm bulunduğunda bildirir |
+
+`integrations.conflicts` kararları yeniden başlatmada uygulanır.
 
 `ui` ve `world` anahtarlarındaki değişiklikler yeni bir derleme gerektirir (`/twilight convert`); `proxy` ve
 `pack-host` anahtarları ile `geyser.send-pack-to-bedrock` yeniden başlatmada, `update-check` ve
@@ -1919,6 +2006,61 @@ tasarruflardan önce 65,1 MB idi), `simple` 41,3 MB; Bedrock'un soğuk önbellek
 
 Java'nın animasyon saati geneldir; Bedrock varlık dokuları varlığın (eşyayı tutan oyuncu, mobilya) göründüğünden
 beri geçen zamanı izler, bu yüzden farklı zamanlarda yerleştirilen iki mobilya farklı evrelerdedir.
+#### Diğer Bedrock içerik araçlarıyla çakışmalar
+
+Başka araçlar Twilight'ın gösterdiğini gösterebilir ya da aynı Geyser'a kendi paketlerini ve eşlemelerini
+gönderebilir. Twilight başlangıçta (arka uç ve proxy) onları arar, başka bir aracın dosyalarına dokunmadan
+çözebildiği durumları çözer, her bulguyu değiştiren ayarla birlikte bir kez günlüğe yazar ve her şeyi
+`/twilight diagnose` ile (proxy'de `/twilightproxy diagnose`) listeler. Rapor ayrıca `reports/diagnostics.txt`
+dosyasına kaydedilir. Bu araçlardan birinden geliyorsanız neyi kaldıracağınız için [geçiş
+rehberine](docs/MIGRATION.md) bakın.
+
+Twilight'ın okuduğu işaretler: sunucunun ya da proxy'nin eklentileri, Geyser'ın `extensions/` klasöründeki
+uzantılar (her jar'ın `extension.yml` dosyasındaki `id` ve `name`), Geyser'ın `config.yml` dosyası ve
+`custom_mappings/` ile `packs/` içindeki dosyalar. Başka araçların jar'larından hiçbir şey yüklenmez ve hiçbir
+yere bir şey gönderilmez.
+
+| Bulunan | Neden çakışır | Twilight varsayılan olarak ne yapar |
+|---|---|---|
+| GeyserModelEngineExtension (GeyserModelEngine ve GeyserUtils ile) | ModelEngine/BetterModel moblarını Bedrock varlıkları olarak çizer; Twilight'ın eşya görüntüsü köprüsü aynı modelleri çizer: oyuncular modelleri iki kez görebilir. Bir model için hiçbir şey çizmeyebilir de (ona göre dışa aktarılmamış model ya da desteklemediği ModelEngine sürümü); bu yüzden Twilight varsayılan olarak yol vermez | Twilight çizmeye devam eder ve her başlangıçta çözümle birlikte tek uyarı yazar: GeyserModelEngine'i, uzantısını ve GeyserUtils'i kaldırın ([geçiş rehberi](docs/MIGRATION.md)) ya da modelleri ona bırakmak için `model-bones: other` yapın (Twilight o zaman kemik göstermez ve derlemez); `model-bones: twilight` "Twilight çizer" seçiminin açık halidir (kaldırma ipucu olmayan uyarı) |
+| Uzantısı ya da GeyserUtils olmayan GeyserModelEngine eklentisi | Hiçbir şey çizmez | Uyarı; Twilight kemikleri göstermeye devam eder |
+| GeyserDisplayEntity, ScaffoldingExtension | Geyser `item_display` için tek çevirmene izin verir; önce yüklenen kazanır | Twilight'ın görüntü köprüsü kapalı kalır (`display-entities: twilight` yine de kaydettirir, uyarıyla) |
+| `custom_mappings/` içinde Twilight ile aynı Java eşyayı (özel model verisi ya da eşya modeli) eşleyen dosyalar (java2bedrock.sh, Rainbow, elle yazılmış) | Geyser önce okuduğu eşlemeyi tutar (ad sırası) ve ötekini atar; oyuncular öteki aracın eşyasını alabilir | Dosya başına bir kez uyarı (ilk `max-notices`, sonra tek özet satırı); `foreign-mappings: retire` onları `retired/` içine taşır |
+| `packs/` içinde Twilight'ın paket kimliğini taşıyan paket | Bedrock ikisini tek paket sayar | Uyarı |
+| BedrockBundler, Rainbow eklentileri | İkinci bir paket gönderici | Uyarı |
+| Geyser'ın `config.yml` dosyasında `enable-custom-content: false` | Özel eşyalar ve bloklar Bedrock'a ulaşmaz | Raporda uyarı |
+| Arka uçta ve proxy'de Geyser, ikisi de görüntü gösteriyor | İki Geyser | Yalnızca bilgi |
+| Küçük sürümü farklı Twilight ve twilight-proxy | Yeni özellikler yalnızca bir tarafta çalışabilir | Uyarı (arka uç proxy'nin sürümünü yetenek mesajından öğrenir) |
+
+Rapor ayrıca her çalışma zamanı katmanı için (eşya görüntüsü köprüsü, model kemikleri, çeviriler, metin düzeni,
+özel biyomlar, giyilen elytra'lar, binici adları, yükleme koruması, özel bloklar, ağ katmanı, paket sunucusu,
+proxy paket paylaşımı) çalışıp çalışmadığını ve çalışmıyorsa nedenini listeler: bu sunucuda Geyser yok, bir
+seçenek kapalı, bu Geyser sürümünde bir API yok ya da özelliği başka bir uzantı üstleniyor. Floodgate,
+ViaVersion/ViaBackwards/ViaRewind, Folia ile Purpur, Leaf ve Pufferfish fork'larını da not eder.
+
+##### `integrations.conflicts`
+
+Aynı anahtarlar `plugins/twilight-proxy/config.yml` içindedir. Bölüm isteğe bağlıdır; eksik anahtarlar
+varsayılanlarını korur. Model ve görüntü kararları başlangıçta verilir (uygulamak için yeniden başlatın);
+`/twilight reload` ayarları sonraki denetim için yeniden okur.
+
+| Anahtar | Varsayılan | Anlamı |
+|---|---|---|
+| `mode` | `auto` | `auto` algılar ve çözer; `off` algılama yapmaz (`diagnose` katman raporu yine çalışır) |
+| `model-bones` | `auto` | ModelEngine/BetterModel modellerini kim gösterir: `auto` (Twilight çizmeye devam eder; GeyserModelEngine uzantısı kuruluysa uyarır), `twilight` (aynısı, açık seçim olarak: uyarıda kaldırma ipucu yoktur), `other` (Twilight hiç çizmez; GeyserModelEngine kullanıcıları için) |
+| `display-entities` | `auto` | Geyser'ın eşya ve blok görüntü varlıklarını kim kaydeder: `auto` (GeyserDisplayEntity ya da ScaffoldingExtension kuruluysa Twilight kapalı kalır), `twilight`, `other` |
+| `foreign-mappings` | `report` | Diğer araçların çakışan eşleme dosyaları: `report` (günlüğe yaz, değiştirme), `retire` (Geyser okumadan önce `retired/<zaman>/` içine taşı, asla silme), `off` |
+| `max-notices` | `10` | Denetim başına çakışma bildirimi sayısı (1-100); kalanı tek özet satırıdır |
+
+##### Tanılama
+
+`/twilight diagnose` (takma ad `doctor`) ve `/twilightproxy diagnose`, platformu, her katmanı (kapalıysa nedeniyle),
+geçerli çakışma ayarlarını ve her bulguyu yazdırır, aynı satırları `reports/diagnostics.txt` dosyasına
+(proxy'de `plugins/twilight-proxy/reports/diagnostics.txt`) kaydeder.
+
+Örnek (GeyserModelEngine kurulu ve başka bir aracın eşleme dosyası olan bir arka uç; Leaf 1.21.11, Geyser 2.12): günlük satırları aynıdır (yukarıdaki İngilizce örneğe bakın; ileti metinleri İngilizcedir).
+
+`model-bones: other` ile başlangıç günlüğü `Conflict resolved: GeyserModelEngine renders ModelEngine/BetterModel models on Bedrock (integrations.conflicts.model-bones: other): Twilight's item-display bridge leaves their bones to it ...` der ve tanılama katman satırı `[off] model bones (ModelEngine, BetterModel) - GeyserModelEngine renders them` olur; `foreign-mappings: retire` ile `Moved custom_mappings/geyser_mappings.json -> retired/<zaman>/custom_mappings/geyser_mappings.json: another tool's mapping file that overlapped Twilight's mappings.` yazar.
 
 #### Paket sunucusu
 
@@ -2076,6 +2218,8 @@ izler. Önceki geliştirme derlemeleri 1.0.0-beta.1'i duyurmaz: onları bir kez 
 | `player-skins.txt` | Katılan oyuncuların skin hash'leri ve her birinin en son görüldüğü zaman (en fazla 20000) |
 | `cache/skins/` | Eşya görüntülerinde gösterilen kafaların Mojang'ın doku sunucusundan indirilen skinleri |
 | `proxy-features.properties` | Bu sunucunun önündeki twilight-proxy'nin en son neyi gösterdiğini söylediği; 30 gün tekrarlanmazsa geçersizleşir |
+| `reports/diagnostics.txt` | Son `/twilight diagnose` raporu |
+| `retired/<zaman>/` | Twilight'ın Geyser klasöründen taşıdığı dosyalar (eski Twilight dosyaları ve `foreign-mappings: retire` ile diğer araçların çakışan eşleme dosyaları); geri almak için geri taşıyın |
 
 Geyser klasöründe Twilight yalnızca `packs/twilight.zip`, `custom_mappings/twilight_*.json` ve
 `locales/overrides/` öğelerinin sahibidir; başka hiçbir şeye dokunulmaz.
@@ -2233,6 +2377,9 @@ içinde olmalıdır; 30128 bayttan büyük mesajlar okunmadan atılır.
 
 | Belirti | Denetim |
 |---|---|
+| Bedrock oyuncuları her ModelEngine ya da BetterModel modelini iki kez görüyor | GeyserModelEngine ve Twilight ikisi de çiziyor: `/twilight diagnose`. GeyserModelEngine'i, uzantısını ve GeyserUtils'i kaldırın ([geçiş rehberi](docs/MIGRATION.md)) ya da modelleri ona bırakmak için `integrations.conflicts.model-bones: other` yapın ([çakışmalar](#diğer-bedrock-içerik-araçlarıyla-çakışmalar)) |
+| Twilight derlemiş olsa da mobilya ya da model kemikleri görünmüyor | `/twilight diagnose` "item-display bridge: off" ve nedenini gösterir: başka bir görüntü uzantısı (GeyserDisplayEntity, ScaffoldingExtension) ya da `display-entities: other` |
+| Bazı özel eşyalar başka bir aracın simgesini gösteriyor | java2bedrock.sh, Rainbow ya da elle yazılmış eşleme dosyaları aynı eşyayı eşliyor: günlük ve `/twilight diagnose` onları adıyla söyler ([geçiş rehberi](docs/MIGRATION.md)) |
 | Bedrock oyuncuları paket almıyor | `/twilight status`; `plugins/Twilight/logs/`; `geyser.send-pack-to-bedrock` |
 | "Restart the server to activate changed custom items, blocks or player heads" | Geyser bunları açılışta kaydeder; bir kez yeniden başlatın. Diğer değişiklikler Bedrock oyuncularına bir sonraki girişlerinde ulaşır |
 | Bir derleme yayımlanmıyor | `build/current/build-report.json` → `problems`; katı derlemeler son iyi paketi korur |

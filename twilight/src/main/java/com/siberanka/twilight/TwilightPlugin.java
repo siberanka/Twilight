@@ -103,7 +103,11 @@ public final class TwilightPlugin extends JavaPlugin {
             reloadConfig();
             startCustomBlocks();
             startPlayerHeads();
-            if (!getConfig().getBoolean("geyser.retire-stale-files", true)) return;
+            readConflictSettings();
+            if (!getConfig().getBoolean("geyser.retire-stale-files", true)) {
+                checkForeignMappings(true);
+                return;
+            }
             Path root = getServer().getWorldContainer().toPath().toAbsolutePath().normalize();
             var service = new GeyserDeploymentService(root, getDataFolder().toPath(), TwilightConfig.read(getConfig(), root));
             for (var file : service.retireStaleFiles()) {
@@ -112,11 +116,143 @@ public final class TwilightPlugin extends JavaPlugin {
                         + ": a Twilight file this server does not own (older version, copy or sync tool) that would register"
                         + " items twice or send a second Twilight pack.");
             }
+            checkForeignMappings(true);
         } catch (java.io.IOException noLocalGeyser) {
             // Geyser is not on this server (the usual proxy layout): nothing to clean up.
         } catch (RuntimeException failure) {
             getLogger().log(Level.WARNING, "Could not check Geyser for stale Twilight files", failure);
         }
+    }
+
+    // --- Conflicts with other Bedrock content tools (integrations.conflicts) ----------------------------------------
+
+    private volatile com.siberanka.twilight.conflicts.ConflictSettings conflictSettings =
+            com.siberanka.twilight.conflicts.ConflictSettings.DEFAULTS;
+    private volatile com.siberanka.twilight.conflicts.Conflicts.Assessment conflictAssessment =
+            com.siberanka.twilight.conflicts.Conflicts.Assessment.NONE;
+
+    /** Reads {@code integrations.conflicts}; an invalid section keeps the previous settings. */
+    private void readConflictSettings() {
+        try {
+            conflictSettings = com.siberanka.twilight.conflicts.ConflictSettings.parse(
+                    key -> getConfig().get("integrations.conflicts." + key));
+        } catch (IllegalArgumentException invalid) {
+            getLogger().warning(invalid.getMessage() + "; the previous conflict settings stay.");
+        }
+    }
+
+    private Path geyserFolderOrNull() {
+        try {
+            return deployment == null ? new GeyserDeploymentService(serverRoot != null ? serverRoot
+                    : getServer().getWorldContainer().toPath().toAbsolutePath().normalize(), getDataFolder().toPath(),
+                    TwilightConfig.read(getConfig(), getServer().getWorldContainer().toPath().toAbsolutePath().normalize()))
+                    .resolveGeyserDirectory() : deployment.resolveGeyserDirectory();
+        } catch (java.io.IOException | RuntimeException noLocalGeyser) {
+            return null;
+        }
+    }
+
+    /** What twilight-proxy in front of this server announced: its version code and whether it shows item displays. */
+    private com.siberanka.twilight.conflicts.Environment conflictEnvironment() {
+        var features = proxyFeatures();
+        long now = System.currentTimeMillis();
+        return com.siberanka.twilight.integration.ConflictProbe.environment(getServer(), geyserFolderOrNull(),
+                features == null ? 0 : features.proxyVersionCode(now), features != null && features.itemDisplays(now));
+    }
+
+    /**
+     * Looks for mapping files of other tools that map what Twilight maps, and for packs with Twilight's pack id.
+     * In the load phase (before Geyser reads its folder) {@code foreign-mappings: retire} moves such files out.
+     */
+    private java.util.List<com.siberanka.twilight.conflicts.Conflicts.Finding> checkForeignMappings(boolean loadPhase) {
+        Path folder = geyserFolderOrNull();
+        if (folder == null) return java.util.List.of();
+        try {
+            var result = com.siberanka.twilight.conflicts.MappingOverlaps.scan(folder, conflictSettings);
+            if (loadPhase && conflictSettings.foreignMappings() == com.siberanka.twilight.conflicts.ConflictSettings.Foreign.RETIRE) {
+                for (String moved : com.siberanka.twilight.conflicts.MappingOverlaps.retire(folder, result.overlaps(),
+                        getDataFolder().toPath().resolve("retired"))) {
+                    getLogger().warning("Moved " + moved + ": another tool's mapping file that overlapped Twilight's mappings.");
+                }
+            } else if (loadPhase) {
+                for (var finding : result.findings()) getLogger().warning("Conflict: " + finding.text());
+            }
+            return result.findings();
+        } catch (java.io.IOException | RuntimeException failure) {
+            getLogger().log(Level.WARNING, "Could not check Geyser's folders for other tools' mappings", failure);
+            return java.util.List.of();
+        }
+    }
+
+    /** Decides who shows what (model bones, display entities) and logs each conflict once, with the setting that changes it. */
+    private void resolveConflicts() {
+        var environment = conflictEnvironment();
+        var assessment = com.siberanka.twilight.conflicts.Conflicts.assess(environment, conflictSettings);
+        conflictAssessment = assessment;
+        for (var finding : assessment.findings()) {
+            if (finding.level() == com.siberanka.twilight.conflicts.Conflicts.Level.WARN) getLogger().warning("Conflict: " + finding.text());
+            else getLogger().info("Conflict resolved: " + finding.text());
+        }
+        var mismatch = com.siberanka.twilight.conflicts.Conflicts.versionMismatch(
+                com.siberanka.twilight.conflicts.Environment.versionCode(getPluginMeta().getVersion()), environment.peerVersionCode(), false);
+        if (mismatch != null) getLogger().warning("Conflict: " + mismatch.text());
+    }
+
+    /** {@code /twilight diagnose}: the capability probe (which layers run, and why not) and every conflict finding. */
+    void diagnose(CommandSender sender) {
+        var environment = conflictEnvironment();
+        var assessment = com.siberanka.twilight.conflicts.Conflicts.assess(environment, conflictSettings);
+        java.util.List<com.siberanka.twilight.conflicts.Conflicts.Finding> extra = new java.util.ArrayList<>(
+                com.siberanka.twilight.conflicts.Diagnostics.geyserFacts(environment, geyserFolderOrNull()));
+        extra.addAll(checkForeignMappings(false));
+        var mismatch = com.siberanka.twilight.conflicts.Conflicts.versionMismatch(
+                com.siberanka.twilight.conflicts.Environment.versionCode(getPluginMeta().getVersion()), environment.peerVersionCode(), false);
+        if (mismatch != null) extra.add(mismatch);
+        var lines = com.siberanka.twilight.conflicts.Diagnostics.render("Twilight " + getPluginMeta().getVersion() + " diagnostics",
+                environment, assessment, layers(environment), extra, conflictSettings);
+        for (String line : lines) send(sender, line);
+        try {
+            Path report = getDataFolder().toPath().resolve("reports/diagnostics.txt");
+            java.nio.file.Files.createDirectories(report.getParent());
+            java.nio.file.Files.write(report, lines, java.nio.charset.StandardCharsets.UTF_8);
+            send(sender, "Saved to plugins/Twilight/reports/diagnostics.txt");
+        } catch (java.io.IOException failure) {
+            send(sender, "The report could not be saved: " + failure.getMessage());
+        }
+    }
+
+    /** The runtime layers and whether each runs on this server. */
+    private java.util.List<com.siberanka.twilight.conflicts.Diagnostics.Layer> layers(com.siberanka.twilight.conflicts.Environment environment) {
+        var layers = new java.util.ArrayList<com.siberanka.twilight.conflicts.Diagnostics.Layer>();
+        boolean geyser = environment.geyserHere();
+        String none = geyser ? "failed to start; see the log" : "Geyser is not on this server (a proxy's Geyser uses twilight-proxy)";
+        layers.add(layer("pack compiler", true, "builds the Bedrock pack and Geyser mappings", ""));
+        layers.add(layer("live pack delivery", livePacks != null, "players get the newest pack on join",
+                !geyser ? none : config != null && !config.sendPackToBedrock() ? "geyser.send-pack-to-bedrock is false" : "Geyser loads the pack at its start only"));
+        boolean bridge = displayBridge instanceof com.siberanka.twilight.integration.display.GeyserDisplayBridge shown && shown.registered();
+        layers.add(layer("item-display bridge (furniture, model bones)", bridge, "item/block displays show with the pack's models",
+                !geyser ? none : !conflictAssessment.registerDisplays() ? "another extension owns display entities (integrations.conflicts.display-entities)"
+                        : "not registered (no display models in the pack yet, or another translator owns item_display)"));
+        layers.add(layer("model bones (ModelEngine, BetterModel)", bridge && conflictAssessment.showModelBones(),
+                "shown through the item-display bridge", !conflictAssessment.showModelBones()
+                        ? "GeyserModelEngine renders them (integrations.conflicts.model-bones)" : "needs the item-display bridge"));
+        layers.add(layer("resource-pack translations", languageBridge != null, "Java language files for Bedrock", geyser ? "off or unavailable" : none));
+        layers.add(layer("Java text layout", textBridge != null, "custom font glyphs and menu titles", geyser ? "off (ui.java-text-layout) or unavailable" : none));
+        layers.add(layer("custom biomes", biomeBridge != null, "exact biome looks", geyser ? "off (geyser.bedrock-biome-matching) or unavailable" : none));
+        layers.add(layer("custom elytras on other players", wornElytra != null, "Java elytra models", geyser ? "unavailable for this Geyser build" : none));
+        layers.add(layer("rider name rule", riderNames != null, "ridden mobs show no name, as on Java", geyser ? "unavailable for this Geyser build" : none));
+        layers.add(layer("loading protection", loadingGuard != null, "keeps clients alive while packs load", geyser ? "off or unavailable" : none));
+        layers.add(layer("custom blocks", customBlocks != null, "note block / tripwire / mushroom blocks", geyser ? "off (geyser.custom-blocks) or unavailable" : none));
+        layers.add(layer("Bedrock network layer", bedrockNetwork != null, "held-back updates, per-connection limits", geyser ? "off (bedrock-network.enabled) or unavailable" : none));
+        layers.add(layer("pack hosting", packHosting != null, "Twilight's own pack download host", "off (pack-host.enabled: false) or Geyser absent"));
+        layers.add(layer("twilight-proxy pack sharing", proxyChannel != null, "pack shared with the proxy's Geyser",
+                getConfig().getBoolean("proxy.share-pack", true) ? "no proxy secret, Velocity forwarding secret or BungeeGuard token found" : "proxy.share-pack is false"));
+        return layers;
+    }
+
+    private static com.siberanka.twilight.conflicts.Diagnostics.Layer layer(String name, boolean active, String detail, String whyNot) {
+        return active ? com.siberanka.twilight.conflicts.Diagnostics.Layer.on(name, detail)
+                : com.siberanka.twilight.conflicts.Diagnostics.Layer.off(name, whyNot);
     }
 
     /**
@@ -229,6 +365,8 @@ public final class TwilightPlugin extends JavaPlugin {
             return thread;
         });
         loadServices();
+        readConflictSettings();
+        resolveConflicts();
         if (getServer().getPluginManager().getPlugin("Geyser-Spigot") != null) {
             if (config.sendPackToBedrock()) {
                 try {
@@ -242,11 +380,14 @@ public final class TwilightPlugin extends JavaPlugin {
             }
             try {
                 var live = livePacks;
-                displayBridge = live == null
-                        ? com.siberanka.twilight.integration.display.GeyserDisplayBridge.forPack(this, servedPack(),
-                                getLogger(), itemDisplayModels())
-                        : new com.siberanka.twilight.integration.display.GeyserDisplayBridge(this, live::index, getLogger(),
-                                itemDisplayModels() || !live.index(null).isEmpty());
+                if (conflictAssessment.registerDisplays()) {
+                    var created = live == null
+                            ? com.siberanka.twilight.integration.display.GeyserDisplayBridge.forPack(this, servedPack(),
+                                    getLogger(), itemDisplayModels())
+                            : new com.siberanka.twilight.integration.display.GeyserDisplayBridge(this, live::index, getLogger(),
+                                    itemDisplayModels() || !live.index(null).isEmpty());
+                    displayBridge = created.modelBones(conflictAssessment.showModelBones());
+                }
             } catch (Exception | LinkageError failure) {
                 getLogger().log(Level.SEVERE, "Live item-display bridge is unavailable; model animation parity is not supported.", failure);
             }
@@ -515,7 +656,7 @@ public final class TwilightPlugin extends JavaPlugin {
         java.util.Set<String> shownOwn = !displays || displayedItems == null ? java.util.Set.of()
                 : displayedItems.keys().stream().filter(com.siberanka.twilight.integration.display.DisplayedItems::own)
                         .collect(java.util.stream.Collectors.toUnmodifiableSet());
-        List<CustomItemDescriptor> liveItems = modelBones(runtimeCollection.items(), displays);
+        List<CustomItemDescriptor> liveItems = modelBones(runtimeCollection.items(), displays && conflictAssessment.showModelBones());
         String minecraftVersion = Bukkit.getMinecraftVersion();
         operationLog.info("runtime-items", liveItems.size());
         for (String issue : runtimeCollection.issues()) operationLog.warn("provider-api", issue);
@@ -942,6 +1083,7 @@ public final class TwilightPlugin extends JavaPlugin {
             loadServices();
             configureUpdates();
             readNetworkSettings();
+            readConflictSettings();
             log.info("configuration", "reloaded; vanilla-override=" + config.vanillaOverride());
             send(sender, "Twilight configuration reloaded. Vanilla overrides: " + config.vanillaOverride());
         } catch (Exception failure) {

@@ -297,11 +297,13 @@ public final class ProxyCore implements TwilightProxyApi {
             return;
         }
         if (settings != null && !servers.isEmpty()) prepareMappingsEarly(dataDirectory, settings, servers, info, warn);
-        if (settings == null || settings.itemDisplays()) {
+        var decision = ProxyConflicts.assess(dataDirectory, null,
+                settings == null ? com.siberanka.twilight.conflicts.ConflictSettings.DEFAULTS : settings.conflicts());
+        if ((settings == null || settings.itemDisplays()) && decision.registerDisplays()) {
             try {
                 ProxyRuntime.EarlyDisplays displays = new ProxyRuntime.EarlyDisplays();
                 displays.bridge = new com.siberanka.twilight.integration.display.GeyserDisplayBridge(owner, displays,
-                        ProxyRuntime.logger(info, warn), true);
+                        ProxyRuntime.logger(info, warn), true).modelBones(decision.showModelBones());
                 earlyDisplays = displays;
             } catch (RuntimeException | LinkageError unavailable) {
                 // The runtime subscribes when it starts.
@@ -369,6 +371,7 @@ public final class ProxyCore implements TwilightProxyApi {
                 for (var file : retired) warn.accept("Moved " + file.file() + " out of Geyser before it started: a Twilight"
                         + " file twilight-proxy does not own (copied by hand, an older sync tool or an older Twilight).", null);
             }
+            ProxyConflicts.foreign(folder, settings.conflicts(), dataDirectory.resolve("retired"), warn);
             Map<String, com.google.gson.JsonObject> packs = new java.util.TreeMap<>();
             for (String server : servers) {
                 ProxyConfig.PackSource source = settings.source(server);
@@ -463,6 +466,9 @@ public final class ProxyCore implements TwilightProxyApi {
             if (!retired.isEmpty() && bridge.itemsRegistered()) {
                 pendRestart(retired.size() + " stale Twilight file(s) removed from Geyser");
             }
+            int foreign = ProxyConflicts.foreign(folder.get(), current.conflicts(), platform.dataDirectory().resolve("retired"),
+                    (message, cause) -> platform.warn(message, cause));
+            if (foreign > 0 && bridge.itemsRegistered()) pendRestart(foreign + " mapping file(s) of other tools removed from Geyser");
         } catch (IOException | RuntimeException failure) {
             platform.warn("Could not move stale Twilight files out of Geyser: " + failure.getMessage(), failure);
         }
@@ -859,7 +865,8 @@ public final class ProxyCore implements TwilightProxyApi {
     /** What this proxy's Bedrock runtime shows, so the backends build only what it uses. */
     int capabilities() {
         ProxyRuntime running = runtime;
-        return running != null && running.showsItemDisplays() ? PackChannel.ITEM_DISPLAYS : 0;
+        int flags = running != null && running.showsItemDisplays() ? PackChannel.ITEM_DISPLAYS : 0;
+        return PackChannel.withVersion(flags, com.siberanka.twilight.conflicts.Environment.versionCode(platform.version()));
     }
 
     // --- Bedrock sessions --------------------------------------------------------------------
@@ -1109,6 +1116,36 @@ public final class ProxyCore implements TwilightProxyApi {
         ProxyRuntime running = runtime;
         if (running == null) return "Twilight's Bedrock runtime is not running on this proxy (no Geyser here).";
         return String.join("\n", running.networkReport());
+    }
+
+    /** {@code /twilightproxy diagnose}: the capability probe (layers that run, and why not) and every conflict finding. */
+    public String diagnoseText() {
+        ProxyConfig current = config;
+        var settings = current == null ? com.siberanka.twilight.conflicts.ConflictSettings.DEFAULTS : current.conflicts();
+        var environment = ProxyConflicts.environment(platform.dataDirectory(), platform, platform.version());
+        var assessment = com.siberanka.twilight.conflicts.Conflicts.assess(environment, settings);
+        java.util.List<com.siberanka.twilight.conflicts.Conflicts.Finding> extra = new java.util.ArrayList<>();
+        Optional<Path> folder = ProxyConflicts.geyserFolder(platform.dataDirectory());
+        if (folder.isPresent()) {
+            extra.addAll(com.siberanka.twilight.conflicts.Diagnostics.geyserFacts(environment, folder.get()));
+            extra.addAll(com.siberanka.twilight.conflicts.MappingOverlaps.scan(folder.get(), settings).findings());
+        }
+        ProxyRuntime running = runtime;
+        var layers = running == null
+                ? java.util.List.of(com.siberanka.twilight.conflicts.Diagnostics.Layer.off("Bedrock runtime", geyser == null
+                        ? "Geyser is not attached (" + geyserProblem + ")" : "not started yet"))
+                : running.layers();
+        var lines = com.siberanka.twilight.conflicts.Diagnostics.render("twilight-proxy " + platform.version() + " diagnostics",
+                environment, assessment, layers, extra, settings);
+        try {
+            Path report = platform.dataDirectory().resolve("reports/diagnostics.txt");
+            Files.createDirectories(report.getParent());
+            Files.write(report, lines, java.nio.charset.StandardCharsets.UTF_8);
+        } catch (IOException failure) {
+            lines = new java.util.ArrayList<>(lines);
+            lines.add("The report could not be saved: " + failure.getMessage());
+        }
+        return String.join("\n", lines);
     }
 
     public String statusText() {
