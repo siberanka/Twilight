@@ -180,6 +180,7 @@ flow mappings are only read and checked, never changed.
 | `maximum-source-bytes` | `1073741824` | Upper limit of all source bytes read in one build |
 | `maximum-archive-entries` | `100000` | Upper limit of entries per source archive |
 | `download-vanilla-assets` | `true` | Download the version's client assets from Mojang (hash-verified) when a build needs them |
+| `animated-textures` | `full` | How `.mcmeta` animated textures are exported (see [Animated textures](#animated-textures)): `full` the authored frames, times and interpolation within the limits; `simple` cheaper (blocks as in full; items and displays get at most 8 evenly sampled states and no pre-rendered interpolation); `off` the first frame only, the pack is as without animation support. A build after changing it is never skipped as a duplicate; a rebuild is needed |
 
 ### `sources`
 
@@ -761,6 +762,13 @@ combined cycle of at most 20 minutes and 48 animated display textures per pack. 
 one model are played over their common cycle; when a combination does not fit, the slowest texture stays on its
 first frame and a notice names it. An animation never fails a build, not even in strict mode.
 
+Pack size is the price of animation, so `generation.animated-textures` chooses how much is exported. Equal state
+textures are shared (named by their content, so two items with the same states use one file), runs of equal
+states are merged into longer steps, and states are stored as indexed PNGs when they have at most 256 colours.
+Measured on a real ItemsAdder pack with 358 animated items (36.4 MB without animation): `full` 45.2 MB (it was
+65.1 MB before these savings), `simple` 41.3 MB; a cold Bedrock join to the world took 69 s with `off`, 73 s with
+`simple` and 82 s with `full` (client start and pack download included; one run each).
+
 Java's animation clock is global; Bedrock entity textures follow the time since the entity (the player holding an
 item, the furniture) appeared, so two furniture pieces placed at different times are in different phases.
 
@@ -1310,6 +1318,7 @@ yalnızca okunur ve denetlenir, asla değiştirilmez.
 | `maximum-source-bytes` | `1073741824` | Bir derlemede okunan tüm kaynak baytlarının üst sınırı |
 | `maximum-archive-entries` | `100000` | Kaynak arşivi başına girdi üst sınırı |
 | `download-vanilla-assets` | `true` | Bir derleme gerektirdiğinde sürümün istemci varlıklarını Mojang'dan indirir (karma doğrulamalı) |
+| `animated-textures` | `full` | `.mcmeta` animasyonlu dokuların nasıl dışa aktarılacağı ([Animasyonlu dokular](#animasyonlu-dokular)): `full` yazarın kareleri, süreleri ve ara geçişi sınırlar içinde; `simple` daha ucuz (bloklar full gibi; eşyalar ve görüntüler en çok 8 eşit aralıklı durum alır, önceden çizilmiş ara geçiş yok); `off` yalnızca ilk kare, paket animasyon desteği olmayan gibidir. Değiştirdikten sonra yapılan derleme yinelenen sayılıp atlanmaz; yeniden derleme gerekir |
 
 ##### `sources`
 
@@ -1900,6 +1909,13 @@ Varlık dokularında kare harmanlama yoktur; bu yüzden `interpolate` olan dokun
 dakikalık birleşik döngü ve pakette 48 animasyonlu görüntü dokusu. Bir modelde birlikte oynayan dokular ortak
 döngülerinde oynatılır; bir birleşim sığmazsa en yavaş doku ilk karesinde kalır ve bir bildirim onu adıyla söyler.
 Animasyon derlemeyi asla başarısız kılmaz, sıkı modda da.
+
+Paket boyutu animasyonun bedelidir; bu yüzden `generation.animated-textures` ne kadarının dışa aktarılacağını seçer.
+Eşit durum dokuları paylaşılır (içeriğiyle adlandırılır, böylece aynı durumlara sahip iki eşya tek dosya kullanır),
+eşit durum dizileri daha uzun adımlara birleştirilir ve en çok 256 renkli durumlar indeksli PNG olarak saklanır.
+358 animasyonlu eşyası olan gerçek bir ItemsAdder paketinde ölçüldü (animasyonsuz 36,4 MB): `full` 45,2 MB (bu
+tasarruflardan önce 65,1 MB idi), `simple` 41,3 MB; Bedrock'un soğuk önbellekle dünyaya katılması `off` ile 69 sn,
+`simple` ile 73 sn, `full` ile 82 sn sürdü (istemci başlatma ve paket indirme dahil; her biri bir ölçüm).
 
 Java'nın animasyon saati geneldir; Bedrock varlık dokuları varlığın (eşyayı tutan oyuncu, mobilya) göründüğünden
 beri geçen zamanı izler, bu yüzden farklı zamanlarda yerleştirilen iki mobilya farklı evrelerdedir.

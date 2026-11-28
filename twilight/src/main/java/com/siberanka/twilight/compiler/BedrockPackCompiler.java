@@ -1107,7 +1107,7 @@ public final class BedrockPackCompiler {
         JsonObject root = new JsonObject();
         root.addProperty("format_version", "1.10");
         root.add("render_controllers", controllers);
-        files.put("render_controllers/" + safe + ".animated.render_controllers.json", jsonBytes(root));
+        files.put("render_controllers/" + safe + ".a.json", jsonBytes(root));
         JsonArray references = new JsonArray();
         references.add(name);
         description.add("render_controllers", references);

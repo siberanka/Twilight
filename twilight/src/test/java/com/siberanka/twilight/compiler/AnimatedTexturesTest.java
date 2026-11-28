@@ -278,7 +278,7 @@ class AnimatedTexturesTest {
         write(source, "assets/demo/models/item/still.json", cubeBlock("demo:item/still"));
         BuildResultHolder built = build(source, "data-items");
         try (ZipFile zip = new ZipFile(built.zip())) {
-            List<String> controllers = names(zip, "render_controllers/").stream().filter(name -> name.contains(".animated.")).toList();
+            List<String> controllers = names(zip, "render_controllers/").stream().filter(name -> name.endsWith(".a.json")).toList();
             assertEquals(1, controllers.size(), "only the animated item gets a render controller of its own");
             JsonObject controller = JsonParser.parseString(text(zip, controllers.getFirst())).getAsJsonObject()
                     .getAsJsonObject("render_controllers").entrySet().iterator().next().getValue().getAsJsonObject();

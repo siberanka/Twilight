@@ -277,7 +277,7 @@ Each operation writes a dedicated UTF-8 log under `plugins/Twilight/logs`, for e
 
 - Modern Java item-definition trees support plain models, conditions, range dispatch, selects, static composites, and special-model bases where Geyser has an equivalent predicate.
 - Legacy numeric custom-model-data overrides remain supported.
-- Animated `.mcmeta` textures play on custom blocks (Bedrock flipbooks), held items and item displays (timed texture frames); frame order, per-frame times and interpolation follow Java within Bedrock's limits (long cycles or many states freeze the slowest texture on its first frame, with a notice). Inventory icons, armour layers and glyphs show the first frame.
+- Animated `.mcmeta` textures play on custom blocks (Bedrock flipbooks), held items and item displays (timed texture frames); frame order, per-frame times and interpolation follow Java within Bedrock's limits (long cycles or many states freeze the slowest texture on its first frame, with a notice). Inventory icons, armour layers and glyphs show the first frame. `generation.animated-textures` (`full`, `simple`, `off`) trades animation for pack size.
 - Layered 2D textures are composed without smoothing. Java cuboids remain volumetric Bedrock geometry with separate first/third-person left/right and head transforms. Handheld presentation follows the resolved Java model parent, while authored hand translation, rotation, and scale are preserved without implicit fitting.
 - Single-layer texture-only bows and crossbows reuse Bedrock's native pose, pull geometry, and animation controllers. Volumetric legacy pull stages retain separate Java geometry and display transforms behind one runtime-selected Bedrock attachable. Crossbow arrow/rocket loads and fishing-rod cast models become explicit Geyser predicates, preserving their distinct states.
 - Supported bitmap providers use adaptive 16-to-512-pixel cells with measured Java height/ascent alignment. Atlas growth preserves authored display dimensions; overflow beyond the supported bounds and custom spacing fail strict conversion. Six metric probes, 36 real glyphs and six further UI/HUD images were compared in both clients. Chest titles use Java font metrics (spacing, negative shifts, bearings and remapped characters); fractional sampling remains a limitation. Large atlases also increase memory use; see the wide glyph review. Named fonts contribute only globally safe, collision-free BMP private-use glyphs.
@@ -591,7 +591,7 @@ dönüşüm sorunlarını, çalışan iş parçacığını ve tam yığın izler
 - Animasyonlu `.mcmeta` dokuları özel bloklarda (Bedrock flipbook), elde tutulan eşyalarda ve eşya görüntülerinde
   (zamanlı doku kareleri) oynar; kare sırası, kare başına süreler ve ara geçiş Bedrock'un sınırları içinde Java'yı
   izler (uzun döngüler veya çok sayıda durum en yavaş dokuyu bildirimle ilk karesinde dondurur). Envanter
-  simgeleri, zırh katmanları ve glifler ilk kareyi gösterir.
+  simgeleri, zırh katmanları ve glifler ilk kareyi gösterir. `generation.animated-textures` (`full`, `simple`, `off`) animasyonu paket boyutuyla takas eder.
 - Katmanlı 2B dokular yumuşatma olmadan birleştirilir. Java küboidleri ayrı birinci/üçüncü şahıs sol/sağ ve
   kafa dönüşümleriyle hacimli Bedrock geometrisi olarak kalır. Elde tutma sunumu çözülmüş Java model üst
   öğesini izler; yazarın verdiği el ötelemesi, dönüşü ve ölçeği örtük sığdırma olmadan korunur.

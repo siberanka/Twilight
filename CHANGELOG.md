@@ -6,6 +6,13 @@ All notable changes in Twilight are documented here.
 
 ## 1.0.2 (unreleased)
 
+- New setting `generation.animated-textures`: `full` (default) exports animated textures as described below,
+  `simple` is cheaper (blocks as in `full`; held items and displays get at most 8 evenly sampled states and no
+  pre-rendered interpolation), `off` shows the first frame only and gives the pack of a version without animation
+  support. Animation exports are smaller: equal state textures are shared across items, equal neighbouring states
+  merge into longer steps, and states are written as indexed PNGs. On a real ItemsAdder pack with 358 animated
+  items the pack is 45.2 MB with `full` (65.1 MB before), 41.3 MB with `simple` and 36.4 MB with `off`.
+
 - Animated textures (`.png.mcmeta`) play on Bedrock where Bedrock can show them. Java's frame order, per-frame
   times, frame size (also non-square frames) and `interpolate` are read like Java's sprite loader (frames with a
   missing index or a time below one are skipped; a frame size that does not divide the image draws the missing
@@ -230,6 +237,14 @@ First public beta of Twilight and twilight-proxy.
 Twilight'taki tüm önemli değişiklikler burada belgelenir.
 
 #### 1.0.2 (yayınlanmadı)
+
+- Yeni ayar `generation.animated-textures`: `full` (varsayılan) animasyonlu dokuları aşağıda anlatıldığı gibi dışa
+  aktarır, `simple` daha ucuzdur (bloklar `full` gibi; elde tutulan eşyalar ve görüntüler en çok 8 eşit aralıklı
+  durum alır, önceden çizilmiş ara geçiş yoktur), `off` yalnızca ilk kareyi gösterir ve animasyon desteği olmayan
+  bir sürümün paketini verir. Animasyon dışa aktarımı küçüldü: eşit durum dokuları eşyalar arasında paylaşılır,
+  yan yana eşit durumlar daha uzun adımlara birleşir ve durumlar indeksli PNG olarak yazılır. 358 animasyonlu
+  eşyası olan gerçek bir ItemsAdder paketinde paket `full` ile 45,2 MB (öncesinde 65,1 MB), `simple` ile 41,3 MB,
+  `off` ile 36,4 MB'dir.
 
 - Animasyonlu dokular (`.png.mcmeta`), Bedrock'un gösterebildiği her yerde Bedrock'ta oynar. Java'nın kare sırası,
   kare başına süreleri, kare boyutu (kare olmayan kareler dahil) ve `interpolate` değeri Java'nın sprite
