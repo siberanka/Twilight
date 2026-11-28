@@ -20,7 +20,7 @@ Twilight is a server-side Java-to-Bedrock custom-content compiler for Geyser. It
 
 ## Status and compatibility
 
-**1.0.1 is the current stable release.** The features are complete for production servers and proxy networks,
+**1.0.1 is the current stable release; 1.0.2-pre.1 is the current prerelease.** The features are complete for production servers and proxy networks,
 and they run on real networks today. Read this section before
 installing, keep backups, and [report problems](https://github.com/siberanka/twilight/issues/new/choose)
 ([GitLab](https://gitlab.com/siberanka/twilight/-/issues)).
@@ -355,7 +355,7 @@ sunucunun paketini verir.
 
 #### Durum ve uyumluluk
 
-**1.0.1 güncel kararlı sürümdür.** Özellikler üretim sunucuları ve proxy'li ağlar için tamamdır ve
+**1.0.1 güncel kararlı sürümdür; 1.0.2-pre.1 güncel ön sürümdür.** Özellikler üretim sunucuları ve proxy'li ağlar için tamamdır ve
 bugün gerçek ağlarda çalışıyor. Kurmadan önce bu bölümü okuyun,
 yedek alın ve [sorunları bildirin](https://github.com/siberanka/twilight/issues/new/choose)
 ([GitLab](https://gitlab.com/siberanka/twilight/-/issues)).

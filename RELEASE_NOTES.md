@@ -1,6 +1,50 @@
-# Twilight 1.0.1
+# Twilight 1.0.2-pre.1 - prerelease
 
 > Türkçe: [aşağıda](#türkçe)
+
+The first 1.0.2 prerelease. The stable release is still 1.0.1.
+
+**Animated textures on Bedrock.** Java `.mcmeta` animations now play on Bedrock where Bedrock can show them:
+custom blocks as Bedrock flipbooks, held items (3D and flat) and item displays (furniture, model bones,
+displayed items and blocks) through texture frames picked by time. Frame order, per-frame times, non-square
+frames and interpolation are read like Java. Inventory icons, armour layers and glyphs keep the first frame,
+because Bedrock cannot animate them. Limits never fail a build: an animation that is too long or too large
+freezes on its first frame with a notice.
+
+**`generation.animated-textures`.** `full` (default), `simple` (blocks as in `full`; held items and displays
+with at most 8 states) or `off` (first frame only). Identical frames are shared, so a real ItemsAdder pack with
+358 animated items is 45.2 MB with `full` (36.4 MB with `off`).
+
+**Conflicts with other Bedrock content tools.** Twilight detects GeyserModelEngine, GeyserDisplayEntity,
+ScaffoldingExtension, other tools' mapping files and pack copies at start, on the server and on the proxy, and
+resolves them automatically (`integrations.conflicts`). With GeyserModelEngine installed, Twilight keeps drawing
+ModelEngine and BetterModel models and warns at every start how to remove it or hand the models to it
+(`model-bones: other`); a missing model is worse than a doubled one. Overlapping mapping files are reported, and
+`foreign-mappings: retire` moves them out of Geyser.
+
+**Diagnostics.** `/twilight diagnose` and `/twilightproxy diagnose` list which layers run and why the others do
+not, and every conflict finding; the report is also saved to `reports/diagnostics.txt`. A backend warns when
+twilight-proxy's version differs.
+
+**Migration guide.** [docs/MIGRATION.md](docs/MIGRATION.md) explains moving from java2bedrock.sh, Rainbow,
+Scaffolding, GeyserModelEngine or hand-written mappings.
+
+**Tested** on copies of production servers (Leaf 1.21.11, ItemsAdder 4.0.18, BetterModel 3.4.2, ModelEngine
+R4.1.0, FancyHolograms) with Geyser 2.12.1 (build 1298) and Floodgate on the server: animated blocks, held items
+in first and third person and item displays on Bedrock 26.6x, furniture and holograms after relogs, the
+conflict handling with GeyserModelEngine 1.0.9 and a java2bedrock-style mapping file, and the diagnose report.
+The proxy side of the conflict handling is covered by unit tests.
+
+Update both JARs and restart once after the build.
+
+The [JARs and SHA-256 files](artifacts/) were built locally under siberanka using Java 25; 493 tests
+across 78 suites passed. Both JARs carry `LICENSE` and `NOTICE` in `META-INF`. No hosted CI was run.
+
+Runtime requirements: Java 21+, Paper/Folia/Spigot 1.21.4+, Geyser with custom content enabled;
+for twilight-proxy, Velocity or BungeeCord with Geyser on the proxy. The runtime bridges target
+Geyser 2.11.3, 2.12.0 and 2.12.1; other Geyser core versions require validation.
+
+## Twilight 1.0.1
 
 1.0.1 is the first stable release after the 1.0.0 betas. It collects the three 1.0.1 prereleases and two fixes
 found while checking them against copies of production servers, with Geyser on the server, on Velocity and on
@@ -407,7 +451,51 @@ Geyser 2.11.3; other Geyser core versions require validation.
 
 ## Türkçe
 
-### Twilight 1.0.1
+### Twilight 1.0.2-pre.1 - ön sürüm
+
+İlk 1.0.2 ön sürümü. Kararlı sürüm hâlâ 1.0.1'dir.
+
+**Bedrock'ta animasyonlu dokular.** Java `.mcmeta` animasyonları artık Bedrock'un gösterebildiği yerlerde oynar:
+özel bloklar Bedrock flipbook'ları olarak, elde tutulan eşyalar (3B ve düz) ve eşya görüntüleri (mobilyalar, model
+kemikleri, görüntü olarak gösterilen eşyalar ve bloklar) zamana göre seçilen doku kareleriyle. Kare sırası, kare
+başına süreler, kare olmayan kareler ve ara geçiş Java'daki gibi okunur. Envanter simgeleri, zırh katmanları ve
+glifler ilk karede kalır, çünkü Bedrock onları canlandıramaz. Sınırlar derlemeyi asla başarısız kılmaz: çok uzun
+ya da çok büyük bir animasyon bir bildirimle ilk karesinde durur.
+
+**`generation.animated-textures`.** `full` (varsayılan), `simple` (bloklar `full` gibi; elde tutulan eşyalar ve
+görüntüler en fazla 8 kareyle) ya da `off` (yalnızca ilk kare). Aynı kareler paylaşılır; böylece 358 animasyonlu
+eşyası olan gerçek bir ItemsAdder paketi `full` ile 45,2 MB'tır (`off` ile 36,4 MB).
+
+**Diğer Bedrock içerik araçlarıyla çakışmalar.** Twilight açılışta, sunucuda ve proxy'de GeyserModelEngine,
+GeyserDisplayEntity, ScaffoldingExtension, başka araçların eşleme dosyalarını ve paket kopyalarını algılar ve
+otomatik olarak çözer (`integrations.conflicts`). GeyserModelEngine kuruluyken Twilight ModelEngine ve BetterModel
+modellerini çizmeye devam eder ve her açılışta onu nasıl kaldıracağınızı ya da modelleri ona nasıl bırakacağınızı
+(`model-bones: other`) söyler; eksik bir model, iki kez görünen bir modelden daha kötüdür. Çakışan eşleme dosyaları
+bildirilir; `foreign-mappings: retire` onları Geyser'ın dışına taşır.
+
+**Tanılama.** `/twilight diagnose` ve `/twilightproxy diagnose`, hangi katmanların çalıştığını, diğerlerinin neden
+çalışmadığını ve tüm çakışma bulgularını listeler; rapor `reports/diagnostics.txt` dosyasına da kaydedilir. Arka
+uç, twilight-proxy'nin sürümü farklıysa uyarır.
+
+**Geçiş rehberi.** [docs/MIGRATION.md](docs/MIGRATION.md); java2bedrock.sh, Rainbow, Scaffolding, GeyserModelEngine
+ya da elle yazılmış eşlemelerden geçişi anlatır.
+
+**Test edildi:** üretim sunucularının kopyalarında (Leaf 1.21.11, ItemsAdder 4.0.18, BetterModel 3.4.2,
+ModelEngine R4.1.0, FancyHolograms), Geyser 2.12.1 (1298 numaralı derleme) ve Floodgate sunucudayken: Bedrock
+26.6x'te animasyonlu bloklar, birinci ve üçüncü şahısta elde tutulan eşyalar ve eşya görüntüleri, yeniden
+girişlerden sonra mobilyalar ve hologramlar, GeyserModelEngine 1.0.9 ve java2bedrock tarzı bir eşleme dosyasıyla
+çakışma yönetimi ve tanılama raporu. Çakışma yönetiminin proxy tarafı birim testleriyle kapsanır.
+
+İki JAR'ı da güncelleyin ve derlemeden sonra bir kez yeniden başlatın.
+
+[JAR'lar ve SHA-256 dosyaları](artifacts/) siberanka adına Java 25 ile yerelde derlendi; 78 paketteki
+493 test geçti. İki JAR da `META-INF` içinde `LICENSE` ve `NOTICE` taşır. Barındırılan CI çalıştırılmadı.
+
+Çalışma zamanı gereksinimleri: Java 21+, Paper/Folia/Spigot 1.21.4+, özel içeriği açık Geyser; twilight-proxy
+için proxy'de Geyser bulunan Velocity veya BungeeCord. Çalışma zamanı köprüleri Geyser 2.11.3, 2.12.0 ve
+2.12.1'i hedefler; diğer Geyser çekirdek sürümleri doğrulama gerektirir.
+
+#### Twilight 1.0.1
 
 1.0.1, 1.0.0 betalarından sonraki ilk kararlı sürümdür. Üç 1.0.1 ön sürümünü ve onları üretim sunucularının
 kopyalarına karşı, Geyser sunucuda, Velocity'de ve BungeeCord'da iken denerken bulunan iki düzeltmeyi bir araya

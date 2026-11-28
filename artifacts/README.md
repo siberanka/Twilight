@@ -1,4 +1,4 @@
-# Twilight 1.0.1 release build
+# Twilight 1.0.2-pre.1 prerelease build
 
 > Türkçe: [aşağıda](#türkçe)
 
@@ -8,7 +8,7 @@
 
 Built locally by siberanka using Java 25.0.2 and Gradle 9.6.0, with
 `:twilight:build :twilight-proxy:build --offline --no-daemon --no-configuration-cache`.
-436 tests across 73 suites passed. No hosted CI was used.
+493 tests across 78 suites passed. No hosted CI was used.
 
 The corresponding source is in this commit under `twilight/`, `twilight-proxy/` and `protocol/`, with build files
 at the repository root. Licensed under the [Twilight License](../LICENSE) (the PolyForm Noncommercial
@@ -18,14 +18,14 @@ selling it is not permitted, and copied or adapted parts must credit Twilight ([
 Read the [release notes](../RELEASE_NOTES.md), the [wiki](../WIKI.md) and the
 [status and compatibility](../README.md#status-and-compatibility) summary before deployment.
 Install the same version of both JARs and restart once after the first build.
-1.0.1 is the first stable release after the 1.0.0 betas: it collects the 1.0.1 prereleases and shows
-BetterModel 3.3 models on Bedrock.
+1.0.2-pre.1 plays animated textures on Bedrock and detects and resolves conflicts with other Bedrock content
+tools. The stable release is 1.0.1 (see the releases page).
 
 ---
 
 ## Türkçe
 
-### Twilight 1.0.1 sürüm derlemesi
+### Twilight 1.0.2-pre.1 ön sürüm derlemesi
 
 [Twilight.jar indir](Twilight.jar?raw=true) | [SHA-256](Twilight.jar.sha256) (arka uç sunucuları)
 
@@ -33,7 +33,7 @@ BetterModel 3.3 models on Bedrock.
 
 siberanka tarafından Java 25.0.2 ve Gradle 9.6.0 ile yerel olarak
 `:twilight:build :twilight-proxy:build --offline --no-daemon --no-configuration-cache`
-komutuyla derlendi. 73 paketteki 436 test geçti. Barındırılan CI kullanılmadı.
+komutuyla derlendi. 78 paketteki 493 test geçti. Barındırılan CI kullanılmadı.
 
 İlgili kaynak kod bu commit içinde `twilight/`, `twilight-proxy/` ve `protocol/` altında, derleme
 dosyaları depo kökündedir. [Twilight License](../LICENSE) ile (ek koşullarla birlikte PolyForm
@@ -44,5 +44,5 @@ satılması yasaktır ve kopyalanan veya uyarlanan parçalar Twilight'ı kaynak 
 Dağıtımdan önce [sürüm notlarını](../RELEASE_NOTES.md), [wiki'yi](../WIKI.md) ve
 [durum ve uyumluluk](../README.md#durum-ve-uyumluluk) özetini okuyun. İki JAR'ın aynı sürümünü
 kurun ve ilk derlemeden sonra bir kez yeniden başlatın.
-1.0.1, 1.0.0 betalarından sonraki ilk kararlı sürümdür: 1.0.1 ön sürümlerini bir araya getirir ve BetterModel 3.3
-modellerini Bedrock'ta gösterir.
+1.0.2-pre.1, animasyonlu dokuları Bedrock'ta oynatır ve diğer Bedrock içerik araçlarıyla çakışmaları algılayıp
+çözer. Kararlı sürüm 1.0.1'dir (sürümler sayfasına bakın).

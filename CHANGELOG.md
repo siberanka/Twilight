@@ -4,7 +4,7 @@
 
 All notable changes in Twilight are documented here.
 
-## 1.0.2 (unreleased)
+## 1.0.2-pre.1 - 2026-11-28
 
 - New setting `generation.animated-textures`: `full` (default) exports animated textures as described below,
   `simple` is cheaper (blocks as in `full`; held items and displays get at most 8 evenly sampled states and no
@@ -12,7 +12,6 @@ All notable changes in Twilight are documented here.
   support. Animation exports are smaller: equal state textures are shared across items, equal neighbouring states
   merge into longer steps, and states are written as indexed PNGs. On a real ItemsAdder pack with 358 animated
   items the pack is 45.2 MB with `full` (65.1 MB before), 41.3 MB with `simple` and 36.4 MB with `off`.
-
 - Animated textures (`.png.mcmeta`) play on Bedrock where Bedrock can show them. Java's frame order, per-frame
   times, frame size (also non-square frames) and `interpolate` are read like Java's sprite loader (frames with a
   missing index or a time below one are skipped; a frame size that does not divide the image draws the missing
@@ -255,7 +254,7 @@ First public beta of Twilight and twilight-proxy.
 
 Twilight'taki tüm önemli değişiklikler burada belgelenir.
 
-#### 1.0.2 (yayınlanmadı)
+#### 1.0.2-pre.1 - 2026-11-28
 
 - Yeni ayar `generation.animated-textures`: `full` (varsayılan) animasyonlu dokuları aşağıda anlatıldığı gibi dışa
   aktarır, `simple` daha ucuzdur (bloklar `full` gibi; elde tutulan eşyalar ve görüntüler en çok 8 eşit aralıklı
